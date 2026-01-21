@@ -1,0 +1,75 @@
+@using PESystem.Helpers
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Replace BGA control</title>
+    <link rel="icon" href="~/assets/img/bga.png" type="image/png">
+    <link rel="stylesheet" href="~/css/site.min.css" asp-append-version="true" />
+    <link href="~/lib/all-fa-icon/css/all.min.css" rel="stylesheet" />
+    <link href="~/assets/vendor/remixicon/remixicon.css" rel="stylesheet" />
+
+    <link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/lib/datatable/style.css" rel="stylesheet" />
+    <link href="~/lib/datatable/jquery.datatables.min.css" rel="stylesheet" />
+    <script src="~/lib/gsap-particles/particles.min.js"></script>
+    <script src="~/lib/gsap-particles/gsap.min.js"></script>
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <script>
+        (function () {
+            const isSidebarFixed = localStorage.getItem('isSidebarFixed') === 'true';
+            if (isSidebarFixed) {
+                document.documentElement.classList.add('sidebar-expanded');
+            } else {
+                document.documentElement.classList.remove('sidebar-expanded');
+            }
+        })();
+    </script>
+
+    <div id="sidebar" class="sidebar">
+        <div class="dashboard-container">
+            <a href="@Url.Action("Home", "Home", new { area = "" })">
+                <img src="~/assets/img/bga.png" style="width:36px; height:36px;" class="logo" />
+            </a>
+            <span class="spanTitle" style="font-size: 1rem; font-weight: bold;">Replace BGA</span>
+            <div class="fixed-checkbox">
+                <input type="checkbox" id="toggleSidebarFixed" title="Giữ cố định" />
+                <label for="toggleSidebarFixed" title="Giữ cố định">
+                    <i class="ri-checkbox-blank-circle-line"></i>
+                </label>
+            </div>
+        </div>
+        <nav class="nav flex-column">
+            <!-- Menu Items -->
+            <a href="@Url.Action("Home", "Home", new { area = "" })" class="nav-link"><i class="fas fa-home"></i> <span>Trang chủ</span></a>
+            <a href="@Url.Action("Process", "Home", new { area = "BGA" })" class="nav-link"><i class="fas fa-diagram-project"></i> <span>Replace BGA process</span></a>
+            <a href="@Url.Action("Dashboard", "Home", new { area = "BGA" })" class="nav-link"><i class="fas fa-chart-pie"></i> <span>Dashboard</span></a>
+            <a href="@Url.Action("Actions", "Home", new { area = "BGA" })" class="nav-link"><i class="fas fa-tasks"></i> <span>Thao tác trạng thái</span></a>
+            <a href="@Url.Action("Search", "Home", new { area = "BGA" })" class="nav-link"><i class="fas fa-search"></i> <span>Tra cứu theo SN</span></a>
+
+        </nav>
+    </div>
+
+    <div class="dashboard-stage">
+        <div class="dashboard-wrapper">
+
+            <div id="spinner-overlay">
+                <span class="loader"></span>
+            </div>
+            @RenderBody()
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/sweetalert2/dist/sweetalert2.all.js"></script>
+    <script src="~/lib/npm-chart.js"></script>
+    <script src="~/lib/jquery.datatables.min.js"></script>
+    <script src="~/lib/excel/xlsx.full.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

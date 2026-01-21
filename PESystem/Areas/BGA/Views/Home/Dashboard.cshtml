@@ -1,0 +1,64 @@
+@{
+    ViewData["Title"] = "Dashboard Replace BGA";
+    Layout = "~/Areas/BGA/Views/Shared/layout_bga.cshtml";
+}
+
+<section class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12 d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <div>
+                <h1 class="fw-bold text-primary mb-1">Dashboard Replace BGA</h1>
+                <p class="text-muted mb-0">Theo dõi số lượng theo ApplyScrapStatus và thời gian Barking.</p>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <small class="text-muted">Cập nhật lần cuối: <span id="dashboard-last-updated">Chưa tải</span></small>
+                <button id="refresh-dashboard-btn" class="btn btn-outline-primary btn-sm"><i class="fas fa-sync-alt me-1"></i>Refresh</button>
+            </div>
+        </div>
+    </div>
+    <div class="row g-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0 bg-white text-dark h-100">
+                <div class="card-header bg-white border-0 d-flex flex-wrap align-items-center justify-content-between gap-2">
+                    <h5 class="mb-0 text-primary">Số lượng theo ApplyScrapStatus</h5>
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <select id="status-download-select" class="form-select form-select-sm" style="min-width: 220px;" disabled>
+                            <option value="">Chọn trạng thái để tải danh sách SN</option>
+                        </select>
+                        <button id="status-download-btn" class="btn btn-outline-secondary btn-sm" type="button" disabled>
+                            <i class="fas fa-download me-1"></i>Tải danh sách SN
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="status-chart-empty" class="alert alert-info d-none" role="alert"></div>
+                    <div class="position-relative" style="height: 360px;">
+                        <canvas id="status-chart" class="d-none w-100 h-100"></canvas>
+                    </div>
+                    <div id="status-download-feedback" class="mt-3 small text-muted"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="card shadow-sm border-0 bg-white text-dark h-100">
+                <div class="card-header bg-white border-0 d-flex flex-wrap align-items-center justify-content-between gap-2">
+                    <h5 class="mb-0 text-primary">Thời gian Barking (ApplyScrapStatus = 11)</h5>
+                    <button id="barking-download-btn" class="btn btn-outline-secondary btn-sm" type="button" disabled>
+                        <i class="fas fa-file-download me-1"></i>Tải danh sách SN
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="barking-age-empty" class="alert alert-info d-none" role="alert"></div>
+                    <div class="position-relative" style="height: 360px;">
+                        <canvas id="barking-age-chart" class="d-none w-100 h-100"></canvas>
+                    </div>
+                    <div id="barking-details" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="~/assets/Areas/BGA/js/dashboard.js"></script>
+}

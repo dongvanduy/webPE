@@ -1,0 +1,95 @@
+﻿@using PESystem.Helpers
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hass Bi</title>
+    <link rel="icon" href="~/assets/img/logo-hass-bi.png" type="image/png">
+
+    <!-- Bootstrap + Global -->
+    <link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/css/site.min.css" rel="stylesheet" />
+    <!--Custom-->
+    <link href="~/assets/areas/hassbi/css/hassbi.css" rel="stylesheet" />
+
+
+    <!-- Icons -->
+    <link href="~/lib/all-fa-icon/css/all.min.css" rel="stylesheet" />
+    <link href="~/assets/vendor/remixicon/remixicon.css" rel="stylesheet" />
+
+    <!-- DataTables Bootstrap 5 -->
+    <link href="~/lib/datatables.bootstrap5.min.css" rel="stylesheet" />
+    <link href="~/lib/buttons.bootstrap5.min.css" rel="stylesheet" />
+
+</head>
+<body>
+    <script>
+        (function () {
+            const isSidebarFixed = localStorage.getItem('isSidebarFixed') === 'true';
+            if (isSidebarFixed) {
+                document.documentElement.classList.add('sidebar-expanded');
+            } else {
+                document.documentElement.classList.remove('sidebar-expanded');
+            }
+        })();
+    </script>
+
+    <!-- Sidebar dọc -->
+    <div id="sidebar" class="sidebar">
+        <!-- Logo and Dashboard with fixed checkbox -->
+        <div class="dashboard-container">
+            <a href="@Url.Action("Home", "Home", new { area = "" })">
+                <img src="~/assets/img/logo-hass-bi.png" style="width:36px; height:36px;" class="logo" />
+            </a>
+            <span class="spanTitle" style="font-size: 1.3rem; font-weight: bold;">
+                HASS-BI
+            </span>
+            <div class="fixed-checkbox">
+                <input type="checkbox" id="toggleSidebarFixed" title="Giữ cố định" />
+                <label for="toggleSidebarFixed" title="Giữ cố định">
+                    <i class="ri-checkbox-blank-circle-line"></i>
+                </label>
+            </div>
+        </div>
+        <nav class="nav flex-column">
+            <!-- Menu Items -->
+            <a href="@Url.Action("Home", "Home", new { area = "" })" class="nav-link"><i class="fas fa-home"></i> <span>Trang chủ</span></a>
+            <a href="@Url.Action("Index", "Home", new { area = "HassBi" })" class="nav-link @ViewContext.IsActive("Home", "Index")"><i class="fas fa-tasks"></i> <span>Báo cáo</span></a>
+            <a href="@Url.Action("Index", "Detail", new { area = "HassBi" })" class="nav-link @ViewContext.IsActive("Detail", "Index")"><i class="fas fa-chart-bar"></i> <span>Dữ liệu</span></a>
+
+        </nav>
+    </div>
+
+
+
+    <div id="spinner-overlay">
+        <span class="loader"></span>
+    </div>
+    @RenderBody()
+ 
+    <!-- jQuery (first) -->
+    <script src="~/lib/jquery-3.7.0.min.js"></script>
+
+    <!-- DataTables core + Bootstrap -->
+    <script src="~/lib/datatable/jquery.datatables.min.js"></script>
+    <script src="~/lib/datatables.bootstrap5.min.js"></script>
+
+    <!-- DataTables Export -->
+    <script src="~/lib/jszip.min.js"></script>
+    <script src="~/lib/datatables.buttons.min.js"></script>
+    <script src="~/lib/buttons.html5.min.js"></script>
+    <script src="~/lib/excel/xlsx.full.min.js"></script>
+
+    <!-- UI Libraries -->
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/sweetalert2/dist/sweetalert2.all.js"></script>
+    <script src="~/lib/echarts/echarts.min.js"></script>
+
+    <!-- Your custom JS -->
+    <script src="~/js/site.min.js?v=4"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+
+</body>
+</html>

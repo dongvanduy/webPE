@@ -1,0 +1,179 @@
+﻿@{
+    ViewData["Title"] = "Home";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<div class="module-grid">
+    <!-- SMART FA -->
+    <a href="@Url.Action("Index", "Home", new { area = "SmartFA" })" class="module-item">
+        <img src="~/assets/img/smartfa.png" />
+        <span>SMART FA</span>
+    </a>
+
+    <!-- REPOSITORY -->
+    <a href="@Url.Action("Index", "Home", new { area = "Repositories" })" class="module-item">
+        <img src="~/assets/img/repository.png" />
+        <span>REPOSITORY</span>
+    </a>
+
+    <!-- PD REPOSITORY -->
+    <a href="@Url.Action("Index", "Home", new { area = "PDRepositories" })" class="module-item">
+        <img src="~/assets/img/repoPD.png" />
+        <span>PD REPOSITORY</span>
+    </a>
+
+    <!-- DATA CLOUD -->
+    <a href="@Url.Action("Index", "Home", new { area = "DataCloud" })" class="module-item">
+        <img src="~/assets/img/dataCloud.png" />
+        <span>DATA CLOUD</span>
+    </a>
+
+    <!-- HASS BI -->
+    <a href="@Url.Action("Index", "Home", new { area = "HassBi" })" class="module-item">
+        <img src="~/assets/img/logo-hass-bi.png" />
+        <span>HASS-BI</span>
+    </a>
+
+    <!-- DDR TOOL -->
+    <a href="@Url.Action("Index", "Home", new { area = "DDR" })" class="module-item">
+        <img src="~/assets/img/computer.png" />
+        <span>DDR TOOL</span>
+    </a>
+
+    <!-- Check List -->
+    <a href="@Url.Action("Index", "Home", new { area = "CheckList" })" class="module-item">
+        <img src="~/assets/img/check_list.png" />
+        <span>CHECK LIST</span>
+    </a>
+
+    <!-- Scrap -->
+    <a href="@Url.Action("Index", "Home", new { area = "Scrap" })" class="module-item">
+        <img src="~/assets/img/scrap.png" />
+        <span>SCRAP</span>
+    </a>
+    <!-- Scrap SW-->
+    <a href="@Url.Action("Index", "Home", new { area = "ScrapSW" })" class="module-item">
+        <img src="~/assets/img/scrap_sw.png" />
+        <span>SCRAP SWITCH</span>
+    </a>
+
+    <!-- Material Control -->
+    <a href="@Url.Action("Index", "Home", new { area = "MaterialSystem" })" class="module-item">
+        <img src="~/assets/img/material-logo.png" />
+        <span>MATERIAL CONTROL</span>
+    </a>
+
+    <!-- Bonepile -->
+    <a href="@Url.Action("Index", "Bonepile", new { area = "Bonepile" })" class="module-item">
+        <img src="~/assets/img/bonepile.png" />
+        <span>BONEPILE</span>
+    </a>
+
+    <!-- Check Data -->
+    <a href="@Url.Action("Index", "DCLC", new { area = "Allpart" })" class="module-item">
+        <img src="~/assets/img/Allpart.png" />
+        <span>CHECK DATA</span>
+    </a>
+
+    <!-- Search Data -->
+    <a href="@Url.Action("Index", "Home", new { area = "SearchData" })" class="module-item">
+        <img src="~/assets/img/searching.png" />
+        <span>SEARCH DATA</span>
+    </a>
+
+    <!-- SFC EXPORT -->
+    <a href="@Url.Action("Index", "Home", new { area = "SFC" })" class="module-item">
+        <img src="~/assets/img/excel.png" />
+        <span>SFC EXPORT</span>
+    </a>
+
+    <!-- Replace BGA Control -->
+    <a href="@Url.Action("Process", "Home", new { area = "BGA" })" class="module-item">
+        <img src="~/assets/img/bga.png" />
+        <span>REPLACE BGA CONTROL</span>
+    </a>
+
+    <!-- NPI Document -->
+    <a href="@Url.Action("Index", "Home", new { area = "NPI" })" class="module-item">
+        <img src="~/assets/img/Document.png" />
+        <span>NPI DOCUMENT</span>
+    </a>
+    <!-- NPI Document -->
+    <a href="@Url.Action("Index", "CheckDraw", new { area = "AOI" })" class="module-item">
+        <img src="~/assets/img/computer-vision.png" />
+        <span>AOI</span>
+    </a>
+
+</div>
+
+<!-- ===========================
+      CSS PRO EDITION
+=========================== -->
+<style>
+    .dashboard-wrapper {
+        padding: 10px;
+    }
+    /* ===== GRID LAYOUT PRO ===== */
+    .module-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 18px;
+        padding-bottom: 32px;
+    }
+
+    .module-item {
+        aspect-ratio: 1 / 1; /* 🔥 Tạo hình vuông */
+        max-width: 150px;
+        border-radius: 14px;
+        padding: 10px;
+        text-align: center;
+        font-weight: bold;
+        text-decoration: none;
+        display: flex;
+        flex-direction: column;
+        justify-content: center; /* Căn giữa icon + text */
+        align-items: center;
+        background: rgba(255,255,255,0.25);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+        transition: 0.25s ease;
+        backdrop-filter: blur(6px);
+    }
+
+        .module-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 22px rgba(0, 0, 0, 0.25);
+            background: rgba(255, 255, 255, 1);
+        }
+
+        .module-item:hover span {
+            font-size: 11px;
+            font-weight: 600;
+            color: #000 !important;
+        }
+        .module-item img {
+            width: 60%;
+            height: 60%;
+            object-fit: contain;
+            margin-bottom: 6px; /* cách text một chút */
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.12));
+        }
+
+        .module-item span {
+            font-size: 11px;
+            font-weight: 600;
+            color: #fff !important;
+        }
+
+
+    /* Fade-In Animation */
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(15px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>

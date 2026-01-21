@@ -1,0 +1,133 @@
+﻿@{
+    ViewData["Title"] = "PD Repository - Tra cứu kho";
+    Layout = "~/Areas/PDRepositories/Views/Shared/_Layout_PD.cshtml";
+}
+
+<style>
+    /* Tối ưu bảng kết quả */
+    .PdStock-results-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin-top: 1rem;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+
+        .PdStock-results-table th {
+            background-color: #f8f9fa;
+            color: #495057;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            padding: 12px 15px;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .PdStock-results-table td {
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
+            font-size: 0.9rem;
+        }
+
+        .PdStock-results-table tbody tr:hover {
+            background-color: #f1f8ff;
+        }
+
+    /* Tối ưu textarea nhập liệu */
+    #PD-repo-seach-input {
+        border-radius: 8px;
+        border: 1px solid #ced4da;
+        padding: 15px;
+        font-family: 'Courier New', monospace;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+        #PD-repo-seach-input:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+            outline: none;
+        }
+
+    .status-badge {
+        font-size: 0.9rem;
+        padding: 6px 12px;
+        border-radius: 20px;
+        background: #e9ecef;
+        font-weight: 500;
+    }
+</style>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold text-primary">
+                    <i class="fas fa-search-location me-2"></i>TRA CỨU DỮ LIỆU KHO
+                </h5>
+                <span id="Data-search-qty" class="status-badge text-dark">
+                    Tổng: 0
+                </span>
+            </div>
+            <div class="card-body bg-light">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">Chọn chức năng</label>
+                            <select id="search-options" class="form-select shadow-sm">
+                                <option value="SEARCH_S/N" selected>🔢 Tìm kiếm S/N</option>
+                                <option value="SEARCH_CAR">📦 Tìm kiếm Carton</option>
+                                <option value="SEARCH_MODEL_NAME">🏷️ Tìm kiếm ModelName</option>
+                                <option value="SEARCH_EXPORT">🕒 Lịch sử xuất kho</option>
+                            </select>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button id="PdStock-search-btn" class="btn btn-primary shadow-sm py-2">
+                                <i class="fas fa-search me-2"></i>Tìm kiếm
+                            </button>
+                            <img id="PdStock-ExportExcel-btn" src="~/assets/img/excel.png" alt="Excel Icon" class="excel-icon">
+                        </div>
+                    </div>
+
+                    <div class="col-md-9">
+                        <label class="form-label small fw-bold text-muted text-uppercase">
+                            Nhập danh sách (Mỗi SN một dòng)
+                        </label>
+                        <textarea id="PD-repo-seach-input"
+                                  class="form-control shadow-sm"
+                                  rows="5"
+                                  placeholder="Dán danh sách SN hoặc Carton..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-0">
+                <div id="PDStock-search-results-section" class="table-responsive" style="min-height: 200px; padding: 20px;">
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-inbox fa-3x mb-3"></i>
+                        <p>Vui lòng chọn tiêu chí và nhập dữ liệu để bắt đầu tìm kiếm</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <style>
+        .excel-icon {
+            width: 28px;
+            height: 28px;
+            transition: transform 0.2s ease-in-out;
+            cursor: pointer;
+        }
+
+            .excel-icon:hover {
+                transform: scale(1.1);
+            }
+    </style>
+    <script src="~/assets/areas/pdstock/js/pdrepository.js?v=@DateTime.Now.Ticks"></script>
+}

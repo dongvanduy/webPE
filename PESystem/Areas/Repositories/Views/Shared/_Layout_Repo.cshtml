@@ -1,0 +1,277 @@
+﻿@using PESystem.Helpers
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KHO RE</title>
+    <link rel="icon" href="~/assets/img/repository.png" type="image/png">
+
+    <!-- Bootstrap + Global -->
+    <link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/css/site.min.css" rel="stylesheet" />
+
+    <!-- Icons -->
+    <link href="~/lib/all-fa-icon/css/all.min.css" rel="stylesheet" />
+    <link href="~/assets/vendor/remixicon/remixicon.css" rel="stylesheet" />
+
+    <!-- DataTables Bootstrap 5 -->
+    <link href="~/lib/datatables.bootstrap5.min.css" rel="stylesheet" />
+    <link href="~/lib/buttons.bootstrap5.min.css" rel="stylesheet" />
+</head>
+
+<body>
+
+    <script>
+        (function () {
+            const isSidebarFixed = localStorage.getItem('isSidebarFixed') === 'true';
+            if (isSidebarFixed) {
+                document.documentElement.classList.add('sidebar-expanded');
+            } else {
+                document.documentElement.classList.remove('sidebar-expanded');
+            }
+        })();
+    </script>
+
+    <!-- Sidebar dọc -->
+    <div id="sidebar" class="sidebar">
+        <!-- Logo and Dashboard with fixed checkbox -->
+        <div class="dashboard-container">
+            <a href="@Url.Action("Home", "Home", new { area = "" })">
+                <img src="~/assets/img/repository.png" style="width:36px; height:36px;" class="logo" />
+            </a>
+            <span class="spanTitle" style="font-size: 1.0rem; font-weight: bold;">
+                KHO RE
+            </span>
+            <div class="fixed-checkbox">
+                <input type="checkbox" id="toggleSidebarFixed" title="Giữ cố định" />
+                <label for="toggleSidebarFixed" title="Giữ cố định">
+                    <i class="ri-checkbox-blank-circle-line"></i>
+                </label>
+            </div>
+        </div>
+        <nav class="nav flex-column">
+            <!-- Menu Items -->
+            <a href="@Url.Action("Home", "Home", new { area = "" })" class="nav-link"><i class="fas fa-home"></i> <span>Trang chủ</span></a>
+            <a href="@Url.Action("Index", "Home", new { area = "Repositories" })" class="nav-link @ViewContext.IsActive("Home", "Index")"><i class="fas fa-dashboard"></i> <span>Dashboard</span></a>
+            <a href="@Url.Action("Index", "SearchProduct", new { area = "Repositories" })" class="nav-link @ViewContext.IsActive("SearchProduct", "Index")"><i class="fas fa-search"></i> <span>Tìm kiếm</span></a>
+            <a href="@Url.Action("Index", "AddProduct", new { area = "Repositories" })" class="nav-link @ViewContext.IsActive("AddProduct", "Index")"><i class="fas fa-download"></i> <span>Nhập kho</span></a>
+            <a href="@Url.Action("Index", "Export", new { area = "Repositories" })" class="nav-link  @ViewContext.IsActive("Export", "Index")"><i class="fas fa-upload"></i> <span>Xuất kho</span></a>
+            <a href="@Url.Action("Index", "KhoScrap", new { area = "Repositories" })" class="nav-link  @ViewContext.IsActive("KhoScrap", "Index")"><i class="fa fa-bug"></i> <span>Kho Phế</span></a>
+            <a href="@Url.Action("Index", "KhoOk", new { area = "Repositories" })" class="nav-link  @ViewContext.IsActive("KhoOk", "Index")"><i class="fa fa-check-circle"></i> <span>Kho Ok</span></a>
+        </nav>
+    </div>
+
+    <!--HTML CỦA SPINER-->
+    <div id="spinner-overlay">
+        <span class="loader"></span>
+    </div>
+
+    @RenderBody()
+
+    <!-- jQuery (first) -->
+    <script src="~/lib/jquery-3.7.0.min.js"></script>
+
+    <!-- DataTables core + Bootstrap -->
+    <script src="~/lib/datatable/jquery.datatables.min.js"></script>
+    <script src="~/lib/datatables.bootstrap5.min.js"></script>
+
+    <!-- DataTables Export -->
+    <script src="~/lib/jszip.min.js"></script>
+    <script src="~/lib/datatables.buttons.min.js"></script>
+    <script src="~/lib/buttons.html5.min.js"></script>
+    <script src="~/lib/excel/xlsx.full.min.js"></script>
+    <!-- UI Libraries -->
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/sweetalert2/dist/sweetalert2.all.js"></script>
+    <script src="~/lib/echarts/echarts.min.js"></script>
+
+    <!-- Your custom JS -->
+    <script src="~/js/site.min.js?v=4"></script>
+
+
+    @RenderSection("Scripts", required: false)
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('warehouse-search-btn');
+            const input = document.getElementById('warehouse-sn-input');
+            const createListBtn = document.getElementById('create-list-btn');
+            const headerSearch = document.getElementById('search-input'); // 🆕 input ở header
+            let warehouseNotFound = [];
+            let warehouseListItems = [];
+
+            let warehouseTable = $('#warehouseTable').DataTable({
+                destroy: true,
+                data: [],
+                columns: [
+                    { title: 'Serial Number' },
+                    { title: 'Kho' },
+                    { title: 'Vị trí' },
+                    { title: 'Product Line' },
+                    { title: 'Model' }
+                ],
+                dom: '<"top d-flex align-items-center"flB>rt<"bottom"ip>',
+                buttons: [{
+                    extend: 'excel',
+                    text: '<img src="/assets/img/excel.png" class="excel-icon"/>',
+                    className: 'excel-button',
+                    title: 'WarehouseSearchResults'
+                }]
+            });
+
+            // 🧠 Hàm xử lý tìm kiếm dùng lại logic cũ
+            async function handleWarehouseSearch(sns) {
+                if (!sns.length) return;
+                try {
+                    const res = await fetch(`${API_BASE_URL}/api/Search/FindLocations`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(sns)
+                    });
+                    const data = await res.json();
+                    warehouseTable.clear();
+
+                    if (data.success) {
+                        const noPositionSerials = [];
+
+                        data.data.forEach(d => {
+                            warehouseTable.row.add([
+                                d.serialNumber,
+                                d.warehouse,
+                                d.location || '',
+                                d.productLine || '',
+                                d.modelName || ''
+                            ]);
+
+                            if (!d.location || d.location === 'Borrowed')
+                                noPositionSerials.push(d.serialNumber);
+                        });
+
+                        warehouseNotFound = data.notFoundSerialNumbers || [];
+                        warehouseListItems = [...warehouseNotFound, ...noPositionSerials];
+
+                        if (warehouseNotFound.length) {
+                            warehouseNotFound.forEach(sn => {
+                                warehouseTable.row.add([sn, 'Not found', '', '', '']);
+                            });
+                        }
+                        if (createListBtn) {
+                            createListBtn.style.display = warehouseListItems.length ? 'inline-block' : 'none';
+                        }
+                    } else {
+                        warehouseNotFound = [];
+                        warehouseListItems = [];
+                        if (createListBtn) createListBtn.style.display = 'none';
+                    }
+
+                    warehouseTable.draw();
+                    $('#warehouseModal').modal('show');
+                } catch (err) {
+                    console.error('FindLocations error', err);
+                }
+            }
+
+            // 🆕 Khi click vào ô tìm kiếm trên header → mở SweetAlert nhập danh sách SN
+            if (headerSearch) {
+                headerSearch.addEventListener('click', async () => {
+                    if (headerSearch.dataset.busy === "true") return;
+                    headerSearch.dataset.busy = "true";
+
+                    const { value: serialList } = await Swal.fire({
+                        title: 'Nhập danh sách SerialNumber',
+                        input: 'textarea',
+                        inputPlaceholder: 'Nhập mỗi SerialNumber trên một dòng...',
+                        showCancelButton: true,
+                        confirmButtonText: '🔍 Tìm kiếm',
+                        cancelButtonText: 'Hủy',
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        showLoaderOnConfirm: true, // 🌀 bật chế độ loading
+                        allowOutsideClick: () => !Swal.isLoading(),
+                        preConfirm: async (value) => {
+                            if (!value.trim()) {
+                                Swal.showValidationMessage('Vui lòng nhập ít nhất 1 SerialNumber!');
+                                return false;
+                            }
+
+                            // 🌀 Hiển thị loading ngay trong popup
+                            Swal.showLoading();
+
+                            const sns = value.split(/\r?\n/).map(s => s.trim().toUpperCase()).filter(s => s);
+                            await handleWarehouseSearch(sns);
+
+                            return true; // đóng popup sau khi hoàn thành
+                        },
+                        didOpen: () => {
+                            headerSearch.blur();
+                        }
+                    });
+
+                    headerSearch.dataset.busy = "false";
+                });
+            }
+
+            // Giữ nguyên phần Create List
+            if (createListBtn) {
+                createListBtn.addEventListener('click', async () => {
+                    const currentUser = document.getElementById('entryPerson').value;
+                    if (!warehouseListItems.length) {
+                        showError('Không có Serial Number không tìm thấy!');
+                        return;
+                    }
+                    $('#warehouseModal').modal('hide');
+                    Swal.fire({
+                        title: 'Tạo danh sách tìm kiếm',
+                        input: 'text',
+                        inputLabel: 'Tên danh sách',
+                        inputPlaceholder: 'Nhập tên danh sách',
+                        showCancelButton: true,
+                        confirmButtonText: 'Lưu',
+                        cancelButtonText: 'Hủy',
+                        showLoaderOnConfirm: true,
+                        preConfirm: async (listName) => {
+                            if (!listName || listName.trim() === '') {
+                                Swal.showValidationMessage('Vui lòng nhập tên danh sách!');
+                                return false;
+                            }
+                            try {
+                                showSpinner();
+                                const response = await fetch(`${API_BASE_URL}/api/Search/SaveSearchList`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        listName: listName.trim(),
+                                        createdBy: currentUser,
+                                        foundItems: [],
+                                        notFoundItems: warehouseListItems.map(sn => ({
+                                            serialNumber: sn || '',
+                                            modelName: '',
+                                            location: ''
+                                        }))
+                                    })
+                                });
+                                if (!response.ok) {
+                                    const errorData = await response.json();
+                                    throw new Error(errorData.message || 'Không thể lưu danh sách!');
+                                }
+                                return { success: true };
+                            } catch (error) {
+                                Swal.showValidationMessage(`Lỗi: ${error.message}`);
+                                return false;
+                            } finally {
+                                hideSpinner();
+                            }
+                        },
+                        allowOutsideClick: () => !Swal.isLoading()
+                    }).then(result => {
+                        if (result.isConfirmed && result.value.success) {
+                            showSuccess('Success!!');
+                        }
+                        $('#warehouseModal').modal('show');
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>

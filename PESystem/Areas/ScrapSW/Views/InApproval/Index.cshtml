@@ -1,0 +1,94 @@
+﻿@{
+    ViewData["Title"] = "Scrap Switch";
+    Layout = "~/Areas/ScrapSW/views/Shared/Layout_Scrap_SW.cshtml";
+}
+
+<input type="hidden" id="analysisPerson" value="@User.Identity.Name" />
+
+<div class="row align-items-stretch">
+    <div class="col-lg-4">
+        <div class="nvidia-card">
+            <div class="nvidia-card-header">
+                <h2>Waitting SPE Approve</h2>
+            </div>
+            <div class="nvidia-card-body">
+                <form id="search-form" class="d-flex flex-column gap-3">
+                    <select id="search-options" class="form-select">
+                        <option selected disabled>Select function</option>
+                        <option value="INPUT_SN">Input Serial Number</option>
+                        <option value="SN_WAIT_SPE_APPROVE">SNs Waitting SPE approve</option>
+                    </select>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="d-flex flex-column gap-4">
+            <!-- FORM INPUT SN -->
+            <form id="input-sn-1-form" method="post" class="hidden scrap-card form-section">
+                <h3 class="h5 text-uppercase fw-semibold">Input Serial Number</h3>
+
+                <div class="row g-3 align-items-stretch">
+                    <!-- SERIAL -->
+                    <div class="col-md-4">
+                        <textarea id="sn-input-1" class="form-control" rows="5" placeholder="Input Serial Number (1 row - 1 SN)"></textarea>
+                    </div>
+
+                    <!-- DESC + TYPE + BUTTON in same row -->
+                    <div class="col-md-8">
+                        <div class="row align-items-end">
+                            <!-- DeSCRIPTION -->
+                            <div class="col-md-6">
+                                <input type="text" id="description-input-1" class="form-control"
+                                       placeholder="Input Description" />
+                            </div>
+
+                            <!-- TYPE BONEPILE -->
+                            <div class="col-md-6">
+                                <select id="bp-options" class="form-select">
+                                    <option selected disabled>Select Type Bonepile</option>
+                                    <option value="BP-10">Bonepile 1.0</option>
+                                    <option value="BP-20">Bonepile 2.0</option>
+                                    <option value="B36R">After Kanban</option>
+                                </select>
+                            </div>
+                        </div>
+                        <!-- BUTTON -->
+                        <div class="col-md-4 d-flex">
+                            <button id="input-sn-btn" class="btn btn-ne mt-3" type="button">Input</button>
+                        </div>
+                    </div>
+
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- RESULT TABLES -->
+<form id="custom-form" method="post" class="d-flex flex-column form-section">
+    <div id="input-sn-1-result" class="hidden scrap-card"></div>
+
+    <div id="sn-wait-approve-result" class="hidden">
+        <div class="table-responsive">
+            <table id="table-sn-wait-approve" class="table table-bordered datatable-table">
+                <thead>
+                    <tr>
+                        <th>SERIAL_NUMBER</th>
+                        <th>DESCRIPTION</th>
+                        <th>CREATE_TIME</th>
+                        <th>APPLY_TASK_STATUS</th>
+                        <th>BONEPILE_TYPE</th>
+                        <th>CREATE_BY</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <script src="~/assets/areas/scrapsw/js/inapproval.js?v=@DateTime.Now.Ticks"></script>
+}

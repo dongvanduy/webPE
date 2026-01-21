@@ -1,0 +1,211 @@
+﻿@{
+    ViewData["Title"] = "Scrap Switch";
+    Layout = "~/Areas/ScrapSW/views/Shared/Layout_Scrap_SW.cshtml";
+}
+<input type="hidden" id="analysisPerson" value="@User.Identity.Name" />
+
+<div class="row g-4 align-items-stretch">
+    <div class="col-lg-4">
+        <div class="nvidia-card h-100">
+            <div class="nvidia-card-header">
+                <h2>SPE Already Approved</h2>
+            </div>
+            <div class="nvidia-card-body">
+                <form id="search-form" class="d-flex flex-column gap-3">
+                    <select id="search-options" class="form-select">
+                        <option selected disabled>Select Function</option>
+                        <option value="INPUT_SN">Input SN Approved</option>
+                        <option value="UPDATE_DATA">Update Data</option>
+                        <option value="COST_UPDATE">Cost Team Aprrove</option>
+                        <option value="PM_UPDATE">NV PM Approve</option>
+                        <option value="REMOVE_APPROVE">Remove SN Scrap</option>
+                    </select>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="d-flex flex-column gap-4">
+
+            <!-- INPUT SN -->
+            <form id="input-sn-form" method="post" class="hidden scrap-card">
+                <h3 class="h5 mb-3 text-uppercase fw-semibold">Input Serial Number</h3>
+                <div class="row g-3 align-items-stretch">
+                    <div class="col-md-5">
+                        <label for="sn-input" class="form-label">Serial Number</label>
+                        <textarea id="sn-input" class="form-control" rows="11"
+                                  placeholder="Input Serial Number (1 row - 1 SN)"></textarea>
+                    </div>
+                    <div class="col-md-7">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">Description email from customer</label>
+                                <input type="text" id="description-input" class="form-control"
+                                       placeholder="Description email from customer">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">NV Customer</label>
+                                <input type="text" id="NVmember-input" class="form-control"
+                                       placeholder="Input customer's name approved">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Type Scrap</label>
+                                <select id="Scrap-options" class="form-select">
+                                    <option selected disabled>Select type scrap</option>
+                                    <option value="0">SPE approve to scrap</option>
+                                    <option value="1">Scrap to quarterly</option>
+                                    <option value="2">Approved to engineer sample</option>
+                                    <option value="3">Approved to master board</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Time NV approve</label>
+                                <input type="date" id="speApproveTime-input" class="form-control" />
+                            </div>
+                            <div class="col-12 d-flex justify-content-end">
+                                <button class="btn btn-ne" type="button">Input</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <!-- UPDATE DATA -->
+            <form id="update-data-form" method="post" class="hidden scrap-card">
+                <h3 class="h5 mb-3 text-uppercase fw-semibold">Update Data</h3>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Serial Number</label>
+                        <textarea id="sn-input-update" class="form-control" rows="7"
+                                  placeholder="Input Serial Number (1 row - 1 SN)"></textarea>
+                    </div>
+                    <div class="col-md-4 d-flex flex-column gap-3">
+                        <div>
+                            <label class="form-label">Task</label>
+                            <input type="text" id="task-input" class="form-control" placeholder="Input Task">
+                        </div>
+                        <div>
+                            <label class="form-label">PO</label>
+                            <input type="text" id="po-input" class="form-control" placeholder="Input PO">
+                        </div>
+                        <button id="update-task-btn" class="btn btn-ne" type="button">Update</button>
+                    </div>
+                    <div class="col-md-4 d-flex flex-column gap-3">
+                        <div>
+                            <label class="form-label">Cost</label>
+                            <input type="text" id="cost-input" class="form-control" placeholder="Input Cost">
+                        </div>
+                        <div>
+                            <label class="form-label">Upload Excel File</label>
+                            <input type="file" id="file-input" class="form-control" accept=".xlsx, .xls">
+                        </div>
+                        <button id="update-cost-btn" class="btn btn-ne" type="button">Update</button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Update PM -->
+            <form id="pm-update-form" method="post" class="hidden scrap-card">
+                <h3 class="h5 mb-3 text-uppercase fw-semibold">PM Update</h3>
+                <div class="row g-3 align-items-stretch">
+                    <div class="col-md-6">
+                        <textarea id="sn-input-pm" class="form-control" rows="5"
+                                  placeholder="Input Serial Number (1 row - 1 SN)"></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="row g-3">
+                            <div class="col-12 d-flex justify-content-end">
+                                <button id="pm-update-btn" class="btn btn-ne" type="button">Input</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Update Cost -->
+            <form id="cost-update-form" method="post" class="hidden scrap-card">
+                <h3 class="h5 mb-3 text-uppercase fw-semibold">Cost Update</h3>
+                <div class="row g-3 align-items-stretch">
+                    <div class="col-md-6">
+                        <textarea id="sn-input-cost" class="form-control" rows="5"
+                                  placeholder="Input Serial Number (1 row - 1 SN)"></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="row g-3">
+                            <div class="col-12 d-flex justify-content-end">
+                                <button id="cost-update-btn" class="btn btn-ne" type="button">Input</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Remove SN Approve -->
+            <form id="remove-form" method="post" class="hidden scrap-card">
+                <h3 class="h5 mb-3 text-uppercase fw-semibold">Remove SN Scrap</h3>
+                <div class="row g-3 align-items-stretch">
+                    <div class="col-md-6">
+                        <textarea id="sn-input-remove" class="form-control" rows="5"
+                                  placeholder="Input Serial Number (1 row - 1 SN)"></textarea>
+                    </div>
+
+                    <div class="col-md-6 d-flex flex-column">
+                        <div>
+                            <input type="text" id="reason-remove" class="form-control" placeholder="Input reason remove">
+                        </div>
+
+                        <div class="g-3 mt-auto">
+                            <div class="col-12 d-flex justify-content-end gap-2 flex-wrap">
+                                <button id="unblock-btn" class="btn btn-outline-ne" type="button">Unblock</button>
+                                <button id="delete-btn" class="btn btn-ne" type="button" disabled>Delete</button>
+                            </div>
+                        </div>
+                        <div id="remove-status" class="alert alert-light border mt-3 small hidden" role="status"></div>
+                    </div>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const formMap = {
+                "INPUT_SN": "input-sn-form",
+                "UPDATE_DATA": "update-data-form",
+                "PM_UPDATE": "pm-update-form",
+                "COST_UPDATE": "cost-update-form",
+                "REMOVE_APPROVE": "remove-form"
+            };
+
+            const selectFunc = document.getElementById("search-options");
+
+            function hideAll() {
+                Object.values(formMap).forEach(id => {
+                    document.getElementById(id)?.classList.add("hidden");
+                });
+            }
+
+            hideAll();
+
+            selectFunc.addEventListener("change", () => {
+                hideAll();
+                const val = selectFunc.value;
+                const form = document.getElementById(formMap[val]);
+                if (form) {
+                    form.classList.remove("hidden");
+                    form.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+                // XÓA DÒNG NÀY ĐI:
+                // if (result) result.classList.remove("hidden");
+            });
+        });
+
+    </script>
+    <script src="~/assets/areas/scrapsw/js/approved.js?v=@DateTime.Now.Ticks"></script>
+}
+

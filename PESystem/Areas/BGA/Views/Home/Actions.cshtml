@@ -1,0 +1,101 @@
+@{
+    ViewData["Title"] = "Thao tác trạng thái";
+    Layout = "~/Areas/BGA/Views/Shared/layout_bga.cshtml";
+}
+
+<section class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="fw-bold text-primary mb-1">Thao tác xác nhận trạng thái</h1>
+            <p class="text-muted mb-0">Cập nhật trạng thái và remark cho các SN được chọn.</p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-12 col-lg-7 col-xxl-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-gradient text-white">
+                    <h5 class="mb-0">Cập nhật trạng thái Replace BGA</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="current-status" class="form-label fw-semibold">Trạng thái hiện tại</label>
+                        <select id="current-status" class="form-select">
+                            <option value="10">10 - Check in barking</option>
+                            <option value="11">11 - Check out barking</option>
+                            <option value="12">12 - VI after barking</option>
+                            <option value="13">13 - Remove BGA, clean pad</option>
+                            <option value="14">14 - Check VI BGA pad</option>
+                            <option value="15">15 - Replace BGA</option>
+                            <option value="16">16 - Xray</option>
+                            <option value="17">17 - ICT, FT</option>
+                            <option value="18">18 - Waiting return PD line ok</option>
+                        </select>
+                    </div>
+
+                    <div id="status-decision-group" class="mb-3 d-none">
+                        <label id="status-decision-label" class="form-label fw-semibold d-block">Kết quả</label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="status-decision" id="status-decision-ok" value="OK">
+                            <label class="form-check-label" for="status-decision-ok">OK</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="status-decision" id="status-decision-ng" value="NG">
+                            <label class="form-check-label" for="status-decision-ng">NG</label>
+                        </div>
+                        <div class="form-text">Chỉ áp dụng cho các bước cần xác nhận kết quả (Xray, ICT/FT).</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="sn-input" class="form-label fw-semibold">Danh sách SN</label>
+                        <textarea id="sn-input" class="form-control" rows="6" placeholder="Nhập mỗi SN trên một dòng hoặc tách bằng dấu phẩy"></textarea>
+                        <div class="form-text">Trạng thái hiện tại của từng SN sẽ hiển thị ở bảng bên dưới.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="remark-input" class="form-label fw-semibold">Remark</label>
+                        <input id="remark-input" type="text" class="form-control" maxlength="50" placeholder="Nhập remark (tối đa 50 ký tự)">
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button id="update-status-btn" class="btn btn-primary">Xác nhận trạng thái</button>
+                        <div id="update-status-feedback" class="alert mt-3 d-none" role="alert"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-5 col-xxl-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Trạng thái hiện tại của SN</h5>
+                    <span class="badge bg-secondary" id="preview-total">0 SN</span>
+                </div>
+                <div class="card-body">
+                    <div id="status-preview-feedback" class="alert d-none" role="alert"></div>
+                    <div class="table-responsive" style="max-height: 420px; overflow-y: auto;">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>SN</th>
+                                    <th>Trạng thái</th>
+                                    <th>Category</th>
+                                </tr>
+                            </thead>
+                            <tbody id="status-preview-body">
+                                <tr class="text-muted">
+                                    <td colspan="4" class="text-center">Nhập SN để xem trạng thái hiện tại.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="~/assets/Areas/BGA/js/actions.js"></script>
+}

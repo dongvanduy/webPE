@@ -1,0 +1,165 @@
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    ViewData["Title"] = "Material Borrowing Summary";
+    Layout = "~/Areas/MaterialSystem/Views/Shared/Layout_material.cshtml";
+    var allowedAreas = HttpContextAccessor.HttpContext?.User.Claims
+        .FirstOrDefault(c => c.Type == "AllowedAreas")?.Value.Split(',');
+    var canShowMaterial = allowedAreas != null && allowedAreas.Any(area => area.Trim() == "Material");
+}
+
+<input type="hidden" id="entryPerson" value="@User.Identity?.Name" />
+<div class="dashboard-stage">
+    <div class="dashboard-wrapper">
+
+        <div id="option-list" class="col-md-12 mt-2">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-7">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                <div>
+                                    <h5 class="card-title mb-0">Thống kê</h5>
+                                    <small class="text-muted">Thời gian tính từ thời điểm cho mượn đến hiện tại</small>
+                                </div>
+                                <div id="aging-summary" class="text-end">
+                                    <div class="fw-semibold" id="total-borrowing">Tổng số liệu đang mượn: 0</div>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <canvas id="agingChart" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">Tác vụ</h5>
+
+                            <div class="d-flex justify-content-around align-items-center flex-wrap gap-3">
+                                @if (canShowMaterial)
+                                {
+                                    <button id="return-btn" class="btn btn-ne">THU LIỆU</button>
+                                }
+                                <img id="refresh-btn" src="~/assets/img/refresh.png" class="action-icon" />
+                                <img id="export-xlsx-btn" src="~/assets/img/excel.png" class="action-icon" />
+                                <img id="export-csv-btn" src="~/assets/img/csv.png" class="action-icon" />
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="table-responsive mt-3">
+            <table id="borrowingSummaryTable" class="table table-bordered table-striped datatable-table" style="width:100%">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="selectAllCheckbox" title="Chọn tất cả" /></th>
+                        <th>TASK</th>
+                        <th>MÃ_LIỆU</th>
+                        <th>VENDOR</th>
+                        <th>DATE_CODE</th>
+                        <th>LOT_CODE</th>
+                        <th>OP1</th>
+                        <th>OP2</th>
+                        <th>LIỆU_OK</th>
+                        <th>LIỆU_NG</th>
+                        <th>ĐÃ_THU_OK</th>
+                        <th>ĐÃ_THU_NG</th>
+                        <th>BORROWED_TIME</th>
+                        <th>TRẠNG THÁI</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="agingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="agingModalTitle">Chi tiết nhóm</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table id="agingBucketTable" class="display table table-bordered table-striped datatable-table" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th>TASK</th>
+                                <th>MÃ_LIỆU</th>
+                                <th>VENDOR</th>
+                                <th>DATE_CODE</th>
+                                <th>LOT_CODE</th>
+                                <th>OP1</th>
+                                <th>OP2</th>
+                                <th>LIỆU_OK</th>
+                                <th>LIỆU_NG</th>
+                                <th>ĐÃ_THU_OK</th>
+                                <th>ĐÃ_THU_NG</th>
+                                <th>BORROWED_TIME</th>
+                                <th>TRẠNG THÁI</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+
+@section Scripts {
+    <style>
+        .action-icon {
+            height: 48px; /* Chiều cao cố định */
+            width: auto; /* Giữ nguyên tỷ lệ gốc */
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+            .action-icon:hover {
+                transform: scale(1.1);
+            }
+
+        #borrowingSummaryTable th,
+        #borrowingSummaryTable td,
+        #agingBucketTable th,
+        #agingBucketTable td {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 120px;
+        }
+
+            #borrowingSummaryTable th:first-child,
+            #borrowingSummaryTable td:first-child {
+                width: 20px !important;
+            }
+
+        .custom-tooltip {
+            position: absolute;
+            background-color: #333;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 1000;
+            white-space: normal;
+            max-width: 300px;
+            display: none;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+    <script src="~/lib/chart.umd.min.js"></script>
+    <script src="~/lib/chartjs-plugin-datalabels.js"></script>
+    <script src="~/assets/areas/material/js/borrowing_summary.js?v=@DateTime.Now.Ticks"></script>
+}

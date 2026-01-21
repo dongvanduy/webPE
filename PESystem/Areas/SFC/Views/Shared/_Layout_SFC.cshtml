@@ -1,0 +1,74 @@
+﻿@using PESystem.Helpers
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SFC</title>
+    <link href="~/css/site.min.css" rel="stylesheet" />
+    <link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/lib/select2/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="~/lib/datatable/jquery.datatables.min.css" rel="stylesheet" />
+    <link href="~/lib/all-fa-icon/css/all.min.css" rel="stylesheet" />
+    <script src="~/lib/gsap-particles/particles.min.js"></script>
+    <script src="~/lib/gsap-particles/gsap.min.js"></script>
+</head>
+
+<body>
+    <script>
+        (function () {
+            const isSidebarFixed = localStorage.getItem('isSidebarFixed') === 'true';
+            if (isSidebarFixed) {
+                document.documentElement.classList.add('sidebar-expanded');
+            } else {
+                document.documentElement.classList.remove('sidebar-expanded');
+            }
+        })();
+    </script>
+    <!-- Sidebar dọc -->
+    <div id="sidebar" class="sidebar">
+        <div class="dashboard-container">
+            <a href="@Url.Action("Home", "Home", new { area = "" })">
+                <img src="~/assets/img/repository.png" style="width:48px; height:48px;" class="logo" />
+            </a>
+            <span class="spanTitle" style="font-size: 1.0rem; font-weight: bold;">
+                SFC
+            </span>
+            <div class="fixed-checkbox">
+                <input type="checkbox" id="toggleSidebarFixed" title="Giữ cố định" />
+                <label for="toggleSidebarFixed" title="Giữ cố định">
+                    <i class="fa fa-circle-thin"></i>
+                </label>
+            </div>
+        </div>
+        <nav class="nav flex-column">
+            <!-- Menu Items -->
+            <a href="@Url.Action("Home", "Home", new { area = "" })" class="nav-link"><i class="fas fa-home"></i> <span>Trang chủ</span></a>
+            <a href="@Url.Action("Index", "Home", new { area = "SFC" })" class="nav-link @ViewContext.IsActive("Home", "Index")"><i class="fas fa-dashboard"></i> <span>Search</span></a>
+        </nav>
+    </div>
+
+    <div class="dashboard-stage">
+        <div class="dashboard-wrapper">
+        <!--HTML CỦA SPINER-->
+        <div id="spinner-overlay">
+            <span class="loader"></span>
+        </div>
+        @RenderBody()
+    </div>
+    </div>
+    <script src="~/lib/jquery-3.7.0.min.js"></script> <!-- jQuery -->
+    <script src="~/lib/datatable/jquery.datatables.min.js"></script> <!-- DataTables core -->
+    <script src="~/lib/datatables.bootstrap5.min.js"></script> <!-- Bootstrap5 integration -->
+    <script src="~/lib/datatables.buttons.min.js"></script> <!-- Buttons extension -->
+    <script src="~/lib/buttons.html5.min.js"></script> <!-- HTML5 export -->
+    <script src="~/js/site.js?v=3"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="~/lib/sweetalert2/dist/sweetalert2.all.js"></script>
+    <script src="~/lib/select2/dist/js/select2.full.min.js"></script>
+    <script src="~/lib/datatable/datatables.fixedheader.min.js"></script>
+    <script src="~/lib/excel/xlsx.full.min.js"></script>
+
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

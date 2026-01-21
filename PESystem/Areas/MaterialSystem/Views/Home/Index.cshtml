@@ -1,0 +1,599 @@
+﻿@{
+    ViewData["Title"] = "Material Area";
+    Layout = "~/Areas/MaterialSystem/views/Shared/Layout_material.cshtml";
+}
+<div class="dashboard-stage">
+    <div class="dashboard-wrapper">
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h1 class="h4 mb-0 text-center">Tìm Kiếm Thông Tin Linh Kiện</h1>
+            </div>
+            <div class="card-body">
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <input type="text" id="serialNumber" class="form-control" placeholder="Nhập SerialNumber...">
+                    </div>
+                    <div class="col-md-4">
+                        <input type="text" id="refDes" class="form-control" placeholder="Nhập vị trí...">
+                    </div>
+                    <div class="col-md-2">
+                        <button onclick="search()" class="btn btn-primary w-100">Tìm kiếm</button>
+                    </div>
+                </div>
+
+                <div class="mt-5">
+                    <h2 class="h5 fw-semibold mb-3">Thông Tin Liệu Trên PCB</h2>
+                    <div class="table-responsive">
+                        <table id="dcLcTable" class="display table table-bordered table-striped datatable-table" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>P_SN</th>
+                                    <th>MODEL_NAME</th>
+                                    <th>MÃ_LIỆU</th>
+                                    <th>VENDOR_CODE</th>
+                                    <th>VENDOR_NAME</th>
+                                    <th>REF_DES</th>
+                                    <th>DATE_CODE</th>
+                                    <th>LOT_CODE</th>
+                                    <th>PROCESS_FLAG</th>
+                                    <th>STATION</th>
+                                    <th>GROUP_NAME</th>
+                                    <th>WORK_TIME</th>
+                                    <th>WO</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dcLcTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="mt-5">
+                    <h2 class="h5 fw-semibold mb-3">Thông Tin Liệu Trong Kho</h2>
+                    <div class="table-responsive">
+                        <table id="materialTable" class="display table table-bordered table-striped datatable-table" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>MÃ_LIỆU</th>
+                                    <th>VENDOR</th>
+                                    <th>DATE_CODE</th>
+                                    <th>LOT_CODE</th>
+                                    <th>VỊ_TRÍ</th>
+                                    <th>TỔNG_LĨNH</th>
+                                    <th>Qty'OK</th>
+                                    <th>Qty'NG</th>
+                                    <th>ĐÃ_PHÁT</th>
+                                    <th>ĐÃ_PHẾ</th>
+                                    <th>ESD</th>
+                                    <th>NOTE</th>
+                                </tr>
+                            </thead>
+                            <tbody id="materialTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="mt-5">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3">
+                        <h2 class="h5 fw-semibold mb-2 mb-md-0">Biểu Đồ Theo Dõi DATE CODE Theo PN</h2>
+                        <button id="downloadDateCodeDetails" class="btn btn-success btn-sm">
+                            Tải dữ liệu chi tiết
+                        </button>
+                    </div>
+                    <div class="bg-light rounded p-3">
+                        <canvas id="dateCodeChart" height="120"></canvas>
+                    </div>
+                    <p class="text-muted small mt-2 mb-0">
+                        Biểu đồ thống kê số PN có Qty'OK &gt; 0 theo nhóm tuổi DATE CODE.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <style>
+        /* CSS cho tooltip tùy chỉnh */
+        .custom-tooltip {
+            position: absolute;
+            background-color: #333;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 1000;
+            white-space: normal;
+            max-width: 300px;
+            display: none;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        /* Hiển thị tooltip khi di chuột vào */
+        td:hover .custom-tooltip {
+            display: block;
+        }
+        #dateCodeChart {
+            width: 100%;
+            max-height: 360px;
+        }
+    </style>
+
+    <script src="~/lib/npm-chart.js"></script>
+
+    <script>
+        // Hàm tạo nội dung cho ô với tooltip
+        function createTooltipCell(data) {
+            return `<span class="tooltip-trigger" data-tooltip="${data || ''}">${data || ''}</span>`;
+        }
+
+        // Hàm gắn sự kiện tooltip cho các phần tử
+        function attachTooltipEvents() {
+            $('.tooltip-trigger').each(function () {
+                const $this = $(this);
+                if (!$this.data('tooltip-initialized')) {
+                    $this.on('mouseover', function (e) {
+                        const tooltipText = $this.data('tooltip');
+                        if (tooltipText) {
+                            let tooltip = document.querySelector('.custom-tooltip');
+                            if (!tooltip) {
+                                tooltip = document.createElement('div');
+                                tooltip.className = 'custom-tooltip';
+                                document.body.appendChild(tooltip);
+                            }
+                            tooltip.textContent = tooltipText;
+                            tooltip.style.display = 'block';
+                            tooltip.style.left = (e.pageX + 10) + 'px';
+                            tooltip.style.top = (e.pageY - 20) + 'px';
+                        }
+                    }).on('mousemove', function (e) {
+                        const tooltip = document.querySelector('.custom-tooltip');
+                        if (tooltip && tooltip.style.display === 'block') {
+                            tooltip.style.left = (e.pageX + 10) + 'px';
+                            tooltip.style.top = (e.pageY - 20) + 'px';
+                        }
+                    }).on('mouseout', function () {
+                        const tooltip = document.querySelector('.custom-tooltip');
+                        if (tooltip) {
+                            tooltip.style.display = 'none';
+                        }
+                    });
+                    $this.data('tooltip-initialized', true);
+                }
+            });
+        }
+
+        const dateCodeGroups = [
+            { key: 'under6', label: 'Dưới 6 tháng' },
+            { key: 'sixToOne', label: '6 tháng - 1 năm' },
+            { key: 'oneToTwo', label: '1 năm - 2 năm' },
+            { key: 'overTwo', label: 'Trên 2 năm' }
+        ];
+
+        let dateCodeChartInstance = null;
+        let dateCodeDetailRows = [];
+        let dateCodeSummaries = {
+            under6: { count: 0, quantity: 0 },
+            sixToOne: { count: 0, quantity: 0 },
+            oneToTwo: { count: 0, quantity: 0 },
+            overTwo: { count: 0, quantity: 0 }
+        };
+
+        async function loadDateCodeChart() {
+            try {
+                const response = await fetch('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/MaterialSystem/GetAllSumMaterials', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Không thể tải dữ liệu DATE CODE');
+                }
+
+                const data = await response.json();
+                const filtered = (data || []).filter(item => Number(item?.sO_LUONG_OK || 0) > 0);
+                const now = new Date();
+
+                dateCodeSummaries = {
+                    under6: { count: 0, quantity: 0 },
+                    sixToOne: { count: 0, quantity: 0 },
+                    oneToTwo: { count: 0, quantity: 0 },
+                    overTwo: { count: 0, quantity: 0 }
+                };
+                dateCodeDetailRows = [];
+
+                filtered.forEach(item => {
+                    const parsedDate = parseDateCode(item?.datE_CODE);
+                    if (!parsedDate) {
+                        return;
+                    }
+
+                    const diffMonths = Math.max(0, (now - parsedDate) / (1000 * 60 * 60 * 24 * 30.4375));
+                    const groupKey = categorizeDateCode(diffMonths);
+
+                    if (!groupKey) {
+                        return;
+                    }
+
+                    const summary = dateCodeSummaries[groupKey];
+                    summary.count += 1;
+                    summary.quantity += Number(item?.sO_LUONG_OK || 0);
+
+                    const groupLabel = dateCodeGroups.find(g => g.key === groupKey)?.label || '';
+
+                    dateCodeDetailRows.push({
+                        'Nhóm thời gian': groupLabel,
+                        'MÃ_LIỆU': item?.mA_LIEU || '',
+                        'DATE_CODE': item?.datE_CODE || '',
+                        "Qty'OK": item?.sO_LUONG_OK || 0,
+                        'Nhà cung ứng': item?.nhA_CUNG_UNG || '',
+                        'Vị trí': item?.location || ''
+                    });
+                });
+
+                const chartLabels = dateCodeGroups.map(g => g.label);
+                const chartData = dateCodeGroups.map(g => dateCodeSummaries[g.key].count);
+
+                const ctx = document.getElementById('dateCodeChart');
+                if (!ctx) {
+                    return;
+                }
+
+                if (dateCodeChartInstance) {
+                    dateCodeChartInstance.destroy();
+                }
+
+                dateCodeChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: chartLabels,
+                        datasets: [{
+                            label: 'Số PN',
+                            data: chartData,
+                            backgroundColor: ['#4caf50', '#ffc107', '#03a9f4', '#9c27b0']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Số PN'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Nhóm thời gian'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    footer(context) {
+                                        const label = context?.[0]?.label;
+                                        if (!label) {
+                                            return '';
+                                        }
+                                        const group = dateCodeGroups.find(g => g.label === label);
+                                        if (!group) {
+                                            return '';
+                                        }
+                                        const quantity = dateCodeSummaries[group.key]?.quantity || 0;
+                                        return `Tổng Qty'OK: ${quantity}`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Không thể tải biểu đồ DATE CODE:', error);
+            }
+        }
+
+        function categorizeDateCode(months) {
+            if (months < 6) {
+                return 'under6';
+            }
+            if (months < 12) {
+                return 'sixToOne';
+            }
+            if (months < 24) {
+                return 'oneToTwo';
+            }
+            return 'overTwo';
+        }
+
+        function parseDateCode(raw) {
+            if (!raw) {
+                return null;
+            }
+
+            const value = raw.toString().trim();
+            if (!value) {
+                return null;
+            }
+
+            const numeric = value.replace(/[^0-9]/g, '');
+            if (/^\d{8}$/.test(numeric)) {
+                const year = parseInt(numeric.slice(0, 4), 10);
+                const month = parseInt(numeric.slice(4, 6), 10) - 1;
+                const day = parseInt(numeric.slice(6, 8), 10);
+                return new Date(year, month, day);
+            }
+
+            if (/^\d{6}$/.test(numeric)) {
+                const year = parseInt(numeric.slice(0, 4), 10);
+                const month = parseInt(numeric.slice(4, 6), 10) - 1;
+                return new Date(year, month, 1);
+            }
+
+            if (/^\d{4}$/.test(numeric)) {
+                const shortYear = parseInt(numeric.slice(0, 2), 10);
+                const week = parseInt(numeric.slice(2), 10);
+                const fullYear = resolveTwoDigitYear(shortYear);
+                return getDateFromIsoWeek(fullYear, week);
+            }
+
+            const parsed = new Date(value);
+            return isNaN(parsed.getTime()) ? null : parsed;
+        }
+
+        function resolveTwoDigitYear(twoDigitYear) {
+            if (isNaN(twoDigitYear)) {
+                return null;
+            }
+
+            const now = new Date();
+            const currentCentury = Math.floor(now.getFullYear() / 100) * 100;
+            const currentTwoDigit = now.getFullYear() % 100;
+
+            let year = currentCentury + twoDigitYear;
+            if (twoDigitYear > currentTwoDigit + 1) {
+                year -= 100;
+            }
+
+            return year;
+        }
+
+        function getDateFromIsoWeek(year, week) {
+            if (!year || !week || week > 53 || week < 1) {
+                return null;
+            }
+            const simple = new Date(year, 0, 1 + (week - 1) * 7);
+            const dayOfWeek = simple.getDay() || 7;
+            if (dayOfWeek <= 4) {
+                simple.setDate(simple.getDate() - dayOfWeek + 1);
+            } else {
+                simple.setDate(simple.getDate() + (8 - dayOfWeek));
+            }
+            return simple;
+        }
+
+        function convertToCsv(data) {
+            if (!data || data.length === 0) {
+                return '';
+            }
+
+            const headers = Object.keys(data[0]);
+            const csvRows = [headers.join(',')];
+
+            data.forEach(row => {
+                const values = headers.map(field => {
+                    const cell = row[field] ?? '';
+                    const stringValue = cell.toString().replace(/"/g, '""');
+                    return `"${stringValue}"`;
+                });
+                csvRows.push(values.join(','));
+            });
+
+            return csvRows.join('\r\n');
+        }
+
+        $(document).ready(function () {
+            // Initialize DataTables for both tables
+            $('#dcLcTable').DataTable({
+                pageLength: 10,
+                scrollX: true,
+                responsive: true,
+                fixedHeader: true
+            });
+
+            $('#materialTable').DataTable({
+                pageLength: 10,
+                scrollX: true,
+                responsive: true,
+                fixedHeader: true
+            });
+
+            loadDateCodeChart();
+
+            $('#downloadDateCodeDetails').on('click', function () {
+                if (!dateCodeDetailRows.length) {
+                    alert('Không có dữ liệu để tải xuống!');
+                    return;
+                }
+
+                const csvContent = convertToCsv(dateCodeDetailRows);
+                if (!csvContent) {
+                    alert('Không thể tạo dữ liệu tải xuống!');
+                    return;
+                }
+
+                const blob = new Blob(['\ufeff', csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `date_code_tracking_${new Date().toISOString().slice(0, 10)}.csv`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+            });
+        });
+
+        async function search() {
+            const serialNumber = document.getElementById('serialNumber').value;
+            const refDes = document.getElementById('refDes').value.toUpperCase();
+
+            if (!serialNumber || !refDes) {
+                alert('Vui lòng nhập đầy đủ Serial Number và Reference Designator!');
+                return;
+            }
+
+            // Destroy existing DataTables to reinitialize with new data
+            $('#dcLcTable').DataTable().destroy();
+            $('#materialTable').DataTable().destroy();
+
+            // Clear table bodies
+            document.getElementById('dcLcTableBody').innerHTML = '';
+            document.getElementById('materialTableBody').innerHTML = '';
+
+            try {
+                // Call GET_DC_LC API
+                const dcLcResponse = await fetch('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/RepairStatus/info-allpart/with-refdes', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        type: 'GET_DC_LC',
+                        item: 'BY-RE-SN',
+                        var_1: serialNumber,
+                        var_2: refDes
+                    })
+                });
+
+                if (!dcLcResponse.ok) {
+                    throw new Error('Lỗi khi gọi API GET_DC_LC');
+                }
+
+                const dcLcData = await dcLcResponse.json();
+
+                // Check if data is empty
+                if (!dcLcData || !dcLcData.result || dcLcData.result.length === 0) {
+                    alert('Không tìm thấy dữ liệu từ API info-allpart/with-refdes!');
+                    return;
+                }
+
+                // Populate GET_DC_LC table with tooltips
+                const dcLcTableBody = document.getElementById('dcLcTableBody');
+                dcLcData.result.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                                        <td>${createTooltipCell(item.p_sn)}</td>
+                                        <td>${createTooltipCell(item.p_no)}</td>
+                                        <td>${createTooltipCell(item.kp_no)}</td>
+                                        <td>${createTooltipCell(item.mfr_kp_no)}</td>
+                                        <td>${createTooltipCell(item.mfr_name)}</td>
+                                        <td>${createTooltipCell(item.ref_des)}</td>
+                                        <td>${createTooltipCell(item.date_code)}</td>
+                                        <td>${createTooltipCell(item.lot_code)}</td>
+                                        <td>${createTooltipCell(item.process_flag)}</td>
+                                        <td>${createTooltipCell(item.station)}</td>
+                                        <td>${createTooltipCell(item.group_name)}</td>
+                                        <td>${createTooltipCell(item.work_time)}</td>
+                                        <td>${createTooltipCell(item.wo)}</td>
+                                    `;
+                    dcLcTableBody.appendChild(row);
+                });
+
+                // Reinitialize DataTable for dcLcTable
+                $('#dcLcTable').DataTable({
+                    pageLength: 10,
+                    scrollX: true,
+                    responsive: true,
+                    fixedHeader: true
+                });
+
+                // Get unique KP_NO values from the result for material API call
+                const kpNos = [...new Set(dcLcData.result.map(item => item.kp_no))];
+
+                // Call SearchByMaLieu API for each unique KP_NO
+                const materialTableBody = document.getElementById('materialTableBody');
+                for (const kpNo of kpNos) {
+                    const materialResponse = await fetch('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/MaterialSystem/SearchByMaLieu', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            maLieu: kpNo
+                        })
+                    });
+
+                    if (!materialResponse.ok) {
+                        throw new Error('Lỗi khi gọi API SearchByMaLieu');
+                    }
+
+                    const materialData = await materialResponse.json();
+
+                    if (!materialData || materialData.length === 0) {
+                        console.warn(`Không tìm thấy dữ liệu từ API SearchByMaLieu cho KP_NO: ${kpNo}`);
+                        continue;
+                    }
+
+                    // jugando: Populate Material table with tooltips
+                    materialData.forEach(item => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                                            <td>${createTooltipCell(item.mA_LIEU)}</td>
+                                            <td>${createTooltipCell(item.nhA_CUNG_UNG)}</td>
+                                            <td>${createTooltipCell(item.datE_CODE)}</td>
+                                            <td>${createTooltipCell(item.loT_CODE)}</td>
+                                            <td>${createTooltipCell(item.location)}</td>
+                                            <td>${createTooltipCell(item.tonG_LINH)}</td>
+                                            <td>${createTooltipCell(item.sO_LUONG_OK)}</td>
+                                            <td>${createTooltipCell(item.sO_LUONG_NG)}</td>
+                                            <td>${createTooltipCell(item.chO_MUON)}</td>
+                                            <td>${createTooltipCell(item.dA_BAO_PHE)}</td>
+                                            <td>${createTooltipCell(item.esd)}</td>
+                                            <td>${createTooltipCell(item.remark)}</td>
+                                        `;
+                        materialTableBody.appendChild(row);
+                    });
+                }
+
+                // Reinitialize DataTable for materialTable
+                $('#materialTable').DataTable({
+                    pageLength: 10,
+                    scrollX: true,
+                    responsive: true,
+                    fixedHeader: true
+                });
+
+                // Attach tooltip events after populating tables
+                attachTooltipEvents();
+
+            } catch (error) {
+                alert(`Đã xảy ra lỗi: ${error.message}`);
+            }
+        }
+
+        // CSS cho tooltip
+        const style = document.createElement('style');
+        style.textContent = `
+                            .custom-tooltip {
+                                position: absolute;
+                                background-color: #333;
+                                color: #fff;
+                                padding: 5px 10px;
+                                border-radius: 3px;
+                                font-size: 12px;
+                                z-index: 1000;
+                                display: none;
+                                max-width: 200px;
+                                word-wrap: break-word;
+                            }
+                        `;
+        document.head.appendChild(style);
+    </script>
+}

@@ -1,0 +1,268 @@
+@{
+    ViewData["Title"] = "History Error";
+}
+@{
+    Layout = "~/Areas/Allpart/Views/Shared/layout_allpart.cshtml";
+}
+
+<link rel="stylesheet" href="~/assets/css/nvidia-theme.css" />
+<script src="~/lib/chart.umd.min.js"></script>
+
+<div class="allpart-interface nvidia-section">
+    <div class="section-heading text-center text-lg-start">
+        <h1 class="display-6">Tìm kiếm thông tin lịch sử lỗi</h1>
+        <p>Tra cứu chi tiết lịch sử lỗi với giao diện dễ đọc, đồng bộ màu xanh NVIDIA.</p>
+    </div>
+
+    <div class="row g-4 align-items-stretch">
+        <div class="col-12">
+            <div class="nvidia-card h-100">
+                <div class="nvidia-card-header">
+                    <h2>Bộ lọc tìm kiếm</h2>
+                    <span class="badge-nvidia">History Error</span>
+                </div>
+                <div class="nvidia-card-body">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-4">
+                            <label for="serialNumber" class="form-label">Serial Number</label>
+                            <textarea id="serialNumber" class="form-control" rows="3" placeholder="Nhập SerialNumber (mỗi dòng một giá trị)..."></textarea>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="type-options" class="form-label">Chọn kiểu tra cứu</label>
+                            <select id="type-options" class="form-select">
+                                <option selected disabled>SELECT TYPE</option>
+                                <option value="1">Tra cứu theo SN-SFG</option>
+                                <option value="2">Tra cứu theo SN-FG</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button onclick="search()" class="btn btn-ne w-100">Tìm kiếm</button>
+                        </div>
+                        <div class="col-md-2">
+                            <button onclick="downloadExcel()" class="btn btn-ne w-100">Tải xuống Excel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="nvidia-card">
+                <div class="nvidia-card-header">
+                    <h2>Kết quả tra cứu</h2>
+                </div>
+                <div class="nvidia-card-body">
+                    <div id="loading-overlay" class="loading-overlay">
+                        <div class="spinner"></div>
+                        <div>Đang tải dữ liệu...</div>
+                    </div>
+                    <div class="table-responsive">
+                        <table id="historyDataTable" class="display table table-hover table-striped datatable-table nvidia-table" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>SERIAL_NUMBER</th>
+                                    <th>KEY_PART_SN</th>
+                                    <th>MO_NUMBER</th>
+                                    <th>MODEL_NAME</th>
+                                    <th>TEST_TIME</th>
+                                    <th>TEST_GROUP</th>
+                                    <th>TEST_CODE</th>
+                                    <th>DATA1</th>
+                                    <th>REASON_CODE</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyDataTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const TOOLTIP_OFFSET_X = 10;
+        const TOOLTIP_OFFSET_Y = 10;
+        let tableData = [];
+        let dataTable;
+
+        function positionTooltip(evt, tooltip) {
+            const pageX = evt.pageX ?? (evt.clientX + window.scrollX);
+            const pageY = evt.pageY ?? (evt.clientY + window.scrollY);
+            tooltip.style.left = (pageX + TOOLTIP_OFFSET_X) + 'px';
+            tooltip.style.top = (pageY + TOOLTIP_OFFSET_Y) + 'px';
+        }
+
+        function htmlEscape(value) {
+            return String(value ?? '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
+
+        function createTooltipCell(data) {
+            const text = htmlEscape(data);
+            return `<span class="tooltip-trigger" data-tooltip="${text}">${text}</span>`;
+        }
+
+        function attachTooltipEvents() {
+            $(document)
+                .off('.tooltipHover')
+                .on('mouseover.tooltipHover', '.tooltip-trigger', function (e) {
+                    const tooltipText = $(this).data('tooltip');
+                    if (!tooltipText) return;
+
+                    let tooltip = document.querySelector('.custom-tooltip');
+                    if (!tooltip) {
+                        tooltip = document.createElement('div');
+                        tooltip.className = 'custom-tooltip';
+                        document.body.appendChild(tooltip);
+                    }
+                    tooltip.textContent = tooltipText;
+                    tooltip.style.display = 'block';
+                    positionTooltip(e, tooltip);
+                })
+                .on('mousemove.tooltipHover', '.tooltip-trigger', function (e) {
+                    const tooltip = document.querySelector('.custom-tooltip');
+                    if (tooltip && tooltip.style.display === 'block') {
+                        positionTooltip(e, tooltip);
+                    }
+                })
+                .on('mouseout.tooltipHover', '.tooltip-trigger', function () {
+                    const tooltip = document.querySelector('.custom-tooltip');
+                    if (tooltip) {
+                        tooltip.style.display = 'none';
+                    }
+                });
+        }
+
+        $(document).ready(function () {
+            dataTable = $('#historyDataTable').DataTable({
+                pageLength: 10,
+                scrollX: true,
+                responsive: false,
+                autoWidth: false,
+                columnDefs: [
+                    { targets: '_all', width: '210px' }
+                ],
+                fixedHeader: true
+            });
+            attachTooltipEvents();
+        });
+
+        async function search() {
+            const serialNumbersText = document.getElementById('serialNumber').value.trim();
+            const typeValue = document.getElementById('type-options').value;
+            const loadingOverlay = document.getElementById('loading-overlay');
+
+            if (!serialNumbersText) {
+                alert('Vui lòng nhập ít nhất một Serial Number.');
+                return;
+            }
+
+            if (typeValue === 'SELECT TYPE') {
+                alert('Vui lòng chọn kiểu tra cứu.');
+                return;
+            }
+
+            const serialNumbers = serialNumbersText.split('\n').map(sn => sn.trim()).filter(sn => sn);
+            if (serialNumbers.length === 0) {
+                alert('Danh sách Serial Number không hợp lệ.');
+                return;
+            }
+
+            loadingOverlay.style.display = 'flex';
+
+            try {
+                const response = await fetch('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/SFC/history-error-by-sn', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        serialNumbers: serialNumbers,
+                        typeValue: parseInt(typeValue)
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Lỗi khi gọi API: ${response.status} - ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                tableData = data;
+
+                dataTable.clear();
+
+                if (data.length === 0) {
+                    alert('Không tìm thấy dữ liệu cho các Serial Number đã nhập.');
+                    dataTable.draw();
+                    return;
+                }
+
+                data.forEach(row => {
+                    dataTable.row.add([
+                        createTooltipCell(row.SERIAL_NUMBER || ''),
+                        createTooltipCell(row.KEY_PART_SN || ''),
+                        createTooltipCell(row.MO_NUMBER || ''),
+                        createTooltipCell(row.MODEL_NAME || ''),
+                        createTooltipCell(row.TEST_TIME || ''),
+                        createTooltipCell(row.TEST_GROUP || ''),
+                        createTooltipCell(row.TEST_CODE || ''),
+                        createTooltipCell(row.DATA1 || ''),
+                        createTooltipCell(row.REASON_CODE || '')
+                    ]);
+                });
+
+                dataTable.draw();
+                attachTooltipEvents();
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert(`Đã xảy ra lỗi: ${error.message}`);
+            } finally {
+                loadingOverlay.style.display = 'none';
+            }
+        }
+
+        function downloadExcel() {
+            if (tableData.length === 0) {
+                alert('Không có dữ liệu để xuất Excel.');
+                return;
+            }
+
+            const filteredData = tableData.map(row => ({
+                SERIAL_NUMBER: row.SERIAL_NUMBER || '',
+                KEY_PART_SN: row.KEY_PART_SN || '',
+                MO_NUMBER: row.MO_NUMBER || '',
+                MODEL_NAME: row.MODEL_NAME || '',
+                TEST_TIME: row.TEST_TIME || '',
+                TEST_GROUP: row.TEST_GROUP || '',
+                TEST_CODE: row.TEST_CODE || '',
+                DATA1: row.DATA1 || '',
+                REASON_CODE: row.REASON_CODE || ''
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(filteredData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'HistoryError');
+
+            worksheet['!cols'] = [
+                { wch: 20 },
+                { wch: 20 },
+                { wch: 15 },
+                { wch: 20 },
+                { wch: 20 },
+                { wch: 15 },
+                { wch: 15 },
+                { wch: 20 },
+                { wch: 20 }
+            ];
+
+            XLSX.writeFile(workbook, `HistoryError_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+    </script>
+}

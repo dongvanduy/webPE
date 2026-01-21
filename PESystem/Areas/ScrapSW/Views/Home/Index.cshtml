@@ -1,0 +1,68 @@
+﻿@* File: Index.cshtml *@
+@{
+    ViewData["Title"] = "Scrap Area";
+    Layout = "~/Areas/ScrapSW/views/Shared/Layout_Scrap_SW.cshtml";
+}
+
+<h1 class="flowchart-title">Switch - Apply Task Scrap System Flow</h1>
+
+<div class="flowchart-image-container">
+    <!-- Thay toàn bộ flowchart bằng 1 ảnh -->
+    <img src="~/assets/img/guide.png"
+         alt="Switch - Apply Task Scrap System Flow"
+         class="flowchart-image" />
+</div>
+
+@section Styles {
+    <style>
+        .flowchart-title {
+            text-align: center;
+            font-size: 28px;
+            font-weight: bold;
+            color: #FFFFFF;
+            margin: 20px 0;
+        }
+
+        .flowchart-image-container {
+            width: 95%;
+            max-width: 1400px; /* Điều chỉnh theo kích thước ảnh thực tế của bạn */
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            overflow-x: auto; /* Cho phép cuộn ngang nếu ảnh quá rộng trên mobile */
+            text-align: center;
+        }
+
+        .flowchart-image {
+            max-width: 100%;
+            height: auto;
+            border: 2px solid #ccc;
+            border-radius: 6px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            transition: transform 0.3s ease;
+        }
+
+            .flowchart-image:hover {
+                transform: scale(1.02);
+            }
+
+        /* Tùy chọn: thêm nút download ảnh */
+        .download-btn {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: #1ba1e2;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+            .download-btn:hover {
+                background-color: #0d8bd9;
+            }
+    </style>
+}

@@ -1,0 +1,183 @@
+﻿@{
+    ViewData["Title"] = "SmartFA Area";
+    Layout = "~/Areas/SmartFA/Views/Shared/_Layout_SmartFA.cshtml";
+}
+<div class="dashboard-stage">
+    <div class="dashboard-wrapper">
+        <div class="dashboard-toolbar">
+            <div class="toolbar-label">Khoảng thời gian:</div>
+            <button type="button" id="pickDateBtn" class="btn btn-outline-info btn-sm d-flex align-items-center gap-2">
+                <i class="fa fa-calendar"></i>
+                Chọn thời gian
+            </button>
+            <input type="datetime-local" id="cioStartDate" hidden />
+            <input type="datetime-local" id="cioEndDate" hidden />
+        </div>
+
+        <div class="row g-3">
+
+            <!-- Card 1 -->
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="neon-card">
+                    <div class="card-title">Check In/Out Before</div>
+                    <div id="checkInOutChart" class="echart"></div>
+                </div>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="neon-card">
+                    <div class="card-title">Check In Before/After</div>
+                    <div id="checkInBeforeAfer" class="echart"></div>
+                </div>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="neon-card">
+                    <div class="card-title">Tồn Kho(No location)</div>
+                    <div id="noLocationTrendChart" class="echart"></div>
+                </div>
+            </div>
+
+            <!-- Card 4 -->
+            <div class="col-12 col-md-6 col-lg-8">
+                <div class="neon-card">
+                    <div class="card-title d-flex justify-content-between align-items-center">
+                        <span>Trạng thái tồn kho</span>
+                        <small id="inventoryStatusSummary" class="text-muted">Tổng: 0</small>
+                    </div>
+                    <div id="inventoryStatusChart" class="echart"></div>
+                </div>
+            </div>
+
+            <!-- Card 5 -->
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="neon-card">
+                    <div class="card-title">SAP IN/OUT</div>
+                    <div id="sapInOutChart" class="echart"></div>
+                </div>
+            </div>
+        </div>
+        <!--Table SN ton kho chua co vi tri-->
+        <div id="cioNoLocationSection" class="row mt-3" style="display:none;">
+            <div class="col-12">
+                <div class="card shadow-lg rounded-lg border-0">
+                    <div class="card-body p-4">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                            <h5 class="card-title font-weight-bold mb-0">Tồn kho chưa có vị trí</h5>
+                            <img src="~/assets/img/excel.png" alt="Excel Icon" id="exportNoLocationExcelBtn" class="export-icon">
+                        </div>
+                        <div class="table-responsive">
+                            <table id="cio-no-location-table" class="table table-bordered datatable-table table-striped mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>TYPE</th>
+                                        <th>SERIAL_NUMBER</th>
+                                        <th>MODEL_NAME</th>
+                                        <th>PRODUCT_LINE</th>
+                                        <th>LOCATION</th>
+                                        <th>AGING_HOURS</th>
+                                        <th>WIP_GROUP</th>
+                                        <th>ERROR_FLAG</th>
+                                        <th>WORK_FLAG</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal chứa DataTable -->
+<div class="modal fade" id="statusModal" tabindex="-1" aria-labelledby="statusModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-lg-custom">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="statusModalLabel">Danh Sách Serial Numbers</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body table-responsive">
+                <table id="modal-sn-table" class="table table-bordered datatable-table table-striped">
+                    <thead>
+                        <tr>
+                            <th>SERIAL_NUMBER</th>
+                            <th>PRODUCT_LINE</th>
+                            <th>MODEL_NAME</th>
+                            <th>WIP_GROUP</th>
+                            <th>TEST_GROUP</th>
+                            <th>ERROR_CODE</th>
+                            <th>ERROR_DESC</th>
+                            <th>STATUS_FA</th>
+                            <th>AGING STATUS</th>
+                            <th>PERSON_CONFIRM</th>
+                            <th>TIME_CONFIRM</th>
+                            <th>HANDLER</th>
+                            <th>LOCATION</th>
+                            <th>BORROW_STATUS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Dữ liệu sẽ được chèn tại đây -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <img src="~/assets/img/excel.png" alt="Excel Icon" id="exportExcelBtn" class="export-icon">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal hiển thị chi tiết Check In/Out -->
+<div class="modal fade" id="cioModal" tabindex="-1" aria-labelledby="cioModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-lg-custom">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cioModalLabel">Chi tiết</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body table-responsive">
+                <table id="cio-modal-table" class="table table-bordered datatable-table table-striped">
+                    <thead>
+                        <tr>
+                            <th>SFG</th>
+                            <th>FG</th>
+                            <th>MO_NUMBER</th>
+                            <th>MODEL_NAME</th>
+                            <th>PRODUCT_LINE</th>
+                            <th>WORK_FLAG</th>
+                            <th>ERROR_FLAG</th>
+                            <th>LOCATION</th>
+                            <th>AGING_HOURS</th>
+                            <th>P_SENDER</th>
+                            <th>IN_DATE</th>
+                            <th>OUT_DATE</th>
+                            <th>REPAIRER</th>
+                            <th>STATION</th>
+                            <th>ERROR_CODE</th>
+                            <th>ERROR_DESC</th>
+                            <th>TYPE</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <img src="~/assets/img/excel.png" alt="Excel Icon" id="exportCioExcelBtn" class="export-icon">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script type="module" src="~/assets/areas/smartfa/js/dashboardfa.js?v=@DateTime.Now.Ticks"></script>
+    }

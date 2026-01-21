@@ -1,0 +1,154 @@
+@model PESystem.Areas.NPI.Models.NpiCategoryCardViewModel
+@using System
+@using System.Linq
+
+@{
+    var modalId = $"uploadModal_{new string(Model.CategoryPath.Where(char.IsLetterOrDigit).ToArray())}";
+    if (string.IsNullOrEmpty(modalId) || modalId == "uploadModal_")
+    {
+        modalId += Guid.NewGuid().ToString("N");
+    }
+
+    var cardClasses = Model.IsChildCategory
+        ? "card shadow-sm border-0 h-100 bg-light npi-category-card npi-category-card--child"
+        : "card shadow-sm border-0 h-100 npi-category-card";
+
+    var headerClasses = Model.IsChildCategory
+        ? "card-header d-flex justify-content-between align-items-center py-3 bg-light border-0 border-bottom npi-category-card__header"
+        : "card-header bg-white d-flex justify-content-between align-items-center py-3 npi-category-card__header";
+}
+
+<div class="@cardClasses">
+    <div class="@headerClasses">
+        <div>
+            <h5 class="mb-1 fw-semibold npi-category-card__title">@Model.DisplayName</h5>
+            <small class="text-muted">@Model.Documents.Sum(d => d.Versions.Count) phiên bản được lưu trữ</small>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#@modalId">
+            <i class="bi bi-upload"></i><span>Tải lên</span>
+        </button>
+    </div>
+    <div class="card-body">
+        @{ var hasAnyVersion = Model.Documents.Any(d => d.Versions != null && d.Versions.Any()); }
+        @if (hasAnyVersion)
+        {
+            <div class="table-responsive">
+                <table class="table align-middle table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col" style="min-width: 200px;">Tài liệu</th>
+                            <th scope="col" class="text-center">Phiên bản</th>
+                            <th scope="col">Ngày cập nhật</th>
+                            <th scope="col">Người cập nhật</th>
+                            <th scope="col" class="text-end">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var document in Model.Documents.OrderBy(d => d.DocumentName))
+                        {
+                            if (document.Versions == null || !document.Versions.Any())
+                            {
+                                continue;
+                            }
+
+                            var orderedVersions = document.Versions
+                                .OrderByDescending(v => v.Version)
+                                .ThenByDescending(v => v.UploadedAt)
+                                .ToList();
+                            var latestVersion = orderedVersions.FirstOrDefault()?.Version ?? 0;
+                            for (int i = 0; i < orderedVersions.Count; i++)
+                            {
+                                var version = orderedVersions[i];
+                                <tr>
+                                    @if (i == 0)
+                                    {
+                                        <td rowspan="@orderedVersions.Count" class="align-middle">
+                                            <div class="fw-semibold text-primary npi-document-name">@document.DocumentName</div>
+                                            <small class="text-muted">@orderedVersions.Count phiên bản được lưu</small>
+                                        </td>
+                                    }
+                                    <td class="text-center">
+                                        <div class="d-flex flex-column align-items-center gap-2">
+                                            <span class="badge rounded-pill fw-semibold npi-version-badge">@($"V{version.Version}")</span>
+                                            <small class="text-muted text-break">@version.OriginalFileName</small>
+                                            @if (version.Version == latestVersion)
+                                            {
+                                                <small class="text-success fw-semibold">Mới nhất</small>
+                                            }
+                                        </div>
+                                    </td>
+                                    <td>@version.UploadedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>@(string.IsNullOrWhiteSpace(version.UploadedBy) ? "-" : version.UploadedBy)</td>
+                                    <td class="text-end">
+                                        <div class="npi-document-actions d-flex justify-content-end gap-2">
+                                            <a class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1" asp-area="NPI" asp-controller="Home" asp-action="Download" asp-route-projectId="@Model.ProjectId" asp-route-categoryPath="@Model.CategoryPath" asp-route-documentName="@document.DocumentName" asp-route-version="@version.Version" title="Tải xuống">
+                                                <i class="bi bi-download"></i><span>Tải</span>
+                                            </a>
+                                            <form asp-area="NPI" asp-controller="Home" asp-action="DeleteVersion" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xoá phiên bản này?');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="projectId" value="@Model.ProjectId" />
+                                                <input type="hidden" name="categoryPath" value="@Model.CategoryPath" />
+                                                <input type="hidden" name="documentName" value="@document.DocumentName" />
+                                                <input type="hidden" name="version" value="@version.Version" />
+                                                <button type="submit" class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1" title="Xoá phiên bản">
+                                                    <i class="bi bi-trash"></i><span>Xoá</span>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="d-flex align-items-center justify-content-center text-muted py-4">
+                <i class="bi bi-inbox me-2"></i> Chưa có tài liệu nào được tải lên.
+            </div>
+        }
+    </div>
+</div>
+
+<div class="modal fade" id="@modalId" tabindex="-1" aria-labelledby="@($"{modalId}Label")" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content shadow">
+            <div class="modal-header">
+                <h5 class="modal-title" id="@($"{modalId}Label")">Tải tài liệu mới - @Model.DisplayName</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <form asp-area="NPI" asp-controller="Home" asp-action="UploadDocument" method="post" enctype="multipart/form-data">
+                <div class="modal-body">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="projectId" value="@Model.ProjectId" />
+                    <input type="hidden" name="categoryPath" value="@Model.CategoryPath" />
+
+                    <div class="mb-3">
+                        <label class="form-label">Tên tài liệu <span class="text-danger">*</span></label>
+                        <input type="text" name="documentName" class="form-control" placeholder="Nhập tên tài liệu" required />
+                        <div class="form-text">Tên tài liệu sẽ được sử dụng để gom nhóm các phiên bản.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Người cập nhật</label>
+                        <input type="text" name="uploadedBy" class="form-control" placeholder="Tên người cập nhật" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">File tải lên <span class="text-danger">*</span></label>
+                        <input type="file" name="file" class="form-control" required />
+                        <div class="form-text">Mỗi lần tải lên hệ thống sẽ tự động đánh số phiên bản (v1, v2, ...).</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Huỷ</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-upload me-1"></i> Tải lên
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

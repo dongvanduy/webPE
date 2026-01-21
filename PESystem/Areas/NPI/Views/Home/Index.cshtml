@@ -1,0 +1,187 @@
+@model IEnumerable<PESystem.Areas.NPI.Models.NpiProjectSummaryViewModel>
+@using System
+@using System.Linq
+
+@{
+    ViewData["Title"] = "NPI Document";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0">NPI Document</h2>
+            <p class="text-muted mb-0">Quản lý tài liệu cho từng project NPI</p>
+        </div>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createProjectModal">
+            <i class="bi bi-plus-circle me-2"></i>Tạo project mới
+        </button>
+    </div>
+
+    @if (ViewBag.Success != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @ViewBag.Success
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    else if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @ViewBag.Error
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            @if (Model != null && Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">Project</th>
+                                <th scope="col">Owner</th>
+                                <th scope="col" class="text-center" style="width: 180px;">Hạng mục đã tải</th>
+                                <th scope="col" style="width: 180px;">Ngày tạo</th>
+                                <th scope="col" class="text-end" style="width: 220px;">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var projectSummary in Model)
+                            {
+                                var project = projectSummary.Project;
+                                var totalCategories = projectSummary.TotalCategoryCount;
+                                var progressText = totalCategories > 0
+                                ? $"{projectSummary.UploadedCategoryCount}/{totalCategories}"
+                                : projectSummary.UploadedCategoryCount.ToString();
+                                var progressLabel = totalCategories > 0
+                                ? $"Đã tải {projectSummary.UploadedCategoryCount}/{totalCategories} hạng mục"
+                                : $"Đã tải {projectSummary.UploadedCategoryCount} hạng mục";
+                                var badgeClasses = projectSummary.UploadedCategoryCount > 0
+                                ? "badge rounded-pill bg-light text-dark border border-primary px-3 py-2"
+                                : "badge rounded-pill bg-light text-muted border border-secondary px-3 py-2";
+                                var modalKey = new string(project.Id.Where(char.IsLetterOrDigit).ToArray());
+                                modalKey = string.IsNullOrWhiteSpace(modalKey) ? Guid.NewGuid().ToString("N") : modalKey;
+                                <tr>
+                                    <td class="fw-semibold">@project.Name</td>
+                                    <td>@(string.IsNullOrWhiteSpace(project.Owner) ? "-" : project.Owner)</td>
+                                    <td class="text-center">
+                                        <span class="@badgeClasses" title="@progressLabel" aria-label="@progressLabel">
+                                            @progressText
+                                        </span>
+                                    </td>
+                                    <td>@project.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td class="text-end">
+                                        <div class="d-inline-flex flex-wrap gap-2 justify-content-end">
+                                            <a class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1" asp-area="NPI" asp-controller="Home" asp-action="Manage" asp-route-id="@project.Id">
+                                                <i class="bi bi-folder2-open"></i><span>Quản lý</span>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#editProjectModal_@modalKey">
+                                                <i class="bi bi-pencil-square"></i><span>Sửa</span>
+                                            </button>
+
+                                            <button type="button" class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#deleteProjectModal_@modalKey">
+                                                <i class="bi bi-trash"></i><span>Xoá</span>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <div class="modal fade" id="editProjectModal_@modalKey" tabindex="-1" aria-labelledby="editProjectModalLabel_@modalKey" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="editProjectModalLabel_@modalKey">Cập nhật project</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                                            </div>
+                                            <form asp-area="NPI" asp-controller="Home" asp-action="UpdateProject" method="post">
+                                                <div class="modal-body">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="projectId" value="@project.Id" />
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="projectName_@modalKey">Tên project</label>
+                                                        <input type="text" id="projectName_@modalKey" name="projectName" class="form-control" value="@project.Name" required />
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label" for="projectOwner_@modalKey">Owner</label>
+                                                        <input type="text" id="projectOwner_@modalKey" name="owner" class="form-control" value="@project.Owner" />
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Huỷ</button>
+                                                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="modal fade" id="deleteProjectModal_@modalKey" tabindex="-1" aria-labelledby="deleteProjectModalLabel_@modalKey" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="deleteProjectModalLabel_@modalKey">Xoá project</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                                            </div>
+                                            <form asp-area="NPI" asp-controller="Home" asp-action="DeleteProject" method="post">
+                                                <div class="modal-body">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="projectId" value="@project.Id" />
+                                                    <p class="mb-0">Bạn có chắc chắn muốn xoá project <strong>@project.Name</strong>? Toàn bộ tài liệu liên quan sẽ bị xoá khỏi hệ thống.</p>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Huỷ</button>
+                                                    <button type="submit" class="btn btn-danger">Xoá project</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <h5 class="text-muted mb-2">Chưa có project nào được tạo.</h5>
+                    <p class="text-muted mb-4">Nhấn nút "Tạo project mới" để bắt đầu lưu trữ tài liệu NPI.</p>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createProjectModal">
+                        Tạo project mới
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="createProjectModal" tabindex="-1" aria-labelledby="createProjectModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createProjectModalLabel">Tạo project NPI mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form asp-area="NPI" asp-controller="Home" asp-action="CreateProject" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label for="projectName" class="form-label">Tên project <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="projectName" name="projectName" required />
+                        <div class="form-text">Tên project sẽ được sử dụng để tạo cấu trúc thư mục lưu trữ.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="owner" class="form-label">Owner</label>
+                        <input type="text" class="form-control" id="owner" name="owner" placeholder="Người phụ trách project" />
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Đóng</button>
+                        <button type="submit" class="btn btn-primary">Tạo project</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

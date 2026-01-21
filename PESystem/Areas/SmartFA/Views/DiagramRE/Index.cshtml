@@ -1,0 +1,303 @@
+﻿@{
+    ViewData["Title"] = "SmartFA Area";
+    Layout = "~/Areas/SmartFA/Views/Shared/_Layout_SmartFA.cshtml";
+}
+
+<div class="dashboard-stage">
+    <div class="dashboard-wrapper">
+        <div class="room">
+            <!-- Group A -->
+            <div class="group group-a">
+                @for (int i = 1; i <= 8; i++)
+                {
+                    <div class="cell group-a-cell" data-cell="@($"A{i}")">
+                        <span class="cell-name">@($"A{i}")</span>
+                        <span class="cell-count">0</span>
+                    </div>
+                }
+                <div class="group-label">A</div>
+            </div>
+
+            <!-- Group B -->
+            <div class="group group-b">
+                @for (int i = 1; i <= 3; i++)
+                {
+                    <div class="cell group-b-cell" data-cell="@($"B{i}")">
+                        <span class="cell-name">@($"B{i}")</span>
+                        <span class="cell-count">0</span>
+                    </div>
+                }
+                <div class="group-label">B</div>
+            </div>
+
+            <!-- Group C -->
+            <div class="group group-c">
+                @for (int i = 1; i <= 7; i++)
+                {
+                    <div class="cell group-c-cell" data-cell="@($"C{i}")">
+                        <span class="cell-name">@($"C{i}")</span>
+                        <span class="cell-count">0</span>
+                    </div>
+                }
+                <div class="group-label">C</div>
+            </div>
+
+            <!-- Group D -->
+            <div class="group group-d">
+                @for (int i = 1; i <= 6; i++)
+                {
+                    <div class="cell group-d-cell" data-cell="@($"D{i}")">
+                        <span class="cell-name">@($"D{i}")</span>
+                        <span class="cell-count">0</span>
+                    </div>
+                }
+                <div class="group-label">D</div>
+            </div>
+
+            <!-- Group RTEST -->
+            <div class="group group-rtest">
+                <div class="rtest-grid">
+                    @for (int r = 1; r <= 2; r++)
+                    {
+                        for (int c = 1; c <= 3; c++)
+                        {
+                            var id = $"R{r}{c}";
+                            <div class="cell group-rtest-cell" data-cell="@id">
+                                <span class="cell-name">@id</span>
+                                <span class="cell-count">0</span>
+                            </div>
+                        }
+                    }
+                </div>
+                <div class="group-label">RTEST</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal hiển thị chi tiết cell -->
+<div class="modal fade" id="cellDetailModal" tabindex="-1" aria-labelledby="cellDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-lg-custom">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cellDetailModalLabel">Thông tin vị trí <span id="modalCellName"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="cellModalAlert" class="alert alert-danger d-none" role="alert"></div>
+                <div class="table-responsive mb-4">
+                    <table class="table table-bordered table-striped datatable-table">
+                        <thead class="table-light">
+                            <tr>
+                                <th>SERIAL_NUMBER</th>
+                                <th>MODEL_NAME</th>
+                                <th>MO_NUMBER</th>
+                                <th>ERROR_CODE</th>
+                                <th>ERROR_DESC</th>
+                                <th>AGING(days)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cellDetailTableBody">
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">Đang tải dữ liệu...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <form id="updateLocationForm" novalidate>
+                    <input type="hidden" id="cellNameInput" />
+                    <div class="mb-3">
+                        <label for="serialListInput" class="form-label">Danh sách Serial Number</label>
+                        <textarea id="serialListInput" class="form-control" rows="5" placeholder="Nhập Serial Number để update lại vị trí!"></textarea>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <span class="text-muted" id="lastUpdatedInfo"></span>
+                        <button type="submit" class="btn btn-ne" id="submitUpdateButton">
+                            UPDATE
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal nhắc nhở -->
+<div class="modal fade" id="reminderModal" tabindex="-1" aria-labelledby="reminderModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reminderModalLabel">Nhắc nhở cập nhật vị trí</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="reminderMessage" class="mb-2"></p>
+                <p class="text-muted small mb-0">Vui lòng nhập lại SerialNumber cho từng cell để hệ thống ghi nhận vị trí hiện tại.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Đã hiểu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <style>
+        .room {
+            position: relative;
+            width: 1100px;
+            height: 700px;
+            background: #f8faff;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto; /* bảo hiểm căn giữa nếu flex lỗi */
+        }
+
+        /* === Shared styles === */
+        .group {
+            position: absolute;
+            padding: 12px;
+            border: 3px solid transparent;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .group-label {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 2px 10px;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .cell {
+            width: 70px;
+            height: 45px;
+            border: 2px solid #000;
+            border-radius: 4px;
+            background: white;
+            font-weight: bold;
+            font-size: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 5px;
+            transition: 0.2s;
+        }
+
+            .cell:hover {
+                transform: scale(1.08);
+            }
+
+        /* === Individual group positioning === */
+        .group-a {
+            left: 100px;
+            top: 160px;
+            border-color: #ffb3b3;
+        }
+
+            .group-a .group-label {
+                background: #ff6b6b;
+            }
+
+        .group-a-cell {
+            background: #ffe4e6;
+        }
+
+        .group-b {
+            left: 400px;
+            top: 40px;
+            flex-direction: row;
+            border-color: #91c2ff;
+        }
+
+            .group-b .group-label {
+                background: #3b82f6;
+            }
+
+        .group-b-cell {
+            background: #dbeafe;
+        }
+
+        .group-c {
+            right: 100px;
+            top: 120px;
+            border-color: #a7f3d0;
+        }
+
+            .group-c .group-label {
+                background: #10b981;
+            }
+
+        .group-c-cell {
+            background: #dcfce7;
+        }
+
+        .group-d {
+            left: 480px;
+            top: 350px;
+            border-color: #fde68a;
+        }
+
+            .group-d .group-label {
+                background: #eab308;
+            }
+
+        .group-d-cell {
+            background: #fef9c3;
+        }
+
+        .group-rtest {
+            left: 400px;
+            top: 160px;
+            border-color: #76b900;
+            background: rgba(118,185,0,0.05);
+            padding: 16px;
+        }
+
+            .group-rtest .group-label {
+                background: #76b900;
+            }
+
+        .rtest-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .group-rtest-cell {
+            background: #eaffd5;
+            border-color: #76b900;
+        }
+
+        /* === Responsive fit === */
+        @@media (max-width: 1400px) {
+            .room {
+                transform: scale(0.9);
+                transform-origin: top center;
+            }
+        }
+
+        @@media (max-width: 1200px) {
+            .room {
+                transform: scale(0.8);
+            }
+        }
+    </style>
+
+    <script src="~/assets/Areas/SmartFA/js/diagramre.js?v=@DateTime.Now.Ticks"></script>
+}

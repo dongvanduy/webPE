@@ -1,0 +1,47 @@
+@{
+    ViewData["Title"] = "FT Fail Export";
+    Layout = "~/Areas/SFC/Views/Shared/_Layout_SFC.cshtml";
+}
+
+<div class="container-fluid py-3">
+    <div class="row g-3">
+        <div class="col-12 col-xl-8">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h3 class="card-title mb-3">Xuất dữ liệu FT First Fail</h3>
+                    <p class="text-muted">Danh sách tối đa 52.000 Serial Number.
+                        Hệ thống sẽ tự động loại bỏ khoảng trắng và bỏ trùng trước khi gửi.</p>
+                    <div class="mb-3">
+                        <label for="serialInput" class="form-label fw-semibold">Danh sách Serial Number</label>
+                        <textarea id="serialInput" class="form-control" rows="18" placeholder="Nhập hoặc dán danh sách Serial Number..."></textarea>
+                        <div class="form-text">Tổng số đã nhập: <span id="totalCount" class="fw-semibold">0</span> &bull; Số Serial hợp lệ (không trùng): <span id="uniqueCount" class="fw-semibold">0</span></div>
+                    </div>
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <button id="exportBtn" class="btn btn-ne px-4">📥 Xuất Excel</button>
+                        <button id="clearBtn" class="btn btn-outline-secondary">Xóa danh sách</button>
+                        <span id="statusMessage" class="ms-2"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-xl-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Hướng dẫn</h5>
+                    <ul class="ps-3 mb-3">
+                        <li>Sao chép danh sách Serial Number từ Excel hoặc nguồn khác và dán vào ô bên trái.</li>
+                        <li>Hệ thống sẽ chia thành từng lô &lt; 1000 Serial Number để truy vấn Oracle.</li>
+                        <li>Nhấn <strong>Xuất Excel</strong> để tải file kết quả về máy.</li>
+                    </ul>
+                    <div class="alert alert-info mb-0" role="alert">
+                        Nếu không tìm thấy dữ liệu, hệ thống sẽ hiển thị thông báo lỗi chi tiết để bạn kiểm tra lại danh sách Serial Number.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/assets/areas/sfc/js/export-ft-fail.js?v=@DateTime.Now.Ticks"></script>
+}

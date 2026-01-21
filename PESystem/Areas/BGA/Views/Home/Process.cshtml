@@ -1,0 +1,63 @@
+@{
+    ViewData["Title"] = "Replace BGA process";
+    Layout = "~/Areas/BGA/Views/Shared/layout_bga.cshtml";
+}
+
+<section class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="fw-bold text-primary mb-1">Replace BGA process</h1>
+            <p class="text-muted mb-0">Tài liệu và luồng kiểm soát Replace BGA.</p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-12 col-xl-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Tài liệu quy trình (PDF)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="ratio ratio-4x3 border rounded overflow-hidden">
+                        <iframe src="~/pdfs/product-lines/replace-BGA-process.pdf" title="Replace BGA process" allowfullscreen></iframe>
+                    </div>
+                    <p class="text-muted small mt-3 mb-0">Nếu tài liệu không hiển thị, hãy <a href="~/pdfs/product-lines/replace-BGA-process.pdf" target="_blank">mở trong tab mới</a>.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-xl-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Luồng trạng thái Replace BGA</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Stt</th>
+                                    <th scope="col">Bước</th>
+                                    <th scope="col">ApplyScrapStatus</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>1</td><td>Waiting approve replace BGA</td><td>4</td></tr>
+                                <tr><td>2</td><td>Check in barking</td><td>10</td></tr>
+                                <tr><td>3</td><td>Check out barking</td><td>11</td></tr>
+                                <tr><td>4</td><td>VI after barking</td><td>12</td></tr>
+                                <tr><td>5</td><td>Remove BGA, clean pad</td><td>13</td></tr>
+                                <tr><td>6</td><td>Check VI BGA pad</td><td>14</td></tr>
+                                <tr><td>7</td><td>Replace BGA</td><td>15</td></tr>
+                                <tr><td>8</td><td>Xray</td><td>16</td></tr>
+                                <tr><td>9</td><td>ICT, FT</td><td>17</td></tr>
+                                <tr><td>10</td><td>Waiting return PD line ok</td><td>18</td></tr>
+                                <tr><td>11</td><td>Return PD line ok</td><td>19</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="text-muted mt-3 mb-0">Ở trạng thái 16 (Xray) và 17 (ICT/FT), nếu kết quả OK hệ thống chuyển sang bước tiếp theo, nếu NG quay lại trạng thái 13. Sau khi ICT/FT đạt OK, quy trình chuyển sang trạng thái 18 (Waiting return PD line ok) chờ xác nhận hoàn tất và kết thúc tại trạng thái 19 (Return PD line ok). Mỗi lần xác nhận, người dùng nhập remark lưu vào <strong>FindBoardStatus</strong>.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

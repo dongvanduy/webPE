@@ -1,0 +1,64 @@
+﻿@{
+    ViewData["Title"] = "PDRepository";
+    Layout = "~/Areas/PDRepositories/Views/Shared/_Layout_PD.cshtml";
+}
+
+<section class="pdstock-summary mt-1">
+    <div class="donut-box">
+        <div id="pdstock-total-sn" class="donut-percent">Loading...</div>
+        <div class="donut-header">
+            <div class="donut-label">SL SN</div>
+            <img id="pdstock-export-sn" src="~/assets/img/excel.png" alt="Excel Icon" class="excel-icon">
+        </div>
+    </div>
+    <div class="donut-box">
+        <div id="pdstock-total-carton" class="donut-percent">Loading...</div>
+        <div class="donut-header">
+            <div class="donut-label">SL CARTON</div>
+        </div>
+    </div>
+    <div class="donut-box">
+        <div id="total-b31m" class="donut-percent">Loading...</div>
+        <div class="donut-header">
+            <div class="donut-label">B31M</div>
+        </div>
+    </div>
+    <div class="donut-box">
+        <div id="total-b23f" class="donut-percent">Loading...</div>
+        <div class="donut-header">
+            <div class="donut-label">B23F</div>
+        </div>
+    </div>
+</section>
+
+<section class="pdstock-chart-wrapper mt-3">
+    <h6 class="text-muted mb-2">Biểu đồ số lượng Model Name</h6>
+    <div id="pdstock-model-chart" class="pdstock-model-chart"></div>
+</section>
+
+<!--lựa chọn thời gian-->
+<section class="pdstock-chart-wrapper mt-3">
+    <div class="date-time-range text-muted">
+        <label for="startDate">Bắt đầu:</label>
+        <input type="datetime-local" id="startDate" />
+
+        <label for="endDate">Kết thúc:</label>
+        <input type="datetime-local" id="endDate" />
+        <select id="search-options">
+            <option selected>TYPE</option>
+            <option value="add-stock">Nhập Kho</option>
+            <option value="out-stock">Xuất Kho</option>
+        </select>
+        <button id="searchBtn" class="btn btn-primary">Tìm kiếm</button>
+        <img id="PdStock-ExportExcel-btn" src="~/assets/img/excel.png" alt="Excel Icon" class="excel-icon">
+    </div>
+    <!--Hiển thị bảng dữ liệu-->
+    <div>
+        <div id="PDStock-search-results-section" style="overflow: auto;"></div>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="~/assets/vendor/echarts/echarts.min.js"></script>
+    <script src="~/assets/areas/pdstock/js/pdstockdashboard.js?v=@DateTime.Now.Ticks"></script>
+}

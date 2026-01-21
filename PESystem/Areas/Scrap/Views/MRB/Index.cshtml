@@ -1,0 +1,117 @@
+@{
+    ViewData["Title"] = "Chuyển kho MRB";
+}
+@{
+    Layout = "~/Areas/Scrap/views/Shared/Layout_scrap.cshtml";
+}
+
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+
+<input type="hidden" id="analysisPerson" value="@User.Identity.Name" />
+
+<div class="row g-4 align-items-stretch">
+    <div class="col-lg-4">
+        <div class="nvidia-card h-100">
+            <div class="nvidia-card-header">
+                <h2>Control move MRB</h2>
+            </div>
+            <div class="nvidia-card-body">
+                <form id="search-form" class="d-flex flex-column gap-3">
+                    <select id="search-mrb-options" class="form-select">
+                        <option selected disabled>SELECT FUNCTION</option>
+                        <option value="5">Waitting RE move MRB</option>
+                        <option value="6">Waitting MRB check</option>
+                        <option value="7">Move MRB done</option>
+                    </select>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="d-flex flex-column gap-4">
+            <form id="wait-re-move-mrb" method="post" class="hidden scrap-card" data-search-type="wait-re-move-mrb">
+                <h3 class="h5 mb-3 text-uppercase fw-semibold">Waitting RE move MRB</h3>
+                <div class="d-flex justify-content-end">
+                </div>
+            </form>
+
+            <form id="wait-mrb-confirm" method="post" class="hidden scrap-card" data-search-type="wait-mrb-confirm">
+                <h3 class="h5 mb-3 text-uppercase fw-semibold">Waitting MRB check</h3>
+                <div class="d-flex justify-content-end">
+                </div>
+            </form>
+
+            <form id="moved-mrb-form" method="post" class="hidden scrap-card" data-search-type="moved-mrb">
+                <h3 class="h5 mb-3 text-uppercase fw-semibold">Move MRB done</h3>
+                <div class="d-flex justify-content-end">
+                    <button id="moved-mrb-btn" class="btn btn-ne" type="button">Data</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="mt-5 d-flex flex-column gap-4">
+    <div id="wait-re-move-mrb-result" class="hidden scrap-card">
+        <h3 class="h5 mb-3 text-uppercase fw-semibold">List Waitting RE move MRB</h3>
+        <div class="table-responsive">
+            <table id="wait-re-move-mrb-table" class="mt-2 table table-hover table-striped datatable-table nvidia-table" style="width:100%">
+                <thead>
+                    <tr>
+                        <th class="checkbox-column"><input type="checkbox" id="select-all-5"></th>
+                        <th>Task Number</th>
+                        <th>Apply Time</th>
+                        <th>Total Qty</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="wait-mrb-confirm-result" class="hidden scrap-card">
+        <h3 class="h5 mb-3 text-uppercase fw-semibold">List Waitting MRB check</h3>
+        <div class="table-responsive">
+            <table id="wait-mrb-confirm-table" class="mt-2 table table-hover table-striped datatable-table nvidia-table" style="width:100%">
+                <thead>
+                    <tr>
+                        <th class="checkbox-column"><input type="checkbox" id="select-all-6"></th>
+                        <th>Task Number</th>
+                        <th>Apply Time</th>
+                        <th>Total Qty</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="moved-mrb-form-result" class="hidden scrap-card">
+        <h3 class="h5 mb-3 text-uppercase fw-semibold">List Move MRB done</h3>
+        <div class="table-responsive">
+            <table id="moved-mrb-form-table" class="mt-2 table table-hover table-striped datatable-table nvidia-table" style="width:100%">
+                <thead>
+                    <tr>
+                        <th class="checkbox-column"><input type="checkbox" id="select-all-7"></th>
+                        <th>Task Number</th>
+                        <th>Apply Time</th>
+                        <th>Total Qty</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script src="~/assets/areas/scrap/js/mrb.js?v=@DateTime.Now.Ticks"></script>
+    <style>
+        .flowchart-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #FFFFFF;
+        }
+    </style>
+}

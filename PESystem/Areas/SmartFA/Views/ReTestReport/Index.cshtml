@@ -1,0 +1,35 @@
+﻿@{
+    ViewData["Title"] = "Retest report";
+}
+@{
+    Layout = "~/Areas/SmartFA/Views/Shared/_Layout_SmartFA.cshtml";
+}
+
+<div class="dashboard-stage">
+    <div class="dashboard-wrapper">
+        <h3>Retest capacity in 7 day</h3>
+        <div class="row">
+            <div class="col-md-6">
+                <canvas id="dayShiftChart"></canvas>
+            </div>
+            <div class="col-md-6">
+                <canvas id="nightShiftChart"></canvas>
+            </div>
+        </div>
+        <h3>Retest capacity today</h3>
+        <div class="row">
+            <div class="col-md-6">
+                <canvas id="dayShiftTodayChart"></canvas>
+            </div>
+            <div class="col-md-6">
+                <canvas id="nightShiftTodayChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/chart.umd.min.js"></script>
+    <script src="~/lib/chartjs-plugin-datalabels.js"></script>
+    <script src="~/assets/areas/smartfa/js/retestreport.js?v=@DateTime.Now.Ticks"></script>
+}

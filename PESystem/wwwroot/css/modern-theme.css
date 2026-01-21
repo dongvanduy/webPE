@@ -1,0 +1,120 @@
+﻿:root {
+    /* 1. Bảng màu hiện đại (Lấy cảm hứng từ Material Design 3 & Tailwind) */
+    --primary-color: #2563eb; /* Xanh dương đậm hiện đại */
+    --primary-hover: #1d4ed8;
+    --secondary-color: #64748b;
+    --success-color: #10b981;
+    --danger-color: #ef4444;
+    --warning-color: #f59e0b;
+    --info-color: #3b82f6;
+    /* 2. Màu nền và văn bản */
+    --bg-body: #f1f5f9; /* Xám rất nhạt, dịu mắt hơn màu trắng tinh */
+    --bg-card: #ffffff;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --border-color: #e2e8f0;
+    /* 3. Hiệu ứng đổ bóng (Soft Shadows) - Chìa khóa của UI hiện đại */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    /* 4. Bo góc */
+    --radius-md: 0.5rem; /* 8px */
+    --radius-lg: 0.75rem; /* 12px */
+    --radius-xl: 1rem; /* 16px */
+    /* 5. Font chữ */
+    --font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+body {
+    background-color: var(--bg-body);
+    color: var(--text-main);
+    font-family: var(--font-family-base);
+    -webkit-font-smoothing: antialiased; /* Giúp chữ mượt hơn trên Mac/iOS */
+}
+
+/* --- Tối ưu hóa CARD (Hộp chứa nội dung) --- */
+.card {
+    background-color: var(--bg-card);
+    border: none; /* Bỏ viền đen thô */
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    margin-bottom: 1.5rem;
+}
+
+    .card:hover {
+        box-shadow: var(--shadow-lg); /* Hiệu ứng nổi lên khi di chuột */
+    }
+
+.card-header {
+    background-color: transparent;
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 600;
+    color: var(--primary-color);
+    padding: 1.25rem 1.5rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* --- Tối ưu hóa BUTTONS --- */
+.btn {
+    border-radius: var(--radius-md);
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+    .btn-primary:hover {
+        background-color: var(--primary-hover);
+        transform: translateY(-1px); /* Nút nảy lên nhẹ */
+    }
+
+/* --- Tối ưu hóa DATATABLES (Bạn dùng thư viện này nhiều) --- */
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter {
+    margin-bottom: 1rem;
+}
+
+table.dataTable {
+    border-collapse: separate !important;
+    border-spacing: 0;
+}
+
+    table.dataTable thead th {
+        background-color: #f8fafc;
+        color: var(--text-muted);
+        font-weight: 600;
+        border-bottom: 2px solid var(--border-color) !important;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+    }
+
+    table.dataTable tbody td {
+        padding: 1rem 0.75rem;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 0.875rem;
+    }
+
+    table.dataTable tbody tr:hover {
+        background-color: #f1f5f9; /* Màu nền khi hover dòng */
+        cursor: pointer;
+    }
+
+/* Pagination buttons clean up */
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+    background: var(--primary-color) !important;
+    color: white !important;
+    border: none;
+    border-radius: var(--radius-md);
+}

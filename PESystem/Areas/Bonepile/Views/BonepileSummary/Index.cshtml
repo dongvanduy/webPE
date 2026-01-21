@@ -1,0 +1,72 @@
+@{
+    ViewData["Title"] = "Bonepile Summary";
+    Layout = "~/Areas/Bonepile/Views/Shared/_Layout_Bonepile.cshtml";
+}
+
+<div class="dashboard-grid">
+    <div class="dashboard-left">
+        <div class="data-card chart-card">
+            <div class="chart-container-lg">
+                <div id="statusBarChart" class="echart"></div>
+            </div>
+        </div>
+        <div class="data-card chart-card">
+            <div class="chart-container-lg">
+                <div id="template" class="echart"></div>
+            </div>
+        </div>
+    </div>
+    <div class="dashboard-right">
+        <div class="data-card kpi-card">
+            <div class="kpi-grid">
+                <div class="donut-box highlight"><div class="donut-percent" id="totalCount">N/A</div><div class="donut-label">Total</div></div>
+                <div class="donut-box" data-status="ScrapHasTask"><div class="donut-percent">0</div><div class="donut-label">Scrap Has Task</div></div>
+                <div class="donut-box" data-status="ScrapLackTask"><div class="donut-percent">0</div><div class="donut-label">Scrap Lacks Task</div></div>
+                <div class="donut-box" data-status="WaitingApprovalScrap"><div class="donut-percent">0</div><div class="donut-label">Pending Scrap SPE Approval</div></div>
+                <div class="donut-box" data-status="WaitingApprovalBGA"><div class="donut-percent">0</div><div class="donut-label">Pending BGA SPE Approval</div></div>
+                <div class="donut-box" data-status="ApprovedBGA"><div class="donut-percent">0</div><div class="donut-label">Approved BGA</div></div>
+                <div class="donut-box" data-status="ReworkFG"><div class="donut-percent">0</div><div class="donut-label">Rework FG</div></div>
+                <div class="donut-box" data-status="WaitingCheckOut"><div class="donut-percent">0</div><div class="donut-label">Waiting Check Out</div></div>
+                <div class="donut-box" data-status="RepairInRE"><div class="donut-percent">0</div><div class="donut-label">Repair In RE</div></div>
+                <div class="donut-box" data-status="RepairInPD"><div class="donut-percent">0</div><div class="donut-label">Repair In PD</div></div>
+                <div class="donut-box" data-status="Can'tRepairProcess"><div class="donut-percent">0</div><div class="donut-label">Can't Repair Process</div></div>
+                <div class="donut-box" data-status="WaitingLink"><div class="donut-percent">0</div><div class="donut-label">Waiting Link</div></div>
+                <div class="donut-box" data-status="Linked"><div class="donut-percent">0</div><div class="donut-label">Linked</div></div>
+                <div class="donut-box" data-status="B36V"><div class="donut-percent">0</div><div class="donut-label">B36V</div></div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="data-card table-card">
+    <div class="panel-title">Danh Sách Tổng Hợp</div>
+    <div class="table-responsive">
+        <table id="sumMaterialsTable" class="table table-bordered table-striped bonepile-table" style="width:100%">
+            <thead class="table-light">
+                <tr>
+                    <th>TYPE</th>
+                    <th>SERIAL_NUMBER</th>
+                    <th>PRODUCT_LINE</th>
+                    <th>MODEL_NAME</th>
+                    <th>MO_NUMBER</th>
+                    <th>WIP_GROUP</th>
+                    <th>WIP_GROUP(KB)</th>
+                    <th>TEST_GROUP</th>
+                    <th>TEST_CODE</th>
+                    <th>ERROR_ITEM</th>
+                    <th>TEST_TIME</th>
+                    <th>ERROR_DESC</th>
+                    <th>STATUS</th>
+                    <th>STATUS_V2</th>
+                    <th>AGING</th>
+                    <th>LOCATION</th>
+                    <th>REPAIR</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/assets/areas/bonepile/js/bonepile_summary.js?v=@DateTime.Now.Ticks"></script>
+}

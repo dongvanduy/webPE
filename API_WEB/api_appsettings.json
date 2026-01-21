@@ -1,0 +1,22 @@
+{
+  "ConnectionStrings": {
+    "SQLServerConnection": "Data Source=10.220.130.119,5999;Initial Catalog=SystemPE;Persist Security Info=True;User ID=PE-05;Password=Foxconn168!!;TrustServerCertificate=True;",
+    "OracleConnection": "User Id=TE;Password=B05te;Data Source=(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=10.220.130.220)(PORT=1521)))(CONNECT_DATA=(SERVER=DEDICATED)(SERVICE_NAME=vnsfc)));"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "Jwt": {
+      "Issuer": "API_WEB",
+      "Audience": "API_WEB_CLIENT",
+      "key": "key-@-system-pe-mbd-1-fuyu-@-foxconn-vietnam-nvidia-*-28-08-2024",
+      "AccessTokenMinutes": 60
+    },
+  "SopSettings": {
+    "RootPath": "E:/SOP"
+  },
+  "AllowedHosts": "*"
+}

@@ -1,0 +1,397 @@
+﻿
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 1rem;
+    align-items: end;
+}
+
+.filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+    .filter-field label {
+        font-weight: 600;
+        color: #28457a;
+        font-size: 0.9rem;
+    }
+
+    .filter-field input {
+        border: 1px solid rgba(33, 94, 201, 0.2);
+        border-radius: 10px;
+        padding: 0.6rem 0.75rem;
+        font-size: 0.95rem;
+        color: #1e2a45;
+    }
+
+.filter-actions {
+    display: flex;
+    align-items: flex-end;
+}
+
+.primary-btn {
+    background: linear-gradient(135deg, #2e6eff, #1b55d6);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 0.65rem 1.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+    .primary-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 24px rgba(27, 85, 214, 0.25);
+    }
+
+/* === MAIN GRID === */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1.5rem;
+    align-items: stretch; /* ✅ 2 cột bằng chiều cao */
+}
+
+/* === COLUMN STRUCTURE === */
+.dashboard-left,
+.dashboard-right {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    height: 100%;
+}
+
+    .dashboard-left > .data-card,
+    .dashboard-right > .data-card {
+        flex: 1; /* ✅ chiếm đều chiều cao */
+        height: 100%;
+    }
+    /* Chia đều 50/50 hai chart card */
+    .dashboard-left .chart-card {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+
+/* === CARD STYLE === */
+.data-card {
+    background: #f9fbff;
+    border: 1px solid rgba(0, 86, 216, 0.18);
+    border-radius: 12px;
+    box-shadow: 0 14px 32px rgba(15, 35, 95, 0.08);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+/* === AGING SPLIT === */
+.aging-split {
+    display: grid;
+    grid-template-columns: minmax(240px, 0.55fr) minmax(0, 0.45fr);
+    gap: 1.25rem;
+    align-items: stretch;
+}
+.mini-chart-box,
+.aging-table-card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: inset 0 0 0 1px rgba(0, 86, 216, 0.12);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    flex: 1;
+}
+
+.panel-title {
+    font-weight: 600;
+    color: #003d99;
+    font-size: 1.1rem;
+    letter-spacing: 0.02em;
+}
+
+.status-filter-wrapper select {
+    width: 100%;
+    border: 1px solid rgba(33, 94, 201, 0.2);
+    border-radius: 10px;
+    padding: 0.65rem 0.75rem;
+    background-color: #fff;
+    font-size: 0.95rem;
+}
+
+.notes-box {
+    background: rgba(15, 53, 140, 0.06);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    color: #2a4070;
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+.icon-btn {
+    background: transparent;
+    border: none;
+    color: #1b55d6;
+    font-size: 1.25rem;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+    .icon-btn:hover {
+        transform: translateY(-2px);
+    }
+/* === CHART CONTAINERS === */
+.chart-container-lg {
+    position: relative;
+    width: 100%;
+    height: clamp(260px, 35vh, 360px);
+}
+
+    .chart-container-lg .echart {
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+
+.mini-charts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+}
+
+.mini-chart-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #0f2458;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.chart-container-aging,
+.chart-container-pie {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: clamp(200px, 30vh, 280px);
+}
+
+    .chart-container-aging .echart,
+    .chart-container-pie .echart {
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+/* === KPI GRID === */
+.kpi-card {
+    gap: 1.25rem;
+}
+
+.kpi-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    align-content: stretch;
+}
+
+.excel-button {
+    border: none;
+    background: none;
+    width: 32px;
+    height: 32px;
+}
+
+.donut-box {
+    background: radial-gradient(circle at 50% 0%, #f4f8ff 0%, #eaf1ff 90%);
+    border: 1px solid rgba(0, 86, 216, 0.18);
+    border-radius: 12px;
+    box-shadow: 0 12px 24px rgba(13, 40, 104, 0.12);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    gap: 0.35rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+    .donut-box:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 16px 28px rgba(13, 40, 104, 0.16);
+    }
+
+.donut-percent {
+    font-size: clamp(1.1rem, 1.9vw, 1.6rem);
+    font-weight: 700;
+    color: #001b4e;
+}
+
+.donut-label {
+    font-size: clamp(0.85rem, 1.1vw, 1.05rem);
+    color: #30497a;
+    font-weight: 500;
+    text-align: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1400px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 1024px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-right {
+        order: -1; /* Cho KPI lên đầu khi thu nhỏ */
+    }
+}
+
+
+.dataTables_filter {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important; /* ⬅ Search nằm bên phải */
+}
+
+    .dataTables_filter label {
+        margin-bottom: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+
+    .dataTables_filter input {
+        width: 150px !important;
+    }
+.dataTables_info {
+    display: none !important;
+}
+
+
+/* ===============================
+   TABLE FIX ALIGNMENT + UI PRO
+   Bonepile Table CSS - Final Version
+================================ */
+
+/* FONT + BASIC CONFIG */
+.bonepile-table {
+    font-size: 10px !important;
+    white-space: nowrap !important;
+    width: 100%;
+}
+
+    /* HEADER */
+    .bonepile-table thead th {
+        background: #f8f9fa;
+        font-weight: bold;
+        text-align: left;
+        padding: 6px 8px !important;
+        border-bottom: 2px solid #dee2e6;
+        white-space: nowrap !important;
+    }
+
+    /* BODY CELL */
+    .bonepile-table tbody td {
+        padding: 5px !important;
+        vertical-align: middle;
+        max-width: 200px; /* Ẩn nội dung dài */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap !important;
+        border-color: #e5e5e5;
+    }
+
+    /* ROW HOVER */
+    .bonepile-table tbody tr:hover {
+        background-color: rgba(0, 123, 255, 0.12) !important;
+        cursor: pointer;
+    }
+
+    /* ROW SELECTED (CLICK) */
+    .bonepile-table tbody tr.selected-row {
+        background-color: rgba(0, 180, 255, 0.25) !important;
+        font-weight: 600;
+    }
+
+/* TABLE WRAPPER SCROLL */
+.table-responsive,
+.dataTables_wrapper .dataTables_scrollBody {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* HEADER & BODY ALIGN FIX */
+table.dataTable thead th,
+table.dataTable tbody td {
+    box-sizing: border-box !important;
+}
+
+table.dataTable {
+    width: 100% !important;
+    table-layout: auto !important; /* Không bị bóp cột */
+}
+
+/* PAGINATION STYLE */
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    padding: 2px 8px !important;
+    font-size: 10px !important;
+}
+
+/* ===============================
+   FIXED COLUMN (FREEZE COLUMN)
+================================ */
+
+/* Khi có FixedColumns, DataTables tạo ra 3 table:
+   - main table
+   - fixed left
+   - fixed right
+   -> cần background + shadow để không bị đè lên nhau
+*/
+
+.dtfc-fixed-left,
+.dtfc-fixed-right {
+    background: white !important;
+}
+
+/* Freeze cột trái */
+.dtfc-fixed-left {
+    position: sticky;
+    left: 0;
+    z-index: 10 !important;
+    box-shadow: 2px 0 4px rgba(0,0,0,0.12);
+}
+
+/* Freeze cột phải nếu dùng */
+.dtfc-fixed-right {
+    position: sticky;
+    right: 0;
+    z-index: 10 !important;
+    box-shadow: -2px 0 4px rgba(0,0,0,0.12);
+}
+
+    /* Header freeze – đảm bảo màu ổn định */
+    .dtfc-fixed-left thead th,
+    .dtfc-fixed-right thead th {
+        background: #f8f9fa !important;
+        z-index: 11 !important;
+    }
+
+    /* Body cell freeze */
+    .dtfc-fixed-left tbody td,
+    .dtfc-fixed-right tbody td {
+        background: white !important;
+    }
+
+/* Scroll head fix (không lệch cột) */
+.dataTables_wrapper .dataTables_scrollHead table,
+.dataTables_wrapper .dataTables_scrollBody table {
+    table-layout: auto !important;
+}

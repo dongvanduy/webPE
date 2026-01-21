@@ -1,0 +1,201 @@
+@model PESystem.Areas.NPI.Models.NpiProjectViewModel
+@using PESystem.Areas.NPI.Models
+@using System.Linq
+
+@{ 
+    ViewData["Title"] = $"{Model.Project.Name} - NPI Document";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <style>
+        .npi-overview-card h2 {
+            font-size: 1.75rem;
+        }
+
+        .npi-category-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .npi-subcategory-wrapper {
+            border-left: 3px solid rgba(13, 110, 253, 0.18);
+            padding-left: 1.25rem;
+        }
+
+        .accordion-button {
+            font-size: 1.05rem;
+            font-weight: 600;
+        }
+
+        .npi-category-card__header {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .npi-category-card__title {
+            font-size: 1.05rem;
+        }
+
+        .npi-category-card--child .npi-category-card__title {
+            font-size: 1rem;
+        }
+
+        .npi-category-card--child {
+            background: linear-gradient(180deg, #f8f9ff 0%, #f1f3ff 100%);
+        }
+
+        .npi-document-name {
+            font-size: 1rem;
+        }
+
+        .npi-document-actions .btn {
+            min-width: 90px;
+        }
+
+        .npi-document-actions .btn span {
+            font-size: 0.85rem;
+        }
+
+        .npi-document-actions .btn i {
+            font-size: 0.9rem;
+        }
+
+        .npi-category-card__header .btn {
+            font-size: 0.85rem;
+        }
+
+        .npi-subcategory-wrapper .npi-category-card__header .btn {
+            background-color: #0d6efd;
+            color: #fff;
+        }
+
+        .npi-subcategory-wrapper .npi-category-card__header .btn:hover {
+            background-color: #0b5ed7;
+        }
+
+        .npi-version-badge {
+            background-color: rgba(13, 110, 253, 0.12);
+            color: #0d6efd;
+            border: 1px solid rgba(13, 110, 253, 0.35);
+        }
+
+        @@media (max-width: 768px) {
+            .npi-subcategory-wrapper {
+                padding-left: 1rem;
+                border-left-width: 2px;
+            }
+
+            .npi-document-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .npi-document-actions .btn {
+                width: 100%;
+            }
+        }
+    </style>
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 npi-overview-card">
+        <div>
+            <a class="btn btn-link text-decoration-none px-0" asp-area="NPI" asp-controller="Home" asp-action="Index">
+                <i class="bi bi-arrow-left"></i> Quay lại danh sách project
+            </a>
+            <h2 class="fw-bold mb-0 mt-2">@Model.Project.Name</h2>
+            <div class="text-muted">Owner: @(string.IsNullOrWhiteSpace(Model.Project.Owner) ? "Chưa cập nhật" : Model.Project.Owner)</div>
+            <div class="text-muted">Ngày tạo: @Model.Project.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+        </div>
+        <div class="text-end">
+            <span class="badge text-bg-primary rounded-pill px-3 py-2">@Model.Project.Documents.Sum(d => d.Versions.Count) phiên bản tài liệu</span>
+        </div>
+    </div>
+
+    @if (ViewBag.Success != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @ViewBag.Success
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    else if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @ViewBag.Error
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="accordion" id="npiCategoryAccordion">
+        @{ var index = 0; }
+        @foreach (var category in Model.Structure)
+        {
+            var headingId = $"heading{index}";
+            var collapseId = $"collapse{index}";
+            <div class="accordion-item mb-3 shadow-sm">
+                <h2 class="accordion-header" id="@headingId">
+                    <button class="accordion-button @((index == 0 ? string.Empty : "collapsed"))" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseId" aria-expanded="@(index == 0)" aria-controls="@collapseId">
+                        @category.DisplayName
+                    </button>
+                </h2>
+                <div id="@collapseId" class="accordion-collapse collapse @(index == 0 ? "show" : string.Empty)" aria-labelledby="@headingId" data-bs-parent="#npiCategoryAccordion">
+                    <div class="accordion-body">
+                        <div class="npi-category-stack">
+                            @if (category.Children != null && category.Children.Any())
+                            {
+                                @foreach (var child in category.Children)
+                                {
+                                    var path = BuildPath(category.Name, child.Name);
+                                    var docs = GetDocuments(path);
+                                    <div class="npi-subcategory-wrapper">
+                                        @await Html.PartialAsync("_CategoryCard", new NpiCategoryCardViewModel
+                                        {
+                                            ProjectId = Model.Project.Id,
+                                            DisplayName = child.DisplayName,
+                                            CategoryPath = path,
+                                            Documents = docs.OrderBy(d => d.DocumentName).ToList(),
+                                            IsChildCategory = true
+                                        })
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                var path = BuildPath(category.Name);
+                                var docs = GetDocuments(path);
+                                @await Html.PartialAsync("_CategoryCard", new NpiCategoryCardViewModel
+                                {
+                                    ProjectId = Model.Project.Id,
+                                    DisplayName = category.DisplayName,
+                                    CategoryPath = path,
+                                    Documents = docs.OrderBy(d => d.DocumentName).ToList(),
+                                    IsChildCategory = false
+                                })
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+            index++;
+        }
+    </div>
+</div>
+
+@functions {
+    private string BuildPath(params string[] segments)
+    {
+        return string.Join('/', segments.Where(s => !string.IsNullOrWhiteSpace(s)));
+    }
+
+    private IEnumerable<NpiDocument> GetDocuments(string path)
+    {
+        if (Model.DocumentsByCategory.TryGetValue(path, out var docs))
+        {
+            return docs;
+        }
+
+        return Enumerable.Empty<NpiDocument>();
+    }
+}

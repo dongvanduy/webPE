@@ -1,0 +1,601 @@
+﻿@{
+    ViewData["Title"] = "Repository";
+}
+@{
+    Layout = "~/Areas/Repositories/Views/Shared/_Layout_Repo.cshtml";
+}
+
+<div class="dashboard-stage">
+    <div class="dashboard-wrapper">
+        <input type="hidden" id="entryPerson" value="@User.Identity.Name" />
+
+        <div class="dashboard-right">
+            <div class="data-card kpi-card">
+                <div class="kpi-grid">
+                    <div class="donut-box">
+                        <div class="donut-header">
+                            <div class="donut-label">📦TỔNG KHO</div>
+                            <div id="total-repair-scrap" class="donut-percent">Loading...</div>
+                        </div>
+                        <div class="donut-header">
+                            <img id="search-input" src="~/assets/img/searching.png" alt="Excel Icon" class="excel-icon">
+                            <img id="export-total-btn" src="~/assets/img/excel.png" alt="Excel Icon" class="excel-icon">
+                        </div>
+                    </div>
+
+                    <div class="donut-box">
+                        <div id="total-repair" class="donut-percent">Loading...</div>
+                        <div class="donut-header">
+                            <div class="donut-label">📦KHO SỬA</div>
+                            <img id="export-repair-btn" src="~/assets/img/excel.png" alt="Excel Icon" class="excel-icon">
+                        </div>
+                    </div>
+
+                    <div class="donut-box">
+                        <div id="kho-ok-count" class="donut-percent">Loading...</div>
+                        <div class="donut-header">
+                            <div class="donut-label">📦KHO OK</div>
+                            <img id="export-kho-ok-btn" src="~/assets/img/excel.png" alt="Excel Icon" class="excel-icon">
+                        </div>
+                    </div>
+
+                    <div class="donut-box">
+                        <div id="kho-scrap-count" class="donut-percent">Loading...</div>
+                        <div class="donut-header">
+                            <div class="donut-label">📦KHO PHẾ</div>
+                            <img id="export-kho-scrap-btn" src="~/assets/img/excel.png" alt="Excel Icon" class="excel-icon">
+                        </div>
+                    </div>
+
+                    <div class="donut-box">
+                        <div class="text-center">
+                            <div class="d-flex flex-column justify-content-center">
+                                <div id="borrowed-count" class="donut-percent">Loading...</div>
+                            </div>
+
+                            <div class="d-flex align-items-center justify-content-between gap-2">
+                                <div>
+                                    <div class="donut-label" style="color:#000!important;">Location</div>
+                                    <span id="borrowed-location-found" class="mb-0 text-primary fw-bold clickable" style="cursor: pointer;">Loading...</span>
+                                </div>
+                                <div>
+                                    <div class="donut-label" style="color:#000!important;">NotLocation</div>
+                                    <span id="borrowed-location-missing" class="mb-0 text-primary fw-bold clickable" style="cursor: pointer;">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="donut-box">
+                        <div class="text-center">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <i class="fa fa-calendar fa-1.5x" id="pickDateBtn" aria-hidden="true" style="cursor:pointer;"></i>
+                                <input type="datetime-local" id="cioStartDate" hidden />
+                                <input type="datetime-local" id="cioEndDate" hidden />
+                                <h4 class="donut-percent">B36R</h4>
+                                <i class="fa fa-cogs fa-1.5x" id="b36r-settings" style="cursor: pointer;"></i>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between ">
+                                <div>
+                                    <span class="donut-label" style="color:#000!important;">Linked</span>
+                                    <span id="totaL-linked-mo" class="text-primary fw-bold clickable" style="cursor: pointer;">Loading...</span>
+                                </div>
+                                <div>
+                                    <span class="donut-label" style="color:#000!important;">WaitingLink</span>
+                                    <span id="total-waiting-link-mo" class="text-primary fw-bold clickable" style="cursor: pointer;">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="data-card">
+                <div class="chart-container-lg">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title text-center font-weight-bold">NHẬP XUẤT</h5>
+                        <select id="chart-filter" class="form-select w-auto">
+                            <option value="day" selected>Ngày</option>
+                            <option value="shift1">Ca 1</option>
+                            <option value="shift2">Ca 2</option>
+                        </select>
+                    </div>
+                    <div id="reportsChart" class="echart"></div>
+                </div>
+            </div>
+
+            <div class="data-card confirm-card" id="borrow-return-chart">
+                <div class="text-muted">Đang tải dữ liệu...</div>
+            </div>
+            <div class="aging-split">
+                <div class="mini-chart-box">
+                    <div class="mini-chart-title">B36R - WaitingLink</div>
+                    <div id="b36r-waiting-aging-chart" class="echart mini-pie-chart">
+                        <div class="text-muted">Đang tải dữ liệu...</div>
+                    </div>
+                </div>
+                <div class="mini-chart-box">
+                    <div class="mini-chart-title">B36R - Linked</div>
+                    <div id="b36r-linked-aging-chart" class="echart mini-pie-chart">
+                        <div class="text-muted">Đang tải dữ liệu...</div>
+                    </div>
+                </div>
+                <div class="mini-chart-box">
+                    <div class="mini-chart-title">KHO OK</div>
+                    <div id="warehouse-aging-chart" class="echart mini-pie-chart">
+                        <div class="text-muted">Đang tải dữ liệu...</div>
+                    </div>
+                </div>
+            </div>
+            <div class="data-card">
+                <div class="chart-container-lg">
+                    <div id="borrow-aging-chart" class="echart"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+<!--MODAL SEARCH-->
+<div class="modal fade" id="warehouseModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Kết quả tìm kiếm</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <table id="warehouseTable" class="table table-bordered table-striped datatable-table" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>SERIAL_NUMBER</th>
+                            <th>KHO</th>
+                            <th>VỊ_TRÍ</th>
+                            <th>PRODUCT_LINE</th>
+                            <th>MODEL_NAME</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-success" id="create-list-btn" type="button" style="display:none;">Create List</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="borrowedLocationModal" tabindex="-1" aria-labelledby="borrowedLocationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="borrowedLocationModalLabel">Danh sách Serial Number</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <table id="borrowedLocationTable" class="table table-bordered table-striped datatable-table" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>SERIAL_NUMBER</th>
+                            <th>KHO</th>
+                            <th>VỊ_TRÍ</th>
+                            <th>PRODUCT_LINE</th>
+                            <th>MODEL_NAME</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="dataModal" tabindex="-1" aria-labelledby="dataModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="dataModalLabel">Chi tiết</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <table id="dataTable" class="table table-bordered datatable-table table-striped datatable-table" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>SERIAL_NUMBER</th>
+                            <th>PRODUCT_LINE</th>
+                            <th>MODEL_NAME</th>
+                            <th>MO_NUMBER</th>
+                            <th>EXPORT_DATE</th>
+                            <th>STATUS</th>
+                            <th>LINK_TIME</th>
+                            <th>AGING(DAYS)</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="agingDetailModal" tabindex="-1" aria-labelledby="agingDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="agingDetailModalLabel">Chi tiết Aging</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body table-responsive">
+                <table id="aging-detail-table" class="table table-bordered table-striped datatable-table" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>SERIAL_NUMBER</th>
+                            <th>PRODUCT_LINE</th>
+                            <th>MODEL_NAME</th>
+                            <th>LOCATION</th>
+                            <th>DATE</th>
+                            <th>AGING(DAYS)</th>
+                            <th>STATUS</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="exportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">B36R EXPORT</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group mb-3">
+                    <textarea class="form-control" id="export-search-input" rows="3" placeholder="Nhập Serial Number (mỗi dòng 1 SN)"></textarea>
+                    <button class="btn btn-outline-secondary" id="export-search-btn" type="button">Search</button>
+                </div>
+                <table id="exportTable" class="table table-bordered table-striped datatable-table" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>SERIAL_NUMBER</th>
+                            <th>PRODUCT_LINE</th>
+                            <th>MODEL_NAME</th>
+                            <th>EXPORT_DATE</th>
+                            <th>ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="modelDataModal" tabindex="-1" aria-labelledby="modelDataModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modelDataModalLabel">DANH SÁCH SERIALNUMBER</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body table-responsive">
+                <table id="model-data-table" class="table table-bordered datatable-table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Serial Number</th>
+                            <th>Product Line</th>
+                            <th>Model Name</th>
+                            <th>Mo Number</th>
+                            <th>WIP Group</th>
+                            <th>Test Group</th>
+                            <th>ReasonCode</th>
+                            <th class="data1">Data1</th>
+                            <th>Test Code</th>
+                            <th class="location">Kệ</th>
+                            <th class="location">Cột</th>
+                            <th class="location">Tầng</th>
+                            <th class="location">Khay</th>
+                            <th class="location">Ô</th>
+                            <th>Ngày nhập</th>
+                            <th>Người nhập</th>
+                            <th>Mượn</th>
+                            <th>Ngày mượn</th>
+                            <th>Người mượn</th>
+                            <th>Ghi chú</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div id="pagination-container" class="d-flex justify-content-center mt-2"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ne" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="borrowDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">CHI TIẾT MƯỢN/TRẢ</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body table-responsive">
+                <table id="borrow-detail-table" class="table table-bordered table-striped datatable-table" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>Serial Number</th>
+                            <th>Người Mượn</th>
+                            <th>Thời gian mượn</th>
+                            <th>Thời gian trả</th>
+                            <th>Vị trí</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <style>
+        .kpi-card {
+            gap: 1rem;
+        }
+
+        .kpi-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 1rem;
+            align-content: stretch;
+        }
+
+        .donut-box {
+            background: radial-gradient(circle at 50% 0%, #f4f8ff 0%, #eaf1ff 90%);
+            border: 1px solid rgba(0, 86, 216, 0.18);
+            border-radius: 12px;
+            box-shadow: 0 12px 24px rgba(13, 40, 104, 0.12);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            gap: 0.35rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+            .donut-box:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 16px 28px rgba(13, 40, 104, 0.16);
+            }
+
+        .donut-percent {
+            font-size: clamp(1.1rem, 1.9vw, 1.6rem);
+            color: #001b4e;
+        }
+
+        .donut-label {
+            font-size: clamp(0.85rem, 1vw, 1.05rem);
+            color: #30497a;
+        }
+
+        .donut-header {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between; /* label bên trái, icon bên phải */
+            gap: 0.5rem;
+        }
+
+        /*table card*/
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 10px;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+
+        .date-time-range {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+            .date-time-range label {
+                font-weight: 600;
+                color: #333;
+            }
+
+            .date-time-range input[type="datetime-local"] {
+                padding: 8px;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+                font-size: 14px;
+            }
+
+        .section-title {
+            margin: 20px 0 10px;
+            color: #2c3e50;
+            font-size: 18px;
+            font-weight: 600;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        /* === TABLE === */
+        .table-card .panel-title {
+            margin-bottom: 0.75rem;
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #fff;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            border: 1px solid #eee;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        th {
+            background-color: #3498db;
+            color: white;
+            font-weight: 600;
+        }
+
+        td {
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+            transition: background-color 0.2s;
+        }
+
+        #serialNumberModal .modal-body {
+            overflow-x: auto;
+        }
+
+        #serialNumberTable {
+            width: 100% !important;
+        }
+
+        .confirm-card .panel-title {
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+        }
+
+        /* === CARD === */
+        .data-card {
+            background: #fff;
+            border: 1px solid rgba(0, 86, 216, 0.18);
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(15, 35, 95, 0.08);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+            .data-card:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 12px 26px rgba(0, 86, 216, 0.15);
+            }
+
+        .panel-title {
+            font-weight: 600;
+            color: #003d99;
+            font-size: 1.1rem;
+        }
+
+        /* === CHARTS === */
+        .echart {
+            width: 100%;
+            height: 100%;
+        }
+
+        .chart-container-lg {
+            min-height: 320px;
+        }
+
+        .mini-chart-box {
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 86, 216, 0.1);
+            padding: 1rem;
+            flex: 1;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+            .mini-chart-box:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 8px 20px rgba(15, 35, 95, 0.12);
+            }
+
+        .mini-chart-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #0f2458;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        /* aging nằm ở cột phải (cột 2) của dashboard-grid */
+        .aging-split {
+            grid-column: 1 / -1; /* quan trọng: span toàn bộ grid */
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr)); /* 3 ô = 1 hàng */
+            gap: 1.25rem;
+            width: 100%;
+        }
+
+        .mini-pie-chart {
+            min-height: 220px;
+        }
+        /*========================*/
+
+        .modal-dialog {
+            max-width: 85%;
+            font-size: 14px;
+        }
+
+        .swal2-input {
+            z-index: 2000 !important;
+        }
+
+        #total-stock, #total-stock-re {
+            font-size: 30px;
+            color: #007bff !important;
+        }
+
+        .excel-icon {
+            width: 28px;
+            height: 28px;
+            transition: transform 0.2s ease-in-out;
+            cursor: pointer;
+        }
+
+            .excel-icon:hover {
+                transform: scale(1.1);
+            }
+
+    </style>
+    <script src="~/assets/areas/repositories/js/dashboard.js?v=@DateTime.Now.Ticks"></script>
+    <script src="~/assets/areas/repositories/js/reportschart.js?v=@DateTime.Now.Ticks"></script>
+    <script src="~/assets/areas/repositories/js/borrowChart.js?v=@DateTime.Now.Ticks"></script>
+    <script src="~/assets/areas/repositories/js/agingPieChart.js?v=@DateTime.Now.Ticks"></script>
+    <script src="~/lib/jszip.min.js"></script>
+}

@@ -1,0 +1,234 @@
+@{
+    ViewData["Title"] = "Bonepile";
+    Layout = "~/Areas/Bonepile/Views/Shared/_Layout_Bonepile.cshtml";
+}
+
+<header class="dashboard-header">
+    <div class="filter-grid">
+        <div class="filter-field">
+            <label for="startDate">Từ ngày</label>
+            <input type="datetime-local" id="startDate" value="2025-03-16T11:00" />
+        </div>
+        <div class="filter-field">
+            <label for="endDate">Đến ngày</label>
+            <input type="datetime-local" id="endDate" />
+        </div>
+        <div class="filter-actions">
+            <button id="applyFilters" class="primary-btn">Áp dụng</button>
+        </div>
+    </div>
+</header>
+
+<div class="dashboard-grid">
+    <div class="dashboard-left">
+        <div class="data-card chart-card">
+            <div class="panel-title">Phân Bố Trạng Thái</div>
+            <div class="chart-container-lg">
+                <div id="statusDonutChart" class="echart"></div>
+            </div>
+        </div>
+        <div class="data-card control-card">
+            <div class="panel-title">N/A</div>
+        </div>
+    </div>
+    <div class="dashboard-right">
+        <div class="data-card kpi-card">
+            @*<div class="panel-title">Thống Kê</div>*@
+            <div class="kpi-grid">
+                <div class="donut-box"><div class="donut-label">Bonepile 2.0</div><div class="donut-percent" id="totalCount">N/A</div></div>
+                <div class="donut-box"><div class="donut-label">WaitingApprovalScrap</div><div class="donut-percent" id="waitingScrapCount">N/A</div></div>
+                <div class="donut-box"><div class="donut-label">UnderRepair</div><div class="donut-percent" id="repairCount">N/A</div></div>
+                <div class="donut-box"><div class="donut-label">Online</div><div class="donut-percent" id="onlinePd">N/A</div></div>
+                <div class="donut-box"><div class="donut-label">KANBAN_IN</div><div class="donut-percent" id="kanbanIn">N/A</div></div>
+                <div class="donut-box"><div class="donut-label">Chờ Link</div><div class="donut-percent" id="waitingLink">N/A</div></div>
+                <div class="donut-box"><div class="donut-label">Chờ CheckOut</div><div class="donut-percent" id="waitingOut">N/A</div></div>
+                <div class="donut-box"><div class="donut-label">Chờ CheckIn</div><div class="donut-percent" id="waitingIn">N/A</div></div>
+                <div class="donut-box"><div class="donut-label">Đã Link</div><div class="donut-percent" id="linkedDone">N/A</div></div>
+                <div class="donut-box control-box">
+                    <div class="donut-box-header">
+                        <span class="donut-label">Nhập Kanban</span>
+                        <button type="button" id="pickDateBtn" class="icon-btn" aria-label="Chọn thời gian">
+                            <i class="fa fa-calendar" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    <div class="donut-percent" id="kanbanDone">N/A</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="data-card table-card">
+    <div class="table-responsive">
+        <table id="sumMaterialsTable" class="table table-bordered table-striped bonepile-table" style="width:100%">
+            <div class="col-md-2">
+                <div class="status-filter-wrapper">
+                    <select id="statusFilter" class="form-control">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="Repair">Repair</option>
+                        <option value="CheckOut">CheckOut</option>
+                        <option value="CheckIn">CheckIn</option>
+                        <option value="WaitingLink">WaitingLink</option>
+                        <option value="WaitingKanBanIn">WaitingKanBanIn</option>
+                        <option value="Online">Online</option>
+                        <option value="WaitingApproveScrap">WaitingApproveScrap</option>
+                        <option value="Scrap">Scrap</option>
+                    </select>
+                </div>
+            </div>
+            <thead class="table-light">
+                <tr>
+                    <th>SERIAL_NUMBER</th>
+                    <th>PRODUCT_LINE</th>
+                    <th>MODEL_NAME</th>
+                    <th>MO_NUMBER</th>
+                    <th>WIP_GROUP</th>
+                    <th>FAIL_STATION</th>
+                    <th>TEST_CODE</th>
+                    <th>ERROR_DESC</th>
+                    <th>TIME</th>
+                    <th>FLAG</th>
+                    <th>PO_NO</th>
+                    <th>PO_ITEM</th>
+                    <th>FAIL_AGING</th>
+                    <th>VERSION_CODE</th>
+                    <th>WORK_FLAG</th>
+                    <th>ERROR_FLAG</th>
+                    <th>MO_NEW</th>
+                    <th>STATUS</th>
+                    <th>CHECKIN_TIME</th>
+                    <th>CHECKOUT_TIME</th>
+                    <th>SCRAP_STATUS</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/assets/areas/bonepile/js/bonepile2_0.js?v=@DateTime.Now.Ticks"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const pickBtn = document.getElementById("pickDateBtn");
+
+            const pad = (n) => String(n).padStart(2, "0");
+
+            // format cho input datetime-local (LOCAL, không UTC)
+            const toLocalInputValue = (d) =>
+                `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+            // format cho API (LOCAL)
+            const toApiParam = (d) =>
+                `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+            // parse từ chuỗi 'YYYY-MM-DDTHH:mm' (LOCAL) về Date an toàn (không bị UTC)
+            const parseLocalInput = (s) => {
+                const [date, time] = s.split("T");
+                const [y, m, d] = date.split("-").map(Number);
+                const [hh, mm] = time.split(":").map(Number);
+                return new Date(y, m - 1, d, hh, mm, 0, 0);
+            };
+
+            // Khoảng mặc định: hôm qua 07:30 -> hiện tại
+            const getDefaultRange = () => {
+                const now = new Date();
+                const from = new Date(now);
+                from.setDate(now.getDate() - 1);
+                from.setHours(7, 30, 0, 0);
+                return { from, to: now };
+            };
+
+            // Lưu/đọc lựa chọn gần nhất
+            const LS_KEY = "bonepile2_range";
+            let currentFrom, currentTo;
+
+            const loadSavedRange = () => {
+                const raw = localStorage.getItem(LS_KEY);
+                if (!raw) return false;
+                try {
+                    const obj = JSON.parse(raw);
+                    currentFrom = new Date(obj.from); // lưu epoch/ISO đều ok, mình dùng Date để hiển thị LOCAL
+                    currentTo = new Date(obj.to);
+                    if (isNaN(currentFrom) || isNaN(currentTo)) return false;
+                    return true;
+                } catch { return false; }
+            };
+            const saveRange = () => {
+                localStorage.setItem(LS_KEY, JSON.stringify({
+                    from: currentFrom.getTime(), // lưu epoch để tránh lệch múi giờ
+                    to: currentTo.getTime()
+                }));
+            };
+
+            // API
+            async function loadSummary(from, to) {
+                try {
+                    const url = `https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Bonepile2/waiting-summary?from=${toApiParam(from)}&to=${toApiParam(to)}`;
+                    const res = await fetch(url);
+                    if (!res.ok) throw new Error("API lỗi");
+                    const data = await res.json();
+                    document.getElementById("linkedDone").innerText = data.totals.linked;
+                    document.getElementById("kanbanDone").innerText = data.totals.linkedKanban;
+                } catch (err) {
+                    Swal.fire("Lỗi", "Không lấy được dữ liệu: " + err.message, "error");
+                }
+            }
+
+            // Khởi tạo currentFrom/currentTo (ưu tiên last selection, không có thì default)
+            if (!loadSavedRange()) {
+                const def = getDefaultRange();
+                currentFrom = def.from;
+                currentTo = def.to;
+            }
+
+            // Gọi API ngay lần đầu load với khoảng đang có
+            loadSummary(currentFrom, currentTo);
+
+            // SweetAlert2 chọn lại khoảng thời gian (giữ nguyên lần chọn trước)
+            pickBtn.addEventListener("click", async () => {
+                const { value: formValues } = await Swal.fire({
+                    title: "Chọn khoảng thời gian",
+                    html: `
+                                        <label style="display:block;text-align:left;">Từ:</label>
+                                        <input id="swalFrom" type="datetime-local" class="swal2-input"
+                                               value="${toLocalInputValue(currentFrom)}">
+                                        <label style="display:block;text-align:left;">Đến:</label>
+                                        <input id="swalTo" type="datetime-local" class="swal2-input"
+                                               value="${toLocalInputValue(currentTo)}">
+                                      `,
+                    focusConfirm: false,
+                    showCancelButton: true,
+                    confirmButtonText: "Áp dụng",
+                    cancelButtonText: "Hủy",
+                    preConfirm: () => {
+                        const fromVal = document.getElementById("swalFrom").value;
+                        const toVal = document.getElementById("swalTo").value;
+                        if (!fromVal || !toVal) {
+                            Swal.showValidationMessage("Vui lòng chọn đủ thời gian!");
+                            return false;
+                        }
+                        const f = parseLocalInput(fromVal);
+                        const t = parseLocalInput(toVal);
+                        if (isNaN(f) || isNaN(t)) {
+                            Swal.showValidationMessage("Thời gian không hợp lệ!");
+                            return false;
+                        }
+                        if (t <= f) {
+                            Swal.showValidationMessage("`Đến` phải lớn hơn `Từ`!");
+                            return false;
+                        }
+                        return { f, t };
+                    }
+                });
+
+                if (formValues) {
+                    currentFrom = formValues.f;
+                    currentTo = formValues.t;
+                    saveRange();                 // lưu lại để lần sau mở popup giữ đúng
+                    await loadSummary(currentFrom, currentTo);
+                }
+            });
+        });
+    </script>
+}

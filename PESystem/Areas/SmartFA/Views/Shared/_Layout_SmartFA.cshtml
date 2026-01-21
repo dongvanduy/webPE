@@ -1,0 +1,141 @@
+@using PESystem.Helpers
+@{
+    var hideSidebar = ViewData["HideSidebar"] as bool? ?? false;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartFA</title>
+    <link rel="icon" href="~/assets/img/smartFA.png" type="image/png">
+
+    <!-- Bootstrap -->
+    <link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+    <!-- DataTables Bootstrap5 CSS -->
+    <link href="~/lib/datatables.bootstrap5.min.css" rel="stylesheet" />
+    <link href="~/lib/buttons.bootstrap5.min.css" rel="stylesheet" />
+
+    <!-- Icons -->
+    <link href="~/lib/all-fa-icon/css/all.min.css" rel="stylesheet" />
+    <link href="~/assets/vendor/remixicon/remixicon.css" rel="stylesheet" />
+
+    <!-- Custom (Load after Bootstrap + DataTables) -->
+    <link href="~/css/site.min.css" rel="stylesheet" />
+    <link href="~/assets/areas/smartfa/css/smartFA.css" rel="stylesheet" />
+
+</head>
+<body class="@(hideSidebar ? "layout-no-sidebar" : string.Empty)">
+    <div class="acrylic-backdrop"></div>
+    <!-- Đặt ngay sau opening <body> tag -->
+    <script>
+        (function () {
+            const isSidebarFixed = localStorage.getItem('isSidebarFixed') === 'true';
+            if (isSidebarFixed) {
+                document.documentElement.classList.add('sidebar-expanded');
+            } else {
+                document.documentElement.classList.remove('sidebar-expanded');
+            }
+        })();
+    </script>
+    @if (!hideSidebar)
+    {
+        <!-- Sidebar -->
+        <div id="sidebar" class="sidebar">
+            <div class="dashboard-container">
+                <a href="@Url.Action("Home", "Home", new { area = "" })">
+                    <img src="~/assets/img/smartFA.png" style="width:36px; height:36px;" class="logo" />
+                </a>
+                <span class="spanTitle" style="font-size: 1.0rem; font-weight: bold;">SMART FA</span>
+                <div class="fixed-checkbox">
+                    <input type="checkbox" id="toggleSidebarFixed" title="Giữ cố định" />
+                    <label for="toggleSidebarFixed" title="Giữ cố định">
+                        <i class="ri-checkbox-blank-circle-line"></i>
+                    </label>
+                </div>
+            </div>
+            <nav class="nav flex-column">
+                <!-- Menu Items -->
+                <a href="@Url.Action("Home", "Home", new { area = "" })" class="nav-link @ViewContext.IsActive("Home", "Home")">
+                    <i class="fas fa-home"></i> <span>Trang chủ</span>
+                </a>
+                <a href="@Url.Action("Index", "Home", new { area = "SmartFA" })" class="nav-link @ViewContext.IsActive("Home", "Index")"><i class=" fas fa-dashboard"></i> <span>Dashboard</span></a>
+                <a href="@Url.Action("Index", "DiagramRE", new { area = "SmartFA" })" class="nav-link @ViewContext.IsActive("DiagramRE", "Index")"><i class="fa fa-globe"></i> <span>Sơ Đồ</span></a>
+                <a href="@Url.Action("Index", "Search", new { area = "SmartFA" })" class="nav-link  @ViewContext.IsActive("Search", "Index")"><i class="fas fa-search"></i> <span>Tìm kiếm</span></a>
+                @*<a href="@Url.Action("Index", "Handover", new { area = "SmartFA" })" class="nav-link  @ViewContext.IsActive("Handover", "Index")"><i class="fas fa-exchange-alt"></i> <span>Giao/Nhận bản</span></a>*@
+                <a href="@Url.Action("Index", "Analysis", new { area = "SmartFA" })" class="nav-link  @ViewContext.IsActive("Analysis", "Index")"><i class="fas fa-chart-bar"></i> <span>Phân Tích</span></a>
+                <a href="@Url.Action("Index", "Report", new { area = "SmartFA" })" class="nav-link  @ViewContext.IsActive("Report", "Index")"><i class="fas fa-tasks"></i> <span>Báo Cáo</span></a>
+                @*<a href="@Url.Action("Index", "StatisticsBGA", new { area = "SmartFA" })" class="nav-link  @ViewContext.IsActive("StatisticsBGA", "Index")"><i class="fas fa-bug"></i> <span>DataBGA</span></a>*@
+                @*                <a href="@Url.Action("Index", "CheckIn", new { area = "SmartFA" })" class="nav-link  @ViewContext.IsActive("CheckIn", "Index")"><i class="fas fa-check-circle"></i> <span>IO7CheckGuide</span></a>*@
+                <a href="@Url.Action("Index", "ReTestReport", new { area = "SmartFA" })" class="nav-link  @ViewContext.IsActive("ReTestReport", "Index")"><i class="fa fa-flag"></i> <span>Retest Report</span></a>
+                <a href="@Url.Action("Index", "RepairOwner", new { area = "SmartFA" })" class="nav-link  @ViewContext.IsActive("ReTestReport", "Index")"><i class="fa fa-wrench"></i> <span>Repair Data</span></a>
+            </nav>
+            <ul class="d-flex align-items-center list-unstyled m-0 user-panel">
+                <!-- AVATAR DƯỚI CÙNG SIDEBAR -->
+                @if (User.Identity.IsAuthenticated)
+                {
+                    <div class="sidebar-avatar" id="avatarBtn">
+                        <img src="~/assets/img/avatar.png" class="user-avatar" alt="User">
+
+                        <span class="sidebar-avatar-name">
+                            @User.FindFirst("FullName")?.Value
+                        </span>
+                    </div>
+                }
+
+            </ul>
+        </div>
+    }
+    @if (User.Identity.IsAuthenticated && !hideSidebar)
+    {
+        <div class="user-info-card" id="userInfoCard">
+            <div class="user-info-header">
+                <img src="~/assets/img/avatar.png" class="user-avatar" alt="User">
+                <div class="user-info-text">
+                    <p class="user-name mb-0">@User.FindFirst("FullName")?.Value</p>
+                    <p class="user-email mb-0">@User.FindFirst("Email")?.Value</p>
+                </div>
+            </div>
+            <div class="user-info-actions">
+                <a class="menu-item" asp-action="ChangePassword" asp-controller="Auth">
+                    <i class="fas fa-key"></i> Đổi mật khẩu
+                </a>
+                <form asp-action="Logout" asp-controller="Auth" method="post" class="text-center">
+                    <button type="submit" class="btn btn-ne w-100">Đăng xuất</button>
+                </form>
+            </div>
+        </div>
+    }
+
+    <!--SPINNER-->
+    <div id="spinner-overlay">
+        <span class="loader"></span>
+    </div>
+    @RenderBody()
+
+    <!-- jQuery (first) -->
+    <script src="~/lib/jquery-3.7.0.min.js"></script>
+
+    <!-- DataTables core + Bootstrap -->
+    <script src="~/lib/datatable/jquery.datatables.min.js"></script>
+    <script src="~/lib/datatables.bootstrap5.min.js"></script>
+
+    <!-- DataTables Export -->
+    <script src="~/lib/jszip.min.js"></script>
+    <script src="~/lib/datatables.buttons.min.js"></script>
+    <script src="~/lib/buttons.html5.min.js"></script>
+
+    <!-- UI Libraries -->
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/sweetalert2/dist/sweetalert2.all.js"></script>
+    <script src="~/lib/echarts/echarts.min.js"></script>
+    <script src="~/lib/select2/dist/js/select2.full.min.js"></script>
+    <script src="~/lib/excel/xlsx.full.min.js"></script>
+
+    <!--custom JS -->
+    <script src="~/js/site.min.js?v=4"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

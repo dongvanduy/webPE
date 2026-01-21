@@ -1,0 +1,63 @@
+@{
+    ViewData["Title"] = "Tra cứu SN";
+    Layout = "~/Areas/BGA/Views/Shared/layout_bga.cshtml";
+}
+
+@section Styles {
+    <style>
+        #lookup-result table,
+        #lookup-result table th,
+        #lookup-result table td {
+            white-space: nowrap;
+        }
+    </style>
+}
+
+<section class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="fw-bold text-primary mb-1">Tra cứu trạng thái theo SN</h1>
+            <p class="text-muted mb-0">Nhập danh sách SN để xem trạng thái hiện tại hoặc lịch sử.</p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-12 col-lg-5 col-xxl-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-gradient text-white">
+                    <h5 class="mb-0">Danh sách SN</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="lookup-sn-input" class="form-label fw-semibold">SN (mỗi dòng một mã hoặc tách bằng dấu phẩy)</label>
+                        <textarea id="lookup-sn-input" class="form-control" rows="10" placeholder="Ví dụ:\nSN001\nSN002\nSN003"></textarea>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button id="search-current-btn" class="btn btn-primary">Tra cứu trạng thái hiện tại</button>
+                        <button id="search-history-btn" class="btn btn-outline-primary">Tra cứu lịch sử</button>
+                        <button id="clear-lookup-btn" class="btn btn-outline-secondary">Xóa danh sách</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-lg-7 col-xxl-8">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 id="lookup-title" class="mb-0">Kết quả tra cứu</h5>
+                        <small id="lookup-subtitle" class="text-muted">Chưa có dữ liệu.</small>
+                    </div>
+                    <button id="download-result-btn" class="btn btn-sm btn-outline-success" disabled><i class="fas fa-file-excel me-1"></i>Tải Excel</button>
+                </div>
+                <div class="card-body">
+                    <div id="lookup-feedback" class="alert d-none" role="alert"></div>
+                    <div id="lookup-result" class="table-responsive" style="max-height: 480px; overflow-y: auto;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="~/assets/Areas/BGA/js/search.js"></script>
+}

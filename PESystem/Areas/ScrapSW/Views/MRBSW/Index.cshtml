@@ -1,0 +1,156 @@
+﻿@{
+    ViewData["Title"] = "Chuyển kho MRB";
+}
+@{
+    Layout = "~/Areas/ScrapSW/views/Shared/Layout_Scrap_SW.cshtml";
+}
+
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+
+<input type="hidden" id="analysisPerson" value="@User.Identity.Name" />
+
+<div class="row g-4 align-items-stretch">
+    <div class="col-lg-4">
+        <div class="nvidia-card h-100">
+            <div class="nvidia-card-header">
+                <h2>Control move MRB</h2>
+            </div>
+            <div class="nvidia-card-body">
+                <form id="search-form" class="d-flex flex-column gap-3">
+                    <select id="search-mrb-options" class="form-select">
+                        <option selected disabled>Select Function</option>
+                        <option value="5">Waitting RE Move MRB</option>
+                        <option value="6">Waitting MRB Check</option>
+                        <option value="7">Move MRB Done</option>
+                    </select>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="d-flex flex-column gap-4">
+            <form id="wait-re-move-mrb" method="post" class="hidden scrap-card" data-search-type="wait-re-move-mrb">
+                <h3 class="h5 mb-3 text-uppercase fw-semibold">Waitting RE Move MRB</h3>
+                <div class="d-flex justify-content-end">
+                </div>
+            </form>
+
+            <form id="wait-mrb-confirm" method="post" class="hidden scrap-card" data-search-type="wait-mrb-confirm">
+                <h3 class="h5 mb-3 text-uppercase fw-semibold">Waitting MRB Check</h3>
+                <div class="d-flex justify-content-end">
+                </div>
+            </form>
+
+            <form id="moved-mrb-form" method="post" class="hidden scrap-card" data-search-type="moved-mrb">
+                <h3 class="h5 mb-3 text-uppercase fw-semibold">Move MRB Done</h3>
+                <div class="d-flex justify-content-end">
+                    <button id="moved-mrb-btn" class="btn btn-ne" type="button">Data</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="mt-5 d-flex flex-column gap-4">
+    <div id="wait-re-move-mrb-result" class="hidden scrap-card">
+        <h3 class="h5 mb-3 text-uppercase fw-semibold">List Waitting RE Move MRB</h3>
+        <div class="table-responsive">
+            <table id="wait-re-move-mrb-table" class="mt-2 table table-hover table-striped datatable-table nvidia-table" style="width:100%">
+                <thead>
+                    <tr>
+                        <th class="checkbox-column"><input type="checkbox" id="select-all-5"></th>
+                        <th>Task Number</th>
+                        <th>Apply Time</th>
+                        <th>Total Qty</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="wait-mrb-confirm-result" class="hidden scrap-card">
+        <h3 class="h5 mb-3 text-uppercase fw-semibold">List Waitting MRB Check</h3>
+        <div class="table-responsive">
+            <table id="wait-mrb-confirm-table" class="mt-2 table table-hover table-striped datatable-table nvidia-table" style="width:100%">
+                <thead>
+                    <tr>
+                        <th class="checkbox-column"><input type="checkbox" id="select-all-6"></th>
+                        <th>Task Number</th>
+                        <th>Apply Time</th>
+                        <th>Total Qty</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="moved-mrb-form-result" class="hidden scrap-card">
+        <h3 class="h5 mb-3 text-uppercase fw-semibold">List Move MRB Done</h3>
+        <div class="table-responsive">
+            <table id="moved-mrb-form-table" class="table table-bordered datatable-table" style="width:100%">
+                <thead>
+                    <tr>
+                        <th class="checkbox-column"><input type="checkbox" id="select-all-7"></th>
+                        <th>Task Number</th>
+                        <th>Apply Time</th>
+                        <th>Total Qty</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+@section Scripts {
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const selector = document.getElementById("search-mrb-options");
+
+            // Form khối bên phải
+            const forms = {
+                "5": document.getElementById("wait-re-move-mrb"),
+                "6": document.getElementById("wait-mrb-confirm"),
+                "7": document.getElementById("moved-mrb-form")
+            };
+
+            // Result table khối bên dưới
+            const results = {
+                "5": document.getElementById("wait-re-move-mrb-result"),
+                "6": document.getElementById("wait-mrb-confirm-result"),
+                "7": document.getElementById("moved-mrb-form-result")
+            };
+
+            // Hàm ẩn toàn bộ form & table
+            function hideAll() {
+                Object.values(forms).forEach(el => el.classList.add("hidden"));
+                Object.values(results).forEach(el => el.classList.add("hidden"));
+            }
+
+            // Khi chọn chức năng
+            selector.addEventListener("change", function () {
+                const value = this.value;
+
+                hideAll(); // ẩn hết trước
+
+                // Hiện form tương ứng
+                if (forms[value]) {
+                    forms[value].classList.remove("hidden");
+                }
+
+                // Hiện table tương ứng
+                if (results[value]) {
+                    results[value].classList.remove("hidden");
+                }
+            });
+
+        });
+    </script>
+
+    <script src="~/assets/areas/scrapsw/js/mrb_witch.js?v=@DateTime.Now.Ticks"></script>
+}

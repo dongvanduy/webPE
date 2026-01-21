@@ -1,0 +1,192 @@
+@{
+    ViewData["Title"] = "Scrap Area";
+}
+@{
+    Layout = "~/Areas/Scrap/views/Shared/Layout_scrap.cshtml";
+}
+<input type="hidden" id="analysisPerson" value="@User.Identity.Name" />
+
+<div class="row g-4 align-items-stretch">
+    <div class="col-lg-4">
+        <div class="nvidia-card h-100">
+            <div class="nvidia-card-header">
+                <h2>SPE Already Approved</h2>
+            </div>
+            <div class="nvidia-card-body">
+                <form id="search-form" class="d-flex flex-column gap-3">
+                    <select id="search-options" class="form-select">
+                        <option selected disabled>SELECT FUNCTION</option>
+                        <option value="INPUT_SN">INPUT SN</option>
+                        <option value="CREATE_TASK_FORM">CREATE TASK FORM</option>
+                        <option value="CREATE_TASK_FORM_SN">CREATE TASK FORM BY SN</option>
+                        <option value="CREATE_TASK_BP2">CREATE TASK FORM BP-20</option>
+                        <option value="UPDATE_DATA">UPDATE DATA</option>
+                    </select>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="d-flex flex-column gap-4">
+            <form id="input-sn-form" method="post" class="hidden scrap-card" data-search-type="INPUT_SN">
+                <h3 class="h5 mb-3 text-uppercase fw-semibold">Input Serial Number</h3>
+                <div class="row g-3 align-items-stretch">
+                    <div class="col-md-5">
+                        <label for="sn-input" class="form-label">Serial Number</label>
+                        <textarea name="serialNumbers" id="sn-input" class="form-control" rows="10" placeholder="Input Serial Number (1 row - 1 SN)"></textarea>
+                    </div>
+                    <div class="col-md-7">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label for="description-input" class="form-label">Description email from customer</label>
+                                <input type="text" id="description-input" name="description" class="form-control" placeholder="Description email from customer">
+                            </div>
+                            <div class="col-12">
+                                <label for="NVmember-input" class="form-label">NV Customer</label>
+                                <input type="text" id="NVmember-input" name="po" class="form-control" placeholder="Input customer's name approved">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="Scrap-options" class="form-label">Type Scrap</label>
+                                <select id="Scrap-options" class="form-select">
+                                    <option selected disabled>Select type scrap</option>
+                                    <option value="0">SPE approve to scrap</option>
+                                    <option value="1">Scrap to quarterly</option>
+                                    <option value="2">Approved to engineer sample</option>
+                                    <option value="3">Approved to master board</option>
+                                    <option value="4">Approved to BGA</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="speApproveTime-input" class="form-label">Time NV approve</label>
+                                <input type="date" id="speApproveTime-input" name="speApproveTime" class="form-control" />
+                            </div>
+                            <div class="col-12 d-flex justify-content-end">
+                                <button id="input-sn-btn" class="btn btn-ne" type="button">Input</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <form id="custom-form" method="post" class="hidden scrap-card" data-search-type="CREATE_TASK_FORM">
+                <h3 class="h5 mb-3 text-uppercase fw-semibold">Create task</h3>
+                <div class="d-flex justify-content-end">
+                    <button id="create-task-btn" class="btn btn-ne" type="button">Create</button>
+                </div>
+            </form>
+
+            <form id="custom-form-sn" method="post" class="hidden scrap-card" data-search-type="CREATE_TASK_FORM_SN">
+                <h3 class="h5 mb-3 text-uppercase fw-semibold">Create Task form by SN</h3>
+                <div class="row g-3 align-items-stretch">
+                    <div class="col-lg-8">
+                        <label for="create-task-btn-sn-box" class="form-label">List SN</label>
+                        <textarea name="SN box" id="create-task-btn-sn-box" class="form-control" rows="6" placeholder="Input SN"></textarea>
+                    </div>
+                    <div class="col-lg-4 d-flex align-items-end">
+                        <button id="create-task-btn-sn" class="btn btn-ne w-100" type="button">Create</button>
+                    </div>
+                </div>
+            </form>
+
+            <form id="custom-form-bp2" method="post" class="hidden scrap-card" data-search-type="CREATE_TASK_FORM_SN">
+                <h3 class="h5 mb-3 text-uppercase fw-semibold">Create Task Bonepile 2.0</h3>
+                <div class="row g-3 align-items-stretch">
+                    <div class="col-lg-8">
+                        <label for="create-task-btn-sn-box" class="form-label">List SN</label>
+                        <textarea name="SN box" id="creat-task-bp2" class="form-control" rows="6" placeholder="Input SN"></textarea>
+                    </div>
+                    <div class="col-lg-4 d-flex align-items-end">
+                        <button id="create-task-btn-bp2" class="btn btn-ne w-100" type="button">Create</button>
+                    </div>
+                </div>
+            </form>
+
+            <form id="update-data-form" method="post" class="hidden scrap-card" data-search-type="UPDATE_DATA">
+                <h3 class="h5 mb-3 text-uppercase fw-semibold">Update data</h3>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label for="sn-input-update" class="form-label">Serial Number</label>
+                        <textarea name="serialNumbers" id="sn-input-update" class="form-control" rows="8" placeholder="Input Serial Number (1 row - 1 SN)"></textarea>
+                    </div>
+                    <div class="col-md-4 d-flex flex-column gap-3">
+                        <div>
+                            <label for="task-input" class="form-label">Task</label>
+                            <input type="text" id="task-input" name="task" class="form-control" placeholder="Input Task">
+                        </div>
+                        <div>
+                            <label for="po-input" class="form-label">PO</label>
+                            <input type="text" id="po-input" name="po" class="form-control" placeholder="Input PO">
+                        </div>
+                        <button id="update-task-btn" class="btn btn-ne" type="button">Update</button>
+                    </div>
+                    <div class="col-md-4 d-flex flex-column gap-3">
+                        <div>
+                            <label for="cost-input" class="form-label">Cost</label>
+                            <input type="text" id="cost-input" name="cost" class="form-control" placeholder="Input Cost">
+                        </div>
+                        <div>
+                            <label for="file-input" class="form-label">Upload Excel File (Board SN & Cost)</label>
+                            <input type="file" id="file-input" name="file" class="form-control" accept=".xlsx, .xls">
+                        </div>
+                        <button id="update-cost-btn" class="btn btn-ne" type="button">Update</button>
+                    </div>
+                </div>
+            </form>
+
+            <!--<form id="history-apply-form" method="post" class="hidden scrap-card" data-search-type="HISTORY_APPLY_FORM">
+                <h3 class="h5 mb-3 text-uppercase fw-semibold">Danh sách đã gửi khách hàng</h3>
+                <div class="d-flex justify-content-end">
+                    <button id="create-history-task-btn" class="btn btn-ne" type="button">Data</button>
+                </div>
+            </form>-->
+        </div>
+    </div>
+</div>
+
+<div class="mt-3 d-flex flex-column">
+    <div id="input-sn-result" class="hidden scrap-card"></div>
+
+    <div id="create-task-result" class="hidden scrap-card">
+        <h3 class="h5 mb-3 fw-semibold">List Internal Task</h3>
+        <div class="table-responsive">
+            <table id="task-checkbox-table" class="table table-bordered datatable-table table-striped">
+                <thead>
+                    <tr>
+                        <th class="checkbox-column"><input type="checkbox" id="select-all"></th>
+                        <th>INTERNAL_TASK</th>
+                        <th>DESCRIPTION</th>
+                        <th>NV_APPROVE</th>
+                        <th>KANBAN_STATUS</th>
+                        <th>CATEGORY</th>
+                        <th>TYPE_BP</th>
+                        <th>PURPOSE</th>
+                        <th>CREATE_TIME</th>
+                        <th>CREATE_BY</th>
+                        <th>APPLY_TASK_STATUS</th>
+                        <th>TOTAL_Q'TY</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="create-task-result-sn" class="hidden scrap-card"></div>
+
+    <div id="create-task-result-bp2" class="hidden scrap-card"></div>
+
+    <div id="update-data-result" class="hidden scrap-card"></div>
+</div>
+
+@section Scripts {
+    <script src="~/assets/areas/scrap/js/function.js?v=@DateTime.Now.Ticks"></script>
+    <style>
+        .flowchart-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #FFFFFF;
+        }
+    </style>
+
+}

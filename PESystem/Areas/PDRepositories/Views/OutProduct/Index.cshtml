@@ -1,0 +1,99 @@
+﻿@{
+    ViewData["Title"] = "PD Repository - Xuất Kho";
+    Layout = "~/Areas/PDRepositories/Views/Shared/_Layout_PD.cshtml";
+}
+
+<style>
+    /* Tối ưu hóa textarea và bố cục */
+    #PD-repo-exprot-input {
+        resize: vertical;
+        border-radius: 8px;
+        border: 1px solid #ced4da;
+        padding: 12px;
+        font-family: 'Courier New', Courier, monospace;
+    }
+
+        #PD-repo-exprot-input:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+        }
+
+    .card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
+    .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #eee;
+        font-weight: bold;
+        border-radius: 12px 12px 0 0 !important;
+    }
+
+    .qty-badge {
+        font-size: 0.9rem;
+        padding: 5px 12px;
+        border-radius: 20px;
+        background: #e9ecef;
+        color: #495057;
+        font-weight: 600;
+    }
+
+    .dashboard-wrapper{
+        padding: 0;
+    }
+</style>
+
+<section class="section dashboard container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span class="text-primary"><i class="fas fa-ship me-2"></i>QUẢN LÝ XUẤT KHO PD</span>
+                    <div id="Data-search-qty" class="qty-badge">
+                        Tổng số kết quả: 0
+                    </div>
+                </div>
+                <div class="card-body mt-3">
+                    <div class="row g-3">
+                        <div class="col-md-3 col-lg-2">
+                            <label class="form-label fw-bold text-secondary small">CHỨC NĂNG</label>
+                            <select id="search-options" class="form-select mb-3 shadow-sm">
+                                <option value="" selected disabled>-- Chọn --</option>
+                                <option value="exportByCartonNo">📦 Xuất CARTON</option>
+                                <option value="exportBySn">🔢 Xuất SN</option>
+                            </select>
+
+                            <button id="PdStock-exprort-btn" class="btn btn-primary w-100 py-2 shadow-sm fw-bold">
+                                <i class="fas fa-file-export me-1"></i> XUẤT KHO
+                            </button>
+                        </div>
+
+                        <div class="col-md-9 col-lg-10">
+                            <label for="PD-repo-exprot-input" class="form-label fw-bold text-secondary small">
+                                DANH SÁCH DỮ LIỆU (Mỗi dòng một mã)
+                            </label>
+                            <textarea name="PD-repo-seach"
+                                      id="PD-repo-exprot-input"
+                                      class="form-control shadow-sm"
+                                      rows="5"
+                                      placeholder="Ví dụ:&#10;SN000000001&#10;SN000000002"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-3">
+        <div class="col-12">
+            <div id="PDStock-search-results-section">
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="~/assets/areas/pdstock/js/pdstockexport.js?v=@DateTime.Now.Ticks"></script>
+}

@@ -1,0 +1,131 @@
+﻿@using PESystem.Helpers
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scrap Switch</title>
+
+    <link href="~/assets/img/scrap_sw.png" rel="icon" type="image/png">
+    <link href="~/assets/css/nvidia-theme.css?v=2" rel="stylesheet" />
+
+    <!-- Bootstrap + Global -->
+    <link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/css/site.min.css" rel="stylesheet" />
+    <link href="~/assets/areas/bonepile/css/bonepile.css" rel="stylesheet" />
+
+    <!-- Icons -->
+    <link href="~/lib/all-fa-icon/css/all.min.css" rel="stylesheet" />
+    <link href="~/assets/vendor/remixicon/remixicon.css" rel="stylesheet" />
+
+    <!-- DataTables Bootstrap 5 -->
+    <link href="~/lib/datatables.bootstrap5.min.css" rel="stylesheet" />
+    <link href="~/lib/buttons.bootstrap5.min.css" rel="stylesheet" />
+    <!-- CSS riêng của từng trang sẽ được chèn vào đây -->
+    @RenderSection("Styles", required: false)
+
+</head>
+<body>
+    <script>
+        (function () {
+            const isSidebarFixed = localStorage.getItem('isSidebarFixed') === 'true';
+            if (isSidebarFixed) {
+                document.documentElement.classList.add('sidebar-expanded');
+            } else {
+                document.documentElement.classList.remove('sidebar-expanded');
+            }
+        })();
+    </script>
+    <!-- Sidebar dọc -->
+    <div id="sidebar" class="sidebar">
+        <!-- Logo and Dashboard with fixed checkbox -->
+        <div class="dashboard-container">
+            <a href="@Url.Action("Home", "Home", new { area = "" })">
+                <img src="~/assets/img/scrap_sw.png" style="width:36px; height:36px;" class="logo" />
+            </a>
+            <span class="spanTitle" style="font-size: 1.0rem; font-weight: bold;">Scrap Switch</span>
+            <div class="fixed-checkbox">
+                <input type="checkbox" id="toggleSidebarFixed" title="Giữ cố định" />
+                <label for="toggleSidebarFixed" title="Giữ cố định">
+                    <i class="ri-checkbox-blank-circle-line"></i>
+                </label>
+            </div>
+        </div>
+        <nav class="nav flex-column">
+            <!-- Menu Items -->
+            <a href="@Url.Action("Home", "Home", new { area = "" })" class="nav-link"><i class="fas fa-home"></i> <span>Trang chủ</span></a>
+            <a href="@Url.Action("Index", "Home", new { area = "ScrapSW" })" class="nav-link @ViewContext.IsActive("Home", "Index")"><i class="fas fa-dashboard"></i> <span>Dashboard</span></a>
+            <a href="@Url.Action("Index", "InApproval", new { area = "ScrapSW" })" class="nav-link @ViewContext.IsActive("InApproval", "Index")"><i class="fa fa-spinner"></i> <span>Waiting SPE Approval</span></a>
+            <a href="@Url.Action("Index", "Approved", new { area = "ScrapSW" })" class="nav-link @ViewContext.IsActive("Approved", "Index")"><i class="fa fa-certificate"></i> <span>SPE Already Approved</span></a>
+            <a href="@Url.Action("Index", "MRBSW", new { area = "ScrapSW" })" class="nav-link @ViewContext.IsActive("MRBSW", "Index")"><i class="fa fa-plane"></i> <span>Move MRB Status</span></a>
+            <a href="@Url.Action("Index", "Search", new { area = "ScrapSW" })" class="nav-link @ViewContext.IsActive("Search", "Index")"><i class="fa fa-search"></i> <span>Search</span></a>
+        </nav>
+
+        <ul class="d-flex align-items-center list-unstyled m-0 user-panel">
+            <!-- AVATAR DƯỚI CÙNG SIDEBAR -->
+            @if (User.Identity.IsAuthenticated)
+            {
+                <div class="sidebar-avatar" id="avatarBtn">
+                    <img src="~/assets/img/avatar.png" class="user-avatar" alt="User">
+
+                    <span class="sidebar-avatar-name">
+                        @User.FindFirst("FullName")?.Value
+                    </span>
+                </div>
+            }
+        </ul>
+    </div>
+    @if (User.Identity.IsAuthenticated)
+    {
+        <div class="user-info-card" id="userInfoCard">
+            <div class="user-info-header">
+                <img src="~/assets/img/avatar.png" class="user-avatar" alt="User">
+                <div class="user-info-text">
+                    <p class="user-name mb-0">@User.FindFirst("FullName")?.Value</p>
+                    <p class="user-email mb-0">@User.FindFirst("Email")?.Value</p>
+                </div>
+            </div>
+            <div class="user-info-actions">
+                <a class="menu-item" asp-action="ChangePassword" asp-controller="Auth">
+                    <i class="fas fa-key"></i> Đổi mật khẩu
+                </a>
+                <form asp-action="Logout" asp-controller="Auth" method="post" class="text-center">
+                    <button type="submit" class="btn btn-ne w-100">Đăng xuất</button>
+                </form>
+            </div>
+        </div>
+    }
+
+    <div class="dashboard-stage">
+        <div class="dashboard-wrapper">
+            <!--SPINER-->
+            <div id="spinner-overlay">
+                <span class="loader"></span>
+            </div>
+            @RenderBody()
+        </div>
+    </div>
+    <!-- jQuery (first) -->
+    <script src="~/lib/jquery-3.7.0.min.js"></script>
+
+    <!-- DataTables core + Bootstrap -->
+    <script src="~/lib/datatable/jquery.datatables.min.js"></script>
+    <script src="~/lib/datatables.bootstrap5.min.js"></script>
+
+    <!-- DataTables Export -->
+    <script src="~/lib/jszip.min.js"></script>
+    <script src="~/lib/datatables.buttons.min.js"></script>
+    <script src="~/lib/buttons.html5.min.js"></script>
+
+    <!-- UI Libraries -->
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/sweetalert2/dist/sweetalert2.all.js"></script>
+    <script src="~/lib/echarts/echarts.min.js"></script>
+    <script src="~/lib/excel/xlsx.full.min.js"></script>
+    <!-- Your custom JS -->
+    <script src="~/js/site.min.js?v=4"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
+

@@ -1,0 +1,81 @@
+﻿@{
+    ViewData["Title"] = "Bonepile";
+    Layout = "~/Areas/Bonepile/Views/Shared/_Layout_Bonepile.cshtml";
+}
+
+<div class="dashboard-grid">
+    <div class="dashboard-left">
+        <div class="data-card chart-card">
+            <div class="chart-container-lg">
+                <div id="statusBarChart" class="echart"></div>
+            </div>
+        </div>
+        <div class="chart-card">
+            <div class="mini-charts">
+                <div class="mini-chart-box">
+                    <div class="mini-chart-title">AGING</div>
+                    <div class="chart-container-aging">
+                        <div id="agingPieChart" class="echart"></div>
+                    </div>
+                </div>
+                <div class="mini-chart-box">
+                    <div class="mini-chart-title">N/A</div>
+                    <div class="chart-container-pie">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="dashboard-right">
+        <div class="data-card kpi-card">
+            <div class="kpi-grid">
+                <div class="donut-box"><div class="donut-percent" id="totalCount">N/A</div><div class="donut-label">Total</div></div>
+                <div class="donut-box"><div class="donut-percent" id="reworkFGCount">N/A</div><div class="donut-label">ReworkFG</div></div>
+                <div class="donut-box"><div class="donut-percent" id="scrapCount">N/A</div><div class="donut-label">ScrapHasTask</div></div>
+                <div class="donut-box"><div class="donut-percent" id="noTaskscrapCount">N/A</div><div class="donut-label">ScrapLackTask</div></div>
+                <div class="donut-box"><div class="donut-percent" id="waitingScrapCount">N/A</div><div class="donut-label">WaitingApprovalScrap</div></div>
+                <div class="donut-box"><div class="donut-percent" id="approvedBGACount">N/A</div><div class="donut-label">ApprovedBGA</div></div>
+                <div class="donut-box"><div class="donut-percent" id="underRepairRECount">N/A</div><div class="donut-label">UnderRepairInRE</div></div>
+                <div class="donut-box"><div class="donut-percent" id="underRepairPDCount">N/A</div><div class="donut-label">UnderRepairInPD</div></div>
+                <div class="donut-box"><div class="donut-percent" id="notRepairProcessCount">N/A</div><div class="donut-label">Can'tRepairProcess</div></div>
+                <div class="donut-box"><div class="donut-percent" id="waitingCheckOutCount">N/A</div><div class="donut-label">WaitingCheckout</div></div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="data-card table-card">
+    <div class="table-responsive">
+        <table id="sumMaterialsTable" class="table table-bordered table-striped bonepile-table" style="width:100%">
+            <thead class="table-light">
+                <tr>
+                    <th>SERIAL_NUMBER</th>
+                    <th>PRODUCT_LINE</th>
+                    <th>MODEL_NAME</th>
+                    <th>MO_NUMBER</th>
+                    <th>WIP_GROUP</th>
+                    <th>TEST_GROUP</th>
+                    <th>TEST_CODE</th>
+                    <th>ERROR_CODE_ITEM</th>
+                    <th>TEST_TIME</th>
+                    <th>ERROR_DESC</th>
+                    <th>WORK_FLAG</th>
+                    <th>ERROR_FLAG</th>
+                    <th>CHECKIN_TIME</th>
+                    <th>AGING_DAY</th>
+                    <th>LOCATION</th>
+                    <th>STATUS</th>
+                    <th>REPAIR</th>
+                    <th>STATION_TEST_OFF</th>
+                    <th>TEST_OFF_RESULT</th>
+                    <th>TEST_OFF_DETAIL</th>
+                    <th>TEST_OFF_TIME</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/assets/areas/bonepile/js/bonepile.js?v=@DateTime.Now.Ticks"></script>
+}

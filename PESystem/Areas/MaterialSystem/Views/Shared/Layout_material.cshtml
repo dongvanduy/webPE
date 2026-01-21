@@ -1,0 +1,88 @@
+﻿@using PESystem.Helpers
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Material Control</title>
+    <link rel="icon" href="~/assets/img/material-logo.jpg" type="image/jpg">
+
+    <!-- Bootstrap + Global -->
+    <link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/css/site.min.css" rel="stylesheet" />
+
+    <!-- Icons -->
+    <link href="~/lib/all-fa-icon/css/all.min.css" rel="stylesheet" />
+    <link href="~/assets/vendor/remixicon/remixicon.css" rel="stylesheet" />
+
+    <!-- DataTables Bootstrap 5 -->
+    <link href="~/lib/datatables.bootstrap5.min.css" rel="stylesheet" />
+    <link href="~/lib/buttons.bootstrap5.min.css" rel="stylesheet" />
+
+
+</head>
+<body>
+    <script>
+        (function () {
+            const isSidebarFixed = localStorage.getItem('isSidebarFixed') === 'true';
+            if (isSidebarFixed) {
+                document.documentElement.classList.add('sidebar-expanded');
+            } else {
+                document.documentElement.classList.remove('sidebar-expanded');
+            }
+        })();
+    </script>
+
+    <!-- Sidebar dọc -->
+    <div id="sidebar" class="sidebar">
+        <!-- Logo and Dashboard with fixed checkbox -->
+        <div class="dashboard-container">
+            <a href="@Url.Action("Home", "Home", new { area = "" })">
+                <img src="~/assets/img/material-logo.png" style="width:36px; height:36px;" class="logo" />
+            </a>
+            <span class="spanTitle" style="font-size: 1.0rem; font-weight: bold;">Scrap</span>
+            <div class="fixed-checkbox">
+                <input type="checkbox" id="toggleSidebarFixed" title="Giữ cố định" />
+                <label for="toggleSidebarFixed" title="Giữ cố định">
+                    <i class="ri-checkbox-blank-circle-line"></i>
+                </label>
+            </div>
+        </div>
+        <nav class="nav flex-column">
+            <!-- Menu Items -->
+            <a href="@Url.Action("Home", "Home", new { area = "" })" class="nav-link"><i class="fas fa-home"></i> <span>Trang chủ</span></a>
+            <a href="@Url.Action("Index", "Home", new { area = "MaterialSystem" })" class="nav-link @ViewContext.IsActive("Home", "Index")"><i class=" fas fa-dashboard"></i> <span>Dashboard</span></a>
+            <a href="@Url.Action("Index", "NhapXuatMuon", new { area = "MaterialSystem" })" class="nav-link @ViewContext.IsActive("NhapXuatMuon", "Index")"><i class="fa fa-arrow-down"></i> <span>Nhập Xuất</span></a>
+            <a href="@Url.Action("Index", "ThongKeMuon", new { area = "MaterialSystem" })" class="nav-link @ViewContext.IsActive("ThongKeMuon", "Index")"><i class="fa fa-arrow-up"></i> <span>Thu Liệu</span></a>
+            <a href="@Url.Action("Index", "Tra", new { area = "MaterialSystem" })" class="nav-link @ViewContext.IsActive("Tra", "Index")"><i class="fa fa-chart-bar"></i> <span>Lịch Sử</span></a>
+        </nav>
+    </div>
+
+    <!--SPINER-->
+    <div id="spinner-overlay">
+        <span class="loader"></span>
+    </div>
+    @RenderBody()
+    <!-- jQuery (first) -->
+    <script src="~/lib/jquery-3.7.0.min.js"></script>
+
+    <!-- DataTables core + Bootstrap -->
+    <script src="~/lib/datatable/jquery.datatables.min.js"></script>
+    <script src="~/lib/datatables.bootstrap5.min.js"></script>
+
+    <!-- DataTables Export -->
+    <script src="~/lib/jszip.min.js"></script>
+    <script src="~/lib/datatables.buttons.min.js"></script>
+    <script src="~/lib/buttons.html5.min.js"></script>
+    <script src="~/lib/excel/xlsx.full.min.js"></script>
+    <!-- UI Libraries -->
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/sweetalert2/dist/sweetalert2.all.js"></script>
+    <script src="~/lib/echarts/echarts.min.js"></script>
+
+    <!-- Your custom JS -->
+    <script src="~/js/site.min.js?v=4"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
+

@@ -1,0 +1,82 @@
+@{
+    Layout = "~/Areas/Bonepile/Views/Shared/_Layout_Bonepile.cshtml";
+}
+
+<div class="dashboard-grid">
+    <div class="dashboard-left">
+        <div class="data-card chart-card">
+            <div class="panel-title">Trạng Thái</div>
+            <div class="chart-container-lg">
+                <div id="statusDonutChart" class="echart"></div>
+            </div>
+        </div>
+    </div>
+    <div class="dashboard-right">
+        <div class="data-card kpi-card">
+            <div class="kpi-grid">
+                <div class="donut-box"><div class="donut-label">Total</div><div class="donut-percent" id="totalCount">N/A</div></div>
+                <div class="donut-box"><div class="donut-label">ScrapHasTask</div><div class="donut-percent" id="scrapCount">N/A</div></div>
+                <div class="donut-box"><div class="donut-label">ScrapLacksTask</div><div class="donut-percent" id="noTaskscrapCount">N/A</div></div>
+                <div class="donut-box"><div class="donut-label">WaitingApprovalScrap</div><div class="donut-percent" id="waitingScrapCount">N/A</div></div>
+                <div class="donut-box"><div class="donut-label">Linked</div><div class="donut-percent" id="linkedCount">N/A</div></div>
+                <div class="donut-box"><div class="donut-label">WaitingLink</div><div class="donut-percent" id="waitingLinkCount">N/A</div></div>
+                <div class="donut-box"><div class="donut-label">ApprovedBGA</div><div class="donut-percent" id="approvedBGACount">N/A</div></div>
+                <div class="donut-box"><div class="donut-label">WaitingApprovalBGA</div><div class="donut-percent" id="waitingBGACount">N/A</div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="data-card table-card">
+    <div class="table-responsive">
+        <table id="sumMaterialsTable" class="table table-bordered table-striped bonepile-table" style="width:100%">
+            <thead class="table-light">
+                <tr>
+                    <th>SERIAL_NUMBER</th>
+                    <th>PRODUCT_LINE</th>
+                    <th>MODEL_NAME</th>
+                    <th>MO_NUMBER</th>
+                    <th>WIP_GROUP</th>
+                    <th>ERROR_FLAG</th>
+                    <th>GROUP_NAME</th>
+                    <th>IN_STATION_TIM</th>
+                    <th>STATUS</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="recordsModal" tabindex="-1" aria-labelledby="recordsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="recordsModalLabel">Chi Tiết Serial</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <table id="recordsTable" class="table table-bordered table-striped bonepile-table" style="width:100%">
+                    <thead class="table-light">
+                        <tr>
+                            <th>SERIAL_NUMBER</th>
+                            <th>PRODUCT_LINE</th>
+                            <th>MODEL_NAME</th>
+                            <th>MO_NUMBER</th>
+                            <th>WIP_GROUP</th>
+                            <th>ERROR_FLAG</th>
+                            <th>GROUP_NAME</th>
+                            <th>IN_STATION_TIM</th>
+                            <th>STATUS</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script src="~/assets/areas/bonepile/js/khob31.js?v=@DateTime.Now.Ticks"></script>
+}

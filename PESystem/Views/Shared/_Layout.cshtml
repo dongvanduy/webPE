@@ -1,0 +1,100 @@
+﻿@using PESystem.Helpers
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PE System</title>
+    <link rel="icon" href="~/assets/img/logo.jpg" type="image/jpg">
+    <link href="~/css/site.css?v=@DateTime.Now.Ticks" rel="stylesheet" />
+    <link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/lib/all-fa-icon/css/all.min.css" rel="stylesheet" />
+    <link href="~/assets/vendor/remixicon/remixicon.css" rel="stylesheet" />
+    @await RenderSectionAsync("Styles", required: false)
+
+</head>
+<body>
+    <!-- Áp dụng trạng thái ban đầu từ localStorage -->
+    <script>
+        (function () {
+            try {
+                const isSidebarFixed = localStorage.getItem('isSidebarFixed') === 'true';
+                document.documentElement.classList.toggle('sidebar-expanded', isSidebarFixed);
+            } catch (err) {
+                console.warn('Unable to sync sidebar state from storage', err);
+            }
+        })();
+    </script>
+
+    <div id="sidebar" class="sidebar">
+        <div class="dashboard-container">
+            <a href="@Url.Action("Home", "Home", new { area = "" })">
+                <img src="~/assets/img/logo.jpg" class="logo" alt="Logo" />
+            </a>
+            <span class="spanTitle">PE SYSTEM</span>
+            <div class="fixed-checkbox">
+                <input type="checkbox" id="toggleSidebarFixed" title="Giữ cố định" />
+                <label for="toggleSidebarFixed" title="Giữ cố định">
+                    <i class="ri-checkbox-blank-circle-line"></i>
+                </label>
+            </div>
+        </div>
+        <nav class="nav flex-column">
+            <a href="@Url.Action("Home", "Home", new { area = "" })" class="nav-link">
+                <i class="fas fa-home"></i> <span>Trang chủ</span>
+            </a>
+            <a href="@Url.Action("Index", "AdminView")" class="nav-link @ViewContext.IsActive("AdminView", "Index")">
+                <i class="fas fa-cog"></i> <span>Cài đặt</span>
+            </a>
+        </nav>
+        <ul class="d-flex align-items-center list-unstyled m-0 user-panel">
+            <!-- AVATAR DƯỚI CÙNG SIDEBAR -->
+            @if (User.Identity.IsAuthenticated)
+            {
+                <div class="sidebar-avatar" id="avatarBtn">
+                    <img src="~/assets/img/avatar.png" class="user-avatar" alt="User">
+
+                    <span class="sidebar-avatar-name">
+                        @User.FindFirst("FullName")?.Value
+                    </span>
+                </div>
+            }
+
+        </ul>
+
+    </div>
+    @if (User.Identity.IsAuthenticated)
+    {
+        <div class="user-info-card" id="userInfoCard">
+            <div class="user-info-header">
+                <img src="~/assets/img/avatar.png" class="user-avatar" alt="User">
+                <div class="user-info-text">
+                    <p class="user-name mb-0">@User.FindFirst("FullName")?.Value</p>
+                    <p class="user-email mb-0">@User.FindFirst("Email")?.Value</p>
+                </div>
+            </div>
+            <div class="user-info-actions">
+                <a class="menu-item" asp-action="ChangePassword" asp-controller="Auth">
+                    <i class="fas fa-key"></i> Đổi mật khẩu
+                </a>
+                <form asp-action="Logout" asp-controller="Auth" method="post" class="text-center">
+                    <button type="submit" class="btn btn-ne w-100">Đăng xuất</button>
+                </form>
+            </div>
+        </div>
+    }
+    <div class="dashboard-stage">
+        <div class="dashboard-wrapper">
+            <div id="spinner-overlay">
+                <span class="loader"></span>
+            </div>
+            @RenderBody()
+        </div>
+    </div>
+
+    <script src="~/js/site.min.js?v=4"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/all-fa-icon/js/all.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
