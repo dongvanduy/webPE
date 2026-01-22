@@ -72,9 +72,8 @@ const config = {
         getStatusCounts: "/api/SearchFA/get-status-counts",
         search: "/api/SearchFA/search",
         getFullnameBatch: "/api/SearchFA/get-fullname-batch",
-        handOverStatus: "/api/RepairStatus/hand-over-status",
-        receivingStatus: "/api/RepairStatus/receiving-status",
-        repairStatus: "/api/RepairStatus/repair-status",
+        handOverStatus: "https://sfc-portal.cns.myfiinet.com:443/SfcSmartRepair/api/hand_over_status",
+        receivingStatus: "https://sfc-portal.cns.myfiinet.com:443/SfcSmartRepair/api/receiving_status",
         getAllowedAreas: "/api/SearchFA/get-allowed-areas",
         getCheckPoints: "/api/FixGuide/GetCheckPoints"
     },
@@ -86,6 +85,22 @@ const config = {
         vi: "VI-RE"
     }
 };
+
+//Hàm gọi API SFC
+async function fetchApiSFC(endpoint, payload, method = "POST") {
+    try {
+        const response = await fetch(`${endpoint}`, {
+            method,
+            headers: { "Content-Type": "application/json" },
+            body: method === "POST" ? JSON.stringify(payload) : null
+        });
+        if (!response.ok) throw new Error(`API call failed: ${response.status}`);
+        return await response.json();
+    } catch (error) {
+        console.error(`Error calling ${endpoint}:`, error);
+        throw error;
+    }
+}
 
 // Hàm gọi API chung
 async function fetchApi(endpoint, payload, method = "POST") {
@@ -418,7 +433,7 @@ async function handleGiaoBan() {
     };
 
     try {
-        const result = await fetchApi(config.endpoints.handOverStatus, payload);
+        const result = await fetchApiSFC(config.endpoints.handOverStatus, payload);
         showInfo(`Cập nhật trạng thái bàn giao: ${result.message}`);
         if (result.message.replace(/"/g, "").trim() === "OK") {
             const snsToRemove = allData.map(row => row[0]?.trim());
@@ -466,7 +481,7 @@ async function handleNhanBan() {
         };
 
         try {
-            const result = await fetchApi(config.endpoints.receivingStatus, payload);
+            const result = await fetchApiSFC(config.endpoints.receivingStatus, payload);
             showInfo(`Trạng thái nhận bàn giao: ${result.message}`);
             if (result.message.replace(/"/g, "").trim() === "OK") {
                 const snsToRemove = allData.map(row => row[0]?.trim());

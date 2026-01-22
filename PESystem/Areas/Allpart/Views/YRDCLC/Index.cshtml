@@ -205,7 +205,7 @@
             try {
                 yrdcLcTable.clear();
 
-                const totalResponse = await fetch('https://vnmbd-apapi-cns.myfiinet.com/all_api/api/public/table', {
+                const totalResponse = await fetch('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/RepairStatus/check-yr-by-dclc', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -249,7 +249,7 @@
                 });
                 yrdcLcTable.draw();
 
-                const snResponse = await fetch('https://vnmbd-apapi-cns.myfiinet.com/all_api/api/public/table', {
+                const snResponse = await fetch('http://10.220.130.119:9090/api/RepairStatus/check-yr-by-dclc', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

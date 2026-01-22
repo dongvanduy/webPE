@@ -181,7 +181,7 @@
                     const batch = serialNumbers.slice(i, i + batchSize);
                     const var1 = batch.join(';');
 
-                    const dcLcResponse = await fetch('https://vnmbd-apapi-cns.myfiinet.com/all_api/api/public/table', {
+                    const dcLcResponse = await fetch('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/RepairStatus/info-allpart/with-refdes', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'

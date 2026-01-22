@@ -70,7 +70,7 @@
             }
 
             try {
-                const response = await fetch('https://vnmbd-apapi-cns.myfiinet.com/all_api/api/public/table', {
+                const response = await fetch('https://pe-vnmbd-nvidia-cns.myfiinet.com/api/RepairStatus/info-allpart', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
