@@ -22,8 +22,16 @@
                         <h4 class="card-title fw-bold">📦Total</h4>
                         <div class="d-flex align-items-center justify-content-between gap-2">
                             <h4 id="total-stock" class="mb-0 text-primary fw-bold">Loading...</h4>
-                            <img id="export-scrap-btn" src="~/assets/img/excel.png" alt="Excel Icon" class="excel-icon">
+                            <img id="export-scrap-btn" src="~/assets/img/excel.png" alt="Excel Icon" class="excel-icon" title="Xuất Excel toàn bộ">
                         </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-9">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title fw-bold">Biểu đồ ModelName</h4>
+                        <div id="model-name-chart" style="height: 320px;"></div>
                     </div>
                 </div>
             </div>
@@ -203,5 +211,5 @@
             document.getElementById("button-action").classList.add("hidden");
         });
     </script>
-    <script src="~/assets/areas/repositories/js/khook.js?v=@DateTime.Now.Ticks"></script>
+    <script src="~/assets/areas/repositories/js/khoB28.js?v=@DateTime.Now.Ticks"></script>
 }
