@@ -8,7 +8,7 @@ namespace PESystem.Areas.AOI.Controllers
     {
         private readonly IHttpClientFactory _clientFactory;
         // URL của Python Service chạy offline trên server (dùng IP loopback)
-        private const string AI_SERVICE_URL = "http://127.0.0.1:5000";
+        private const string AI_SERVICE_URL = "http://0.0.0.0:5000";
 
         public CheckDrawController(IHttpClientFactory clientFactory)
         {
