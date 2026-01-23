@@ -37,6 +37,7 @@ namespace API_WEB.ModelsDB
         public virtual DbSet<KhoScrap> KhoScraps { get; set; }
         public virtual DbSet<LogKhoScrap> Logs { get; set; }
         public virtual DbSet<KhoOk> KhoOks { get; set; }
+        public virtual DbSet<KhoB28> KhoB28s { get; set; }
         public virtual DbSet<ScanLog> ScanLogs { get; set; }
         public virtual DbSet<BonepileWaiting> BonepileWaiting { get; set; }
         public virtual DbSet<BonepileAfterStatusHistory> BonepileAfterStatusHistories { get; set; } = null!;
@@ -206,4 +207,3 @@ namespace API_WEB.ModelsDB
         partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
     }
 }
-
