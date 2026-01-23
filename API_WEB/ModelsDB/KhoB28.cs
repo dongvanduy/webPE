@@ -29,17 +29,12 @@ namespace API_WEB.ModelsDB
         public DateTime? InDate { get; set; }
 
         [StringLength(100)]
-        public string? BorrowBy { get; set; }
+        public string? Borrower { get; set; }
 
         [Column(TypeName = "datetime")]
-        public DateTime? BorrowDate { get; set; }
+        public DateTime? BorrowTime { get; set; }
 
-        [StringLength(50)]
-        public string? Status { get; set; }
-
-        public string? ShelfCode { get; set; }
-        public int? ColumnNumber { get; set; }
-        public int? LevelNumber { get; set; }
         public string? Note { get; set; }
+        public string? Status { get; set; }
     }
 }
