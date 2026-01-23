@@ -12,13 +12,13 @@ var builder = WebApplication.CreateBuilder(args);
 // ===== FIX UPLOAD LIMIT (Kestrel) =====
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.Limits.MaxRequestBodySize = 209715200; // 200 MB
+    options.Limits.MaxRequestBodySize = 409715200; // 200 MB
 });
 
 // ===== FIX UPLOAD LIMIT (Form) =====
 builder.Services.Configure<FormOptions>(o =>
 {
-    o.MultipartBodyLengthLimit = 200 * 1024 * 1024;
+    o.MultipartBodyLengthLimit = 400 * 1024 * 1024;
 });
 
 // ---- Config ----
@@ -94,7 +94,16 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+// Trong file Program.cs
+
+var provider = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider();
+// Thêm hỗ trợ cho .mjs
+provider.Mappings[".mjs"] = "application/javascript";
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    ContentTypeProvider = provider
+});
 
 app.UseRouting();
 

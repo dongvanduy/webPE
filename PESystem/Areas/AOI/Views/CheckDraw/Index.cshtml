@@ -1,273 +1,418 @@
 ﻿@{
-    ViewData["Title"] = "Hệ thống AOI Web";
+    ViewData["Title"] = "PCB AI Inspector";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
 <style>
-    #canvas-container {
+    /* Giao diện Toolbar */
+    .toolbar-container {
+        background: #f0f2f5;
+        padding: 10px;
+        border-bottom: 1px solid #ccc;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+
+    /* Khung chứa Canvas */
+    .canvas-wrapper {
         position: relative;
-        display: inline-block;
-        border: 2px solid #666;
-        background-color: #333;
+        width: 100%;
+        height: 80vh; /* Chiều cao 80% màn hình */
         overflow: hidden;
+        background: #333; /* Màu nền tối để dễ nhìn board */
+        border: 1px solid #000;
     }
 
-    canvas {
-        cursor: crosshair;
-        display: block;
-    }
-
-    .zone-item {
-        background-color: #fff3cd;
-        border: 1px solid #ffecb5;
-        margin-bottom: 5px;
-        padding: 8px;
-        border-radius: 4px;
+    /* Màn hình loading */
+    #loadingOverlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.7);
+        z-index: 9999;
+        color: white;
         display: flex;
-        justify-content: space-between;
+        flex-direction: column;
         align-items: center;
+        justify-content: center;
     }
+
+    .loader {
+        border: 8px solid #f3f3f3;
+        border-top: 8px solid #3498db;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        animation: spin 1s linear infinite;
+        margin-bottom: 15px;
+    }
+
+    @@keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* Nút bấm */
+    .btn-tool {
+        margin-right: 5px;
+    }
+
+        .btn-tool.active {
+            border: 2px solid #0056b3;
+            background-color: #e2e6ea;
+        }
 </style>
 
-<div class="container-fluid mt-3">
-    <div class="row">
-        <div class="col-md-3">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="fas fa-tools"></i> Công cụ</h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">1. Chọn Bản Vẽ:</label>
-                        <input type="file" id="inpFile" class="form-control" accept="image/*,.pdf" />
-                    </div>
+<div class="row">
+    <div class="col-12">
+        <div class="toolbar-container d-flex flex-wrap align-items-center">
+            <input type="file" id="inpFile" class="form-control w-auto me-3" accept=".jpg,.jpeg,.png,.pdf" />
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">2. Vẽ Vùng Zoom (Zone):</label>
-                        <div class="d-grid gap-2">
-                            <button class="btn btn-outline-warning active" id="btnDrawMode">
-                                <i class="fas fa-pencil-alt"></i> Chế độ Vẽ (Kéo thả)
-                            </button>
-                        </div>
-                        <hr />
-                        <h6>Danh sách Zone:</h6>
-                        <div id="zoneList" style="max-height: 200px; overflow-y: auto;">
-                            <small class="text-muted">Chưa có vùng nào.</small>
-                        </div>
-                        <button class="btn btn-sm btn-danger w-100 mt-2" onclick="clearZones()">Xóa Tất Cả</button>
-                    </div>
+            <button class="btn btn-primary btn-tool" onclick="runAI()">
+                <i class="fa fa-bolt"></i> Quét AI (Scan)
+            </button>
 
-                    <hr />
-                    <button id="btnProcess" class="btn btn-success w-100 fw-bold py-2" onclick="submitData()" disabled>
-                        <i class="fas fa-microchip"></i> Xử lý AI & Xuất PPTX
-                    </button>
+            <div class="vr mx-2"></div>
 
-                    <div id="loader" class="text-center mt-3 d-none">
-                        <div class="spinner-border text-primary" role="status"></div>
-                        <p class="mt-2 text-primary">Đang phân tích AI...</p>
-                    </div>
+            <button class="btn btn-light btn-tool" id="btnPan" onclick="setMode('pan')">
+                <i class="fa fa-hand-paper-o"></i> Di chuyển (Pan)
+            </button>
 
-                    <div id="resultBox" class="mt-3 d-none">
-                        <a id="btnDownload" href="#" class="btn btn-info w-100 fw-bold text-white">
-                            <i class="fas fa-download"></i> Tải Báo Cáo PPTX
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
+            <button class="btn btn-light btn-tool" id="btnZone" onclick="setMode('draw')">
+                <i class="fa fa-pencil-square-o"></i> Vẽ Zone
+            </button>
 
-        <div class="col-md-9 bg-secondary p-2 text-center" style="height: 85vh; overflow: auto;">
-            <div id="canvas-container">
-                <canvas id="mainCanvas"></canvas>
-            </div>
+            <div class="vr mx-2"></div>
+
+            <button class="btn btn-success btn-tool" onclick="alert('Chức năng đang phát triển')">
+                <i class="fa fa-file-powerpoint-o"></i> Xuất Báo Cáo
+            </button>
+
+            <span class="ms-auto fw-bold" id="statusText">Ready</span>
         </div>
     </div>
 </div>
 
-@section Scripts {+++++9
-    <script>
-        // Sử dụng Vanilla JS để tránh lỗi "$ is not defined"
-        const canvas = document.getElementById('mainCanvas');
-        const ctx = canvas.getContext('2d');
-        let img = new Image();
-        let zones = []; // {x, y, w, h}
-        let isDrawing = false;
-        let startX, startY;
+<div class="row mt-2">
+    <div class="col-12">
+        <div class="canvas-wrapper" id="canvasWrapper">
+            <canvas id="c"></canvas>
+        </div>
+    </div>
+</div>
 
-        // 1. Load Ảnh
-        document.getElementById('inpFile').addEventListener('change', function (e) {
-            if (e.target.files && e.target.files[0]) {
+<div id="loadingOverlay" style="display:none;">
+    <div class="loader"></div>
+    <h4 id="loadingText">Đang xử lý...</h4>
+</div>
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/fabric.min.js"></script>
+
+<script type="module">
+    // Import PDF.js module - sẽ tự động set globalThis.pdfjsLib
+    await import('/lib/pdfjs/build/pdf.mjs');
+    
+    // Cấu hình Worker
+    pdfjsLib.GlobalWorkerOptions.workerSrc = '/lib/pdfjs/build/pdf.worker.mjs';
+    console.log("PDF.js loaded successfully");
+    
+    // Thông báo đã sẵn sàng
+    window.pdfjsReady = true;
+    window.dispatchEvent(new Event('pdfjsReady'));
+</script>
+<script>
+    // --- CẤU HÌNH PDF.js ---
+    // Sử dụng Promise để đợi pdfjsLib được load từ module
+    let pdfjsLibReady = new Promise((resolve) => {
+        if (window.pdfjsReady) {
+            resolve();
+        } else {
+            window.addEventListener('pdfjsReady', () => resolve());
+        }
+    });
+
+    let canvas;
+    let currentMode = 'pan'; // 'pan' hoặc 'draw'
+    let isDragging = false;
+    let lastPosX, lastPosY;
+    let imgElement = null; // Giữ ảnh gốc sau khi load
+
+    // 1. KHỞI TẠO CANVAS
+    $(document).ready(function () {
+        initCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        $('#btnPan').addClass('active'); // Mặc định là chế độ Pan
+    });
+
+    function initCanvas() {
+        const wrapper = document.getElementById('canvasWrapper');
+        canvas = new fabric.Canvas('c', {
+            width: wrapper.clientWidth,
+            height: wrapper.clientHeight,
+            fireRightClick: true,  // Cho phép chuột phải
+            stopContextMenu: true, // Chặn menu chuột phải mặc định của trình duyệt
+            selection: false       // Tắt selection box mặc định của fabric
+        });
+
+        // Sự kiện chuột
+        canvas.on('mouse:wheel', onZoom);
+        canvas.on('mouse:down', onMouseDown);
+        canvas.on('mouse:move', onMouseMove);
+        canvas.on('mouse:up', onMouseUp);
+    }
+
+    function resizeCanvas() {
+        const wrapper = document.getElementById('canvasWrapper');
+        canvas.setWidth(wrapper.clientWidth);
+        canvas.setHeight(wrapper.clientHeight);
+    }
+
+    // 2. XỬ LÝ UPLOAD FILE (ẢNH HOẶC PDF)
+    document.getElementById('inpFile').onchange = async function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        showLoading(true, "Đang đọc file...");
+        canvas.clear(); // Xóa canvas cũ
+
+        try {
+            if (file.type === 'application/pdf') {
+                await renderPdfToCanvas(file);
+            } else {
+                // Đọc như ảnh thường
                 const reader = new FileReader();
-                reader.onload = function (evt) {
-                    img.onload = () => {
-                        canvas.width = img.width;
-                        canvas.height = img.height;
-                        draw();
-                        document.getElementById('btnProcess').disabled = false;
-                    }
-                    img.src = evt.target.result;
-                }
-                reader.readAsDataURL(e.target.files[0]);
+                reader.onload = function(f) {
+                    loadImageToFabric(f.target.result);
+                };
+                reader.readAsDataURL(file);
             }
-        });
+        } catch (err) {
+            console.error(err);
+            alert("Lỗi đọc file: " + err.message);
+            showLoading(false);
+        }
+    };
 
-        // 2. Hàm vẽ
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            // Vẽ ảnh nền
-            if (img.src) {
-                ctx.drawImage(img, 0, 0);
-            }
+    // Hàm render PDF -> Ảnh (Dùng PDF.js)
+    async function renderPdfToCanvas(file) {
+        // Đợi pdfjsLib sẵn sàng
+        await pdfjsLibReady;
+        
+        const fileData = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument(fileData).promise;
 
-            // Vẽ các zone
-            zones.forEach((z, i) => {
-                ctx.strokeStyle = '#ff6600';
-                ctx.lineWidth = 5;
-                ctx.setLineDash([10, 5]);
-                ctx.strokeRect(z.x, z.y, z.w, z.h);
+        // Lấy trang 1
+        const page = await pdf.getPage(1);
 
-                ctx.fillStyle = '#ff6600';
-                ctx.font = 'bold 40px Arial';
-                ctx.fillText(`ZONE ${i + 1}`, z.x, z.y - 10);
+        // Tạo canvas ảo để vẽ PDF lên
+        const viewport = page.getViewport({ scale: 2.0 }); // Scale 2.0 để ảnh nét hơn
+        const tempCanvas = document.createElement('canvas');
+        const context = tempCanvas.getContext('2d');
+        tempCanvas.height = viewport.height;
+        tempCanvas.width = viewport.width;
+
+        await page.render({
+            canvasContext: context,
+            viewport: viewport
+        }).promise;
+
+        // Chuyển canvas ảo thành DataURL (base64 image)
+        const imgData = tempCanvas.toDataURL('image/png');
+        loadImageToFabric(imgData);
+    }
+
+    // Hàm vẽ ảnh nền lên Fabric
+    function loadImageToFabric(dataUrl) {
+        fabric.Image.fromURL(dataUrl, function(img) {
+            imgElement = img;
+
+            // Tính toán scale để ảnh vừa khít màn hình lúc đầu
+            const wrapper = document.getElementById('canvasWrapper');
+            const scale = Math.min(
+                wrapper.clientWidth / img.width,
+                wrapper.clientHeight / img.height
+            );
+
+            // Set ảnh nền
+            canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
+                scaleX: scale,
+                scaleY: scale,
+                originX: 'left',
+                originY: 'top'
             });
-            ctx.setLineDash([]);
-        }
 
-        // 3. Sự kiện chuột (Mouse Events)
-        function getMousePos(evt) {
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            return {
-                x: (evt.clientX - rect.left) * scaleX,
-                y: (evt.clientY - rect.top) * scaleY
-            };
-        }
-
-        canvas.addEventListener('mousedown', e => {
-            isDrawing = true;
-            const p = getMousePos(e);
-            startX = p.x;
-            startY = p.y;
+            // Reset viewport
+            canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+            showLoading(false);
+            updateStatus("Đã tải ảnh. Sẵn sàng quét AI.");
         });
+    }
 
-        canvas.addEventListener('mousemove', e => {
-            if (!isDrawing) return;
-            const p = getMousePos(e);
-            draw();
-
-            // Vẽ khung đang kéo (preview)
-            ctx.strokeStyle = 'red';
-            ctx.lineWidth = 3;
-            ctx.strokeRect(startX, startY, p.x - startX, p.y - startY);
-        });
-
-        canvas.addEventListener('mouseup', e => {
-            if (!isDrawing) return;
-            isDrawing = false;
-            const p = getMousePos(e);
-
-            // Tính toán toạ độ chuẩn (xử lý kéo ngược)
-            let x = Math.min(startX, p.x);
-            let y = Math.min(startY, p.y);
-            let w = Math.abs(p.x - startX);
-            let h = Math.abs(p.y - startY);
-
-            // Chỉ lưu nếu vùng vẽ đủ lớn (>30px)
-            if (w > 30 && h > 30) {
-                zones.push({ x, y, w, h });
-                updateZoneUI();
-            }
-            draw();
-        });
-
-        // 4. Cập nhật UI danh sách Zone
-        function updateZoneUI() {
-            const list = document.getElementById('zoneList');
-            list.innerHTML = '';
-
-            if (zones.length === 0) {
-                list.innerHTML = '<small class="text-muted">Chưa có vùng nào.</small>';
-                return;
-            }
-
-            zones.forEach((z, i) => {
-                const item = document.createElement('div');
-                item.className = 'zone-item';
-                item.innerHTML = `<span><strong>Zone ${i + 1}</strong></span>
-                                  <button class="btn btn-sm btn-danger py-0" onclick="removeZone(${i})">X</button>`;
-                list.appendChild(item);
-            });
+    // 3. GỌI AI BACKEND
+    function runAI() {
+        const fileInput = document.getElementById('inpFile');
+        if(fileInput.files.length === 0) {
+            alert("Vui lòng chọn file trước!");
+            return;
         }
 
-        // Đưa hàm ra global scope để gọi được từ onclick HTML
-        window.removeZone = function(index) {
-            zones.splice(index, 1);
-            updateZoneUI();
-            draw();
-        }
+        showLoading(true, "AI đang phân tích bo mạch...");
 
-        window.clearZones = function() {
-            zones = [];
-            updateZoneUI();
-            draw();
-        }
+        const formData = new FormData();
+        formData.append("file", fileInput.files[0]);
 
-        // 5. Gửi dữ liệu về Server
-        window.submitData = function() {
-            if (zones.length === 0) {
-                alert("Bạn chưa vẽ vùng Zoom nào!");
-                return;
-            }
+        $.ajax({
+            url: '/AOI/CheckDraw/ScanBoard', // Gọi Controller ASP.NET
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(res) {
+                // res là JSON trả về từ Python
+                // { components: [ {box: [x1,y1,x2,y2], designator: "R1"} ] }
 
-            // Chuyển đổi định dạng cho Python: [x1, y1, x2, y2]
-            const pyZones = zones.map(z => [
-                Math.round(z.x),
-                Math.round(z.y),
-                Math.round(z.x + z.w),
-                Math.round(z.y + z.h)
-            ]);
-
-            const fileInput = document.getElementById('inpFile');
-            const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
-            formData.append('zonesData', JSON.stringify(pyZones));
-
-            // Hiển thị loading
-            const loader = document.getElementById('loader');
-            const resultBox = document.getElementById('resultBox');
-            const btnProcess = document.getElementById('btnProcess');
-
-            loader.classList.remove('d-none');
-            resultBox.classList.add('d-none');
-            btnProcess.disabled = true;
-
-            // Sử dụng Fetch API thay vì $.ajax để không phụ thuộc jQuery
-            fetch('/AOI/CheckDraw/Analyze', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(res => {
-                loader.classList.add('d-none');
-                btnProcess.disabled = false;
-
-                if (res.success) {
-                    const btnDownload = document.getElementById('btnDownload');
-                    btnDownload.href = res.downloadUrl;
-                    resultBox.classList.remove('d-none');
-                    alert("Xử lý thành công!");
+                if (res.status && res.status === 'error') {
+                    alert(res.message);
+                } else if (res.components) {
+                    drawComponents(res.components);
+                    updateStatus(`Tìm thấy ${res.components.length} linh kiện.`);
                 } else {
-                    console.error(res);
-                    alert("Lỗi: " + res.message);
+                    console.log(res);
+                    alert("Phản hồi không đúng định dạng JSON");
                 }
-            })
-            .catch(err => {
-                loader.classList.add('d-none');
-                btnProcess.disabled = false;
-                console.error(err);
-                alert("Lỗi kết nối Server.");
+            },
+            error: function(xhr, status, error) {
+                alert("Lỗi kết nối: " + error);
+                console.error(xhr.responseText);
+            },
+            complete: function() {
+                showLoading(false);
+            }
+        });
+    }
+
+    function drawComponents(components) {
+        // Lấy thông số scale hiện tại của ảnh nền để vẽ box đúng vị trí tương đối
+        if (!canvas.backgroundImage) return;
+
+        const bgScaleX = canvas.backgroundImage.scaleX;
+        const bgScaleY = canvas.backgroundImage.scaleY;
+
+        // Xóa các box cũ nếu có
+        const objects = canvas.getObjects();
+        objects.forEach(obj => {
+            if (obj.data && obj.data.type === 'component') {
+                canvas.remove(obj);
+            }
+        });
+
+        components.forEach(c => {
+            // Box từ AI trả về là toạ độ trên ảnh gốc (Pixel)
+            const [x1, y1, x2, y2] = c.box;
+
+            const w = x2 - x1;
+            const h = y2 - y1;
+
+            const rect = new fabric.Rect({
+                left: x1 * bgScaleX, // Nhân với scale của ảnh nền
+                top: y1 * bgScaleY,
+                width: w * bgScaleX,
+                height: h * bgScaleY,
+                fill: 'transparent',
+                stroke: '#00ff00', // Màu xanh lá
+                strokeWidth: 2,
+                selectable: true,  // Cho phép click chọn
+                hasRotatingPoint: false
             });
+
+            // Lưu dữ liệu vào object để dùng sau (ví dụ: hiển thị tên)
+            rect.data = { type: 'component', designator: c.designator };
+
+            canvas.add(rect);
+        });
+
+        canvas.requestRenderAll();
+    }
+
+    // 4. CÁC HÀM TIỆN ÍCH (ZOOM, PAN, MODE)
+    function onZoom(opt) {
+        var delta = opt.e.deltaY;
+        var zoom = canvas.getZoom();
+        zoom *= 0.999 ** delta;
+        if (zoom > 20) zoom = 20;
+        if (zoom < 0.01) zoom = 0.01;
+        canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
+        opt.e.preventDefault();
+        opt.e.stopPropagation();
+    }
+
+    function onMouseDown(opt) {
+        var evt = opt.e;
+        if (currentMode === 'pan') {
+            isDragging = true;
+            lastPosX = evt.clientX;
+            lastPosY = evt.clientY;
+            canvas.setCursor('grab');
         }
-    </script>
-}
+    }
+
+    function onMouseMove(opt) {
+        if (isDragging && currentMode === 'pan') {
+            var e = opt.e;
+            var vpt = canvas.viewportTransform;
+            vpt[4] += e.clientX - lastPosX;
+            vpt[5] += e.clientY - lastPosY;
+            canvas.requestRenderAll();
+            lastPosX = e.clientX;
+            lastPosY = e.clientY;
+        }
+    }
+
+    function onMouseUp(opt) {
+        if (currentMode === 'pan') {
+            isDragging = false;
+            canvas.setCursor('default');
+        }
+    }
+
+    function setMode(mode) {
+        currentMode = mode;
+        // Update UI Button style
+        $('.btn-tool').removeClass('active');
+        if (mode === 'pan') {
+            $('#btnPan').addClass('active');
+            canvas.selection = false; // Tắt selection box
+            canvas.forEachObject(o => o.selectable = false); // Không cho chọn box khi đang pan
+        } else if (mode === 'draw') {
+            $('#btnZone').addClass('active');
+            canvas.selection = true;
+            canvas.forEachObject(o => o.selectable = true);
+        }
+    }
+
+    function showLoading(show, text) {
+        const overlay = document.getElementById('loadingOverlay');
+        const txt = document.getElementById('loadingText');
+        if (show) {
+            overlay.style.display = 'flex';
+            if (text) txt.innerText = text;
+        } else {
+            overlay.style.display = 'none';
+        }
+    }
+
+    function updateStatus(msg) {
+        document.getElementById('statusText').innerText = msg;
+    }
+</script>

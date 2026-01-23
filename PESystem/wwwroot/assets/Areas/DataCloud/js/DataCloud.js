@@ -554,7 +554,7 @@
         if (!files.length) return;
 
         // Kiểm tra kích thước tệp
-        const maxSize = 200 * 1024 * 1024; // 100MB
+        const maxSize = 400 * 1024 * 1024; // 100MB
         for (let file of files) {
             if (file.size > maxSize) {
                 swalWithBootstrapButtons.fire({
@@ -619,7 +619,7 @@
         if (!files.length) return;
 
         // Kiểm tra kích thước tệp
-        const maxSize = 200 * 1024 * 1024; // 100MB
+        const maxSize = 400 * 1024 * 1024; // 100MB
         for (let file of files) {
             if (file.size > maxSize) {
                 swalWithBootstrapButtons.fire({
@@ -691,7 +691,7 @@
             const files = e.originalEvent.dataTransfer.files;
             if (!files.length) return;
             // Kiểm tra kích thước tệp
-            const maxSize = 200 * 1024 * 1024; // 100MB
+            const maxSize = 400 * 1024 * 1024; // 100MB
             for (let file of files) {
                 if (file.size > maxSize) {
                     swalWithBootstrapButtons.fire({

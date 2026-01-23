@@ -1,17 +1,18 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics;
-using System.Text.Json;
+using System.Net.Http.Headers;
 
 namespace PESystem.Areas.AOI.Controllers
 {
     [Area("AOI")]
     public class CheckDrawController : Controller
     {
-        private readonly IWebHostEnvironment _env;
+        private readonly IHttpClientFactory _clientFactory;
+        // URL của Python Service chạy offline trên server (dùng IP loopback)
+        private const string AI_SERVICE_URL = "http://127.0.0.1:5000";
 
-        public CheckDrawController(IWebHostEnvironment env)
+        public CheckDrawController(IHttpClientFactory clientFactory)
         {
-            _env = env;
+            _clientFactory = clientFactory;
         }
 
         public IActionResult Index()
@@ -20,76 +21,49 @@ namespace PESystem.Areas.AOI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Analyze(IFormFile file, string zonesData)
+        public async Task<IActionResult> ScanBoard(IFormFile file)
         {
-            if (file == null || string.IsNullOrEmpty(zonesData))
-                return Json(new { success = false, message = "Thiếu file hoặc chưa vẽ vùng zoom." });
+            if (file == null || file.Length == 0)
+                return BadRequest(new { status = "error", message = "Vui lòng chọn file ảnh hoặc PDF." });
 
             try
             {
-                // 1. Lưu file
-                string uploadFolder = Path.Combine(_env.WebRootPath, "uploads", "aoi");
-                if (!Directory.Exists(uploadFolder)) Directory.CreateDirectory(uploadFolder);
+                // Tạo Client kết nối
+                var client = _clientFactory.CreateClient();
+                client.Timeout = TimeSpan.FromMinutes(30); // Tăng timeout vì AI chạy CPU khá lâu
 
-                string uniqueName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
-                string filePath = Path.Combine(uploadFolder, uniqueName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                using (var content = new MultipartFormDataContent())
                 {
-                    await file.CopyToAsync(stream);
-                }
-
-                // 2. Cấu hình Python (QUAN TRỌNG: Sửa đường dẫn Python.exe)
-                string pythonExe = @"C:\Users\ADMIN\AppData\Local\Programs\Python\Python311\python.exe";
-                string scriptPath = Path.Combine(_env.ContentRootPath, "PythonScripts", "aoi_engine.py");
-                string modelPath = Path.Combine(_env.ContentRootPath, "PythonScripts", "best.pt");
-
-                // Escape JSON
-                string escapedZones = zonesData.Replace("\"", "\\\"");
-
-                // 3. Gọi Python
-                var start = new ProcessStartInfo
-                {
-                    FileName = pythonExe,
-                    Arguments = $"\"{scriptPath}\" --image \"{filePath}\" --outdir \"{uploadFolder}\" --model \"{modelPath}\" --zones \"{escapedZones}\"",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true
-                };
-
-                using (var process = Process.Start(start))
-                {
-                    string output = await process.StandardOutput.ReadToEndAsync();
-                    string error = await process.StandardError.ReadToEndAsync();
-                    process.WaitForExit();
-
-                    if (!string.IsNullOrEmpty(output))
+                    using (var stream = file.OpenReadStream())
                     {
-                        try
+                        var fileContent = new StreamContent(stream);
+                        fileContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
+                        content.Add(fileContent, "file", file.FileName);
+
+                        // Gọi sang Python Service API
+                        // Lưu ý: Endpoint bên Python phải là /api/scan như đã cấu hình
+                        var response = await client.PostAsync($"{AI_SERVICE_URL}/api/scan", content);
+
+                        if (response.IsSuccessStatusCode)
                         {
-                            using (JsonDocument doc = JsonDocument.Parse(output))
-                            {
-                                JsonElement root = doc.RootElement;
-                                if (root.TryGetProperty("status", out var s) && s.GetString() == "success")
-                                {
-                                    string pptxFile = root.GetProperty("pptx_file").GetString();
-                                    return Json(new { success = true, downloadUrl = $"/uploads/aoi/{pptxFile}" });
-                                }
-                                return Json(new { success = false, message = "Lỗi Python: " + (root.TryGetProperty("error", out var err) ? err.GetString() : output) });
-                            }
+                            var jsonString = await response.Content.ReadAsStringAsync();
+                            // Trả nguyên JSON từ Python về cho Frontend xử lý
+                            return Content(jsonString, "application/json");
                         }
-                        catch
+                        else
                         {
-                            return Json(new { success = false, message = "Lỗi Parse JSON Output: " + output });
+                            return StatusCode((int)response.StatusCode, new { status = "error", message = "Lỗi từ AI Server: " + response.ReasonPhrase });
                         }
                     }
-                    return Json(new { success = false, message = "Lỗi System: " + error });
                 }
+            }
+            catch (HttpRequestException ex)
+            {
+                return StatusCode(500, new { status = "error", message = "Không kết nối được AI Service (Python chưa chạy?). Chi tiết: " + ex.Message });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                return StatusCode(500, new { status = "error", message = "Lỗi hệ thống: " + ex.Message });
             }
         }
     }
