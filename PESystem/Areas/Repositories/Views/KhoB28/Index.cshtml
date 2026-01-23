@@ -1,0 +1,44 @@
+﻿@{
+    ViewData["Title"] = "KHO B28";
+    Layout = "~/Areas/Repositories/Views/Shared/_Layout_Repo.cshtml";
+}
+
+<div class="dashboard-stage">
+    <div class="dashboard-wrapper">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="mb-0">Kho B28</h3>
+            <div class="d-flex gap-2">
+                <button id="import-btn" class="btn btn-ne">Nhập</button>
+                <button id="export-btn" class="btn btn-ne">Xuất</button>
+                <button id="borrow-btn" class="btn btn-ne">Mượn</button>
+            </div>
+        </div>
+
+        <input type="hidden" id="current-user" value="@User.Identity?.Name" />
+
+        <div class="datatable-wrapper">
+            <table id="kho-b28-table" class="table table-bordered table-striped" style="width:100%">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>SERIAL_NUMBER</th>
+                        <th>MODEL_NAME</th>
+                        <th>LOCATION</th>
+                        <th>IN_BY</th>
+                        <th>IN_DATE</th>
+                        <th>BORROW_BY</th>
+                        <th>BORROW_DATE</th>
+                        <th>STATUS</th>
+                        <th>NOTE</th>
+                        <th>ACTION</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/assets/Areas/Repositories/js/khoB28.js?v=@DateTime.Now.Ticks"></script>
+}
