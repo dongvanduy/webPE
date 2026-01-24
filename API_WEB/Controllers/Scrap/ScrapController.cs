@@ -12,6 +12,8 @@ using System.Net.Http.Headers;
 using System.Text.Json.Serialization;
 using Oracle.ManagedDataAccess.Client;
 using System.Globalization;
+using System.IO;
+using OfficeOpenXml;
 
 namespace API_WEB.Controllers.Scrap
 {
@@ -94,6 +96,181 @@ namespace API_WEB.Controllers.Scrap
             {
                 await _sqlContext.HistoryScrapLists.AddRangeAsync(historyEntries);
             }
+        }
+
+        [HttpPost("upload-tasknumber-po")]
+        public async Task<IActionResult> UploadTaskNumberPo(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest(new { message = "File không hợp lệ." });
+            }
+
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+            using var stream = new MemoryStream();
+            await file.CopyToAsync(stream);
+            stream.Position = 0;
+
+            using var package = new ExcelPackage(stream);
+            var worksheet = package.Workbook.Worksheets.FirstOrDefault();
+
+            if (worksheet == null)
+            {
+                return BadRequest(new { message = "Không tìm thấy sheet trong file Excel." });
+            }
+
+            var headerMap = BuildHeaderMap(worksheet);
+
+            if (!headerMap.TryGetValue("serialnumber", out var serialCol)
+                || !headerMap.TryGetValue("tasknumber", out var taskCol)
+                || !headerMap.TryGetValue("po", out var poCol))
+            {
+                return BadRequest(new { message = "File Excel phải có các cột SerialNumber, TaskNumber và PO." });
+            }
+
+            var rowCount = worksheet.Dimension.Rows;
+            var updates = new List<TaskPoUpdateRow>();
+
+            for (var row = 2; row <= rowCount; row++)
+            {
+                var serialNumber = worksheet.Cells[row, serialCol].Text.Trim();
+                if (string.IsNullOrEmpty(serialNumber))
+                {
+                    continue;
+                }
+
+                var taskNumber = worksheet.Cells[row, taskCol].Text.Trim();
+                var po = worksheet.Cells[row, poCol].Text.Trim();
+
+                if (string.IsNullOrEmpty(taskNumber) && string.IsNullOrEmpty(po))
+                {
+                    continue;
+                }
+
+                updates.Add(new TaskPoUpdateRow
+                {
+                    RowIndex = row,
+                    SerialNumber = serialNumber,
+                    TaskNumber = string.IsNullOrEmpty(taskNumber) ? null : taskNumber,
+                    PO = string.IsNullOrEmpty(po) ? null : po
+                });
+            }
+
+            if (!updates.Any())
+            {
+                return BadRequest(new { message = "Không có dữ liệu hợp lệ để cập nhật." });
+            }
+
+            var serialNumbers = updates.Select(u => u.SerialNumber).Distinct().ToList();
+            var scrapRecords = await _sqlContext.ScrapLists
+                .Where(s => serialNumbers.Contains(s.SN))
+                .ToListAsync();
+
+            var scrapDict = scrapRecords.ToDictionary(s => s.SN, StringComparer.OrdinalIgnoreCase);
+            var missingSerials = serialNumbers.Where(sn => !scrapDict.ContainsKey(sn)).ToList();
+
+            if (missingSerials.Any())
+            {
+                return BadRequest(new { message = $"Các SerialNumber sau không tồn tại trong ScrapList: {string.Join(", ", missingSerials)}" });
+            }
+
+            var updatedRecords = new List<ScrapList>();
+
+            foreach (var update in updates)
+            {
+                if (!scrapDict.TryGetValue(update.SerialNumber, out var record))
+                {
+                    continue;
+                }
+
+                var isUpdated = false;
+
+                if (!string.IsNullOrEmpty(update.TaskNumber))
+                {
+                    record.TaskNumber = update.TaskNumber;
+                    isUpdated = true;
+                }
+
+                if (!string.IsNullOrEmpty(update.PO))
+                {
+                    record.PO = update.PO;
+                    isUpdated = true;
+                }
+
+                if (isUpdated)
+                {
+                    updatedRecords.Add(record);
+                }
+            }
+
+            if (!updatedRecords.Any())
+            {
+                return BadRequest(new { message = "Không có bản ghi nào được cập nhật." });
+            }
+
+            await AddHistoryEntriesAsync(updatedRecords, "update-task-po");
+            await _sqlContext.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Cập nhật thành công TaskNumber/PO.",
+                updated = updatedRecords.Count
+            });
+        }
+
+        private static Dictionary<string, int> BuildHeaderMap(ExcelWorksheet worksheet)
+        {
+            var headerMap = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            var columnCount = worksheet.Dimension.Columns;
+
+            for (var col = 1; col <= columnCount; col++)
+            {
+                var header = NormalizeHeader(worksheet.Cells[1, col].Text);
+                if (string.IsNullOrEmpty(header))
+                {
+                    continue;
+                }
+
+                if (header == "sn")
+                {
+                    header = "serialnumber";
+                }
+                else if (header is "serial" or "serialno" or "serialnum")
+                {
+                    header = "serialnumber";
+                }
+                else if (header is "task" or "taskno")
+                {
+                    header = "tasknumber";
+                }
+                else if (header is "purchaseorder" or "ponumber" or "pono")
+                {
+                    header = "po";
+                }
+
+                if (!headerMap.ContainsKey(header))
+                {
+                    headerMap.Add(header, col);
+                }
+            }
+
+            return headerMap;
+        }
+
+        private static string NormalizeHeader(string header)
+        {
+            return string.IsNullOrWhiteSpace(header)
+                ? string.Empty
+                : header.Trim().Replace(" ", "").Replace("_", "").ToLowerInvariant();
+        }
+
+        private class TaskPoUpdateRow
+        {
+            public int RowIndex { get; set; }
+            public string SerialNumber { get; set; } = string.Empty;
+            public string? TaskNumber { get; set; }
+            public string? PO { get; set; }
         }
 
         // API INPUT-SN ADAPTER
