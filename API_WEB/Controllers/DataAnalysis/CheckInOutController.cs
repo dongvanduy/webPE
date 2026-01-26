@@ -146,7 +146,6 @@ namespace API_WEB.Controllers.SmartFA
                                          AND a.P_SENDER IN ('V0904136','V3209541', 'V0945375', 'V0928908', 'V3245384', 'V3211693','V1097872', 'V3231778')
                                          AND a.IN_DATETIME BETWEEN :startDate AND :endDate
                                          AND NOT REGEXP_LIKE(a.MODEL_NAME, '^(900|692|930)')
-                                         AND a.REMARK NOT IN ('CK00')
                                          AND NOT EXISTS (
                                               SELECT 1
                                               FROM sfism4.z_kanban_tracking_t z
@@ -212,7 +211,6 @@ WHERE
     AND a.REPAIRER IS NOT NULL
     AND a.IN_DATETIME < a.OUT_DATETIME
     AND r107.ERROR_FLAG != '8'
-    AND a.REMARK NOT IN ('CK00')
     AND a.OUT_DATETIME BETWEEN :startDate AND :endDate
     AND NOT REGEXP_LIKE(a.MODEL_NAME, '^(900|692|930)')
     AND NOT EXISTS (
@@ -278,7 +276,6 @@ WHERE
             AND a.REPAIRER IS NOT NULL
             AND a.IN_DATETIME < a.OUT_DATETIME
             AND r107.ERROR_FLAG != '8'
-            AND a.REMARK NOT IN ('CK00')
             AND a.OUT_DATETIME BETWEEN :startDate AND :endDate
             AND NOT REGEXP_LIKE(a.MODEL_NAME, '^(900|692|930)')
             AND NOT EXISTS (
@@ -1045,7 +1042,6 @@ WHERE
                   AND a.P_SENDER IN ('V0904136','V3209541','V0945375','V0928908','V3245384','V3211693', 'V3231778')
                   AND a.IN_DATETIME BETWEEN :startDate AND :endDate
                   AND NOT REGEXP_LIKE(a.MODEL_NAME, '^(900|692|930)')
-                  AND a.REMARK NOT IN ('CK00')
                   AND NOT EXISTS (
                       SELECT 1
                       FROM sfism4.z_kanban_tracking_t z
