@@ -23,6 +23,7 @@ namespace API_WEB.ModelsOracle
         public DbSet<FailedSerialNumber> FailedSerialNumbers { get; set; } // lấy dữ liệu fail hass-bi
         public DbSet<GetAteSn> GetAteSnRecords { get; set; } // DbSet cho bảng
         public DbSet<ErrorCode> ErrorCodes { get; set; } // DbSet cho bảng
+        public DbSet<RFailAteDataFirstFail> RFailAteDataFirstFails { get; set; } = null!;
         public DbSet<RepairOwnerBySerialResult> RepairOwnerBySerialResults { get; set; } = null!;
         public DbSet<SFISM4_R_ULT_RESULT_T> UltResults { get; set; } = null!;
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -103,6 +104,7 @@ namespace API_WEB.ModelsOracle
             // Cấu hình dữ liêu fail Hasss-bi
             modelBuilder.Entity<FailedSerialNumber>().HasNoKey();
             modelBuilder.Entity<RepairOwnerBySerialResult>().HasNoKey();
+            modelBuilder.Entity<RFailAteDataFirstFail>().HasNoKey();
             base.OnModelCreating(modelBuilder);
 
             // Cấu hình cho bảng R_GET_ATE_SN_T
