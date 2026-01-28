@@ -1,36 +1,70 @@
 ﻿@{
-    ViewData["Title"] = "DDR TOOL";
-}
-@{
+    ViewData["Title"] = "DPU-MEM";
     Layout = "~/Areas/DDR/Views/Shared/Layout_DDR.cshtml";
 }
 
+@{
+    ViewData["Title"] = "SmartFA Area";
+}
+@{
+    Layout = "~/Areas/SmartFA/Views/Shared/_Layout_SmartFA.cshtml";
+}
 @using Microsoft.AspNetCore.Http
 @inject IHttpContextAccessor HttpContextAccessor
-<section>
-    <div class="container">
-        <!-- Form nhập SN -->
-        <form id="sn-form">
-            <div class="form-group">
-                <label for="serialNumber" class="font-weight-bold">Serial Number:</label>
 
-                <textarea id="serialNumber"
-                          class="form-control"
-                          rows="3"
-                          placeholder="Nhập danh sách Serial Number tại đây"></textarea>
-                <button type="button" class="btn btn-success">
-                    <i class="fa fa-sync-alt"></i> Update Status
-                </button>
+<div class="dashboard-stage">
+    <div class="dashboard-wrapper">
+        <div class="data-card">
+            <form id="sn-form">
+                <div class="input-group d-flex align-items-start gap-2">
+                    <textarea id="serialNumberList" class="form-control" rows="3" placeholder="Input SERIAL NUMBER..." required></textarea>
+                    <button type="submit" id="searchButton" class="btn btn-ne">SEARCH</button>
+                    <button type="button" id="refreshButton" class="btn btn-ne">REFRESH</button>
+                </div>
+            </form>
+
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div class="btn-action-group btn-group mt-1">
+                    <button class="btn btn-outline-dark btn-fa">DDR-TOOL</button>
+                    <button class="btn btn-outline-dark btn-retest">FT-OFFLINE</button>
+                    <button class="btn btn-outline-dark btn-thay-lieu">FT-ONLINE</button>
+                    <button class="btn btn-outline-dark btn-vi">NV Instruction</button>
+                </div>
             </div>
 
-        </form>
-
+            <div id="sn-table-wrapper" class="mt-2 datatable-wrapper d-none position-relative">
+                <table id="sn-table" class="table table-bordered datatable-table">
+                    <img id="exportSnTableExcelBtn" src="~/assets/img/excel.png" alt="Excel Icon" style="width:48px; height:48px;" />
+                    <thead>
+                        <tr>
+                            <th>SERIAL_NUMBER</th>
+                            <th>MODEL_NAME</th>
+                            <th>WIP_GROUP</th>
+                            <th>TEST_GROUP</th>
+                            <th>TEST_CODE</th>
+                            <th>PRE_STATUS</th>
+                            <th>STATUS</th>
+                            <th>DATE</th>
+                            <th>ID_NV</th>
+                            <th>VỊ_TRÍ</th>
+                            <th>HƯỚNG_DẪN</th>
+                            <th>SỬA_CHỮA</th>
+                            <th>LỊCH_SỬ</th>
+                            <th>ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-body">
+                        <!-- Các hàng sẽ được thêm ở đây -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
+</div>
 
-    <div class="mt-2">
-        <!-- Bảng hiển trạng thái SN -->
-    </div>
-</section>
+<a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="fa fa-arrow-up"></i></a>
+
 @section Scripts {
-    <script src="~/assets/areas/smartfa/js/importfa.js?v=@DateTime.Now.Ticks"></script>
+    <link href="~/lib/bootstrap@5.min.css" rel="stylesheet" />
+    <script src="~/assets/vendor/apexcharts/apexcharts.min.js"></script>
 }

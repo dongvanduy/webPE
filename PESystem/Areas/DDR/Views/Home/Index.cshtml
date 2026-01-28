@@ -1,13 +1,10 @@
 ﻿@{
-    ViewData["Title"] = "DDR TOOL";
-}
-@{
+    ViewData["Title"] = "DPU-MEM";
     Layout = "~/Areas/DDR/Views/Shared/Layout_DDR.cshtml";
 }
 <section class="dashboard section">
     <!-- Thêm nút Đồng Bộ vào giao diện -->
     <button id="syncButton" class="btn btn-ne">Đồng Bộ</button>
-
     <div class="chart-container" style="width: 80%; margin: auto; padding: 20px;">
         <canvas id="statusChart" style="max-height: 400px;"></canvas>
     </div>
@@ -55,37 +52,7 @@
         </div>
     </div>
 
-    <style>
-        .modal-lg-custom {
-            max-width: 90%; /* Mở rộng modal */
-        }
-
-        .modal-body {
-            overflow-x: auto; /* Thêm scroll ngang nếu cần */
-            overflow-y: auto; /* Thêm scroll dọc nếu cần */
-            max-height: 80vh; /* Giới hạn chiều cao modal để tránh tràn màn hình */
-        }
-
-        table {
-            word-wrap: break-word; /* Ngắt dòng dữ liệu trong table */
-            table-layout: fixed; /* Sử dụng layout cố định */
-        }
-
-        td, th {
-            white-space: nowrap; /* Không xuống dòng trừ khi cần */
-            overflow: hidden;
-            text-overflow: ellipsis; /* Hiển thị "..." khi dữ liệu quá dài */
-        }
-    </style>
-
-
 </section>
 @section Scripts {
-    <script src="~/assets/vendor/apexcharts/apexcharts.js"></script>
-    <script src="~/assets/vendor/apexcharts/apexcharts.min.js"></script>
-    <script src="~/assets/vendor/chart.js/chart.umd.js"></script>
     <script src="~/assets/areas/dpu/home.js?v=@DateTime.Now.Ticks"></script>
-    <script src="~/assets/vendor/echarts/echarts.min.js"></script>
-    <script src="~/assets/vendor/tinymce/tinymce.min.js"></script>
-    <script src="~/assets/vendor/chart.js/chartjs-plugin-datalabels.js"></script>
 }

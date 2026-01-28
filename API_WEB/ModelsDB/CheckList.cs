@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace YourNamespace.Models
+namespace API_WEB.ModelsDB
 {
     [Table("CheckList")]
     public class CheckList

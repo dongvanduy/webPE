@@ -5,7 +5,6 @@ using API_WEB.ModelsDB;
 using DocumentFormat.OpenXml.Presentation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
-using YourNamespace.Models;
 
 namespace API_WEB.ModelsDB
 {
@@ -23,8 +22,6 @@ namespace API_WEB.ModelsDB
         public virtual DbSet<User> Users { get; set; } = null!;
         public virtual DbSet<HassBi> HassBis { get; set; } // DbSet ánh xạ tới bảng HassBi
         public virtual DbSet<GuideRecords> GuideRecords { get; set; }
-        public virtual DbSet<DPUHistory> DPUHistory { get; set; } = null!;
-        public virtual DbSet<DPUCurrent> DPUCurrent { get; set; } = null!;
         public virtual DbSet<SearchList> SearchLists { get; set; } = null!;
         public virtual DbSet<SearchListItem> SearchListItems { get; set; } = null!;
         public DbSet<CheckList> CheckLists { get; set; }
@@ -49,6 +46,7 @@ namespace API_WEB.ModelsDB
         public virtual DbSet<CookbookStep> CookbookSteps { get; set; } = null!;
         public virtual DbSet<FaultRecord> FaultRecords { get; set; } = null!;
         public virtual DbSet<RepairStepStatus> RepairStepStatuses { get; set; } = null!;
+        public virtual DbSet<DPUManager> DPUManagers { get; set; } = null!;
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Export>(entity =>
@@ -203,6 +201,8 @@ namespace API_WEB.ModelsDB
                 e.Property(x => x.ExpiresAt).IsRequired();
                 e.Property(x => x.CreatedAt).IsRequired();
             });
+
+            modelBuilder.Entity<DPUManager>().HasIndex(b => b.SerialNumber).IsUnique();
         }
         partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
     }
