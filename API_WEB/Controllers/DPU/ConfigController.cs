@@ -61,20 +61,20 @@ namespace API_WEB.Controllers.DPU
             var notFoundInOracle = new List<string>();
 
             const string query = @"
-SELECT SERIAL_NUMBER AS SerialNumber,
-       MODEL_NAME AS ModelName,
-       DATA4 AS DescFirstFail,
-       IN_STATION_TIME AS FirstFailTime
-FROM (
-    SELECT t.*,
-           ROW_NUMBER() OVER (
-               PARTITION BY t.serial_number
-               ORDER BY t.in_station_time ASC
-           ) rn
-    FROM sfism4.r_fail_atedata_t t
-    WHERE t.data4 LIKE '%DPU_MEM%' AND SERIAL_NUMBER = :serialNumber
-)
-WHERE rn = 1";
+            SELECT SERIAL_NUMBER AS SerialNumber,
+                   MODEL_NAME AS ModelName,
+                   DATA4 AS DescFirstFail,
+                   IN_STATION_TIME AS FirstFailTime
+            FROM (
+                SELECT t.*,
+                       ROW_NUMBER() OVER (
+                           PARTITION BY t.serial_number
+                           ORDER BY t.in_station_time ASC
+                       ) rn
+                FROM sfism4.r_fail_atedata_t t
+                WHERE t.data4 LIKE '%DPU_MEM%' AND SERIAL_NUMBER = :serialNumber
+            )
+            WHERE rn = 1";
 
             foreach (var serialNumber in serialNumbers)
             {
@@ -96,9 +96,9 @@ WHERE rn = 1";
                 insertItems.Add(new DPUManager
                 {
                     SerialNumber = serialNumber,
-                    HbMb = request.HbMb.Trim(),
-                    TypeBonepile = request.TypeBonepile.Trim(),
-                    FirstFailTime = oracleResult?.FirstFailTime,
+                    HB_MB = request.HbMb.Trim(),
+                    TypeBonpile = request.TypeBonepile.Trim(),
+                    First_Fail_Time = oracleResult?.FirstFailTime,
                     DescFirstFail = oracleResult?.DescFirstFail,
                     ModelName = oracleResult?.ModelName
                 });
