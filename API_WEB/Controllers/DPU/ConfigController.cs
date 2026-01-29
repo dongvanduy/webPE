@@ -232,6 +232,65 @@ namespace API_WEB.Controllers.DPU
             });
         }
 
+        [HttpGet("dpu-status-summary")]
+        public async Task<IActionResult> GetDpuStatusSummary()
+        {
+            var summary = await _sqlContext.DPUManagers
+                .AsNoTracking()
+                .GroupBy(item => item.CurrentStatus == null || item.CurrentStatus == "" ? "N/A" : item.CurrentStatus)
+                .Select(group => new
+                {
+                    CurrentStatus = group.Key,
+                    Count = group.Count()
+                })
+                .OrderByDescending(item => item.Count)
+                .ToListAsync();
+
+            return Ok(new
+            {
+                Success = true,
+                Data = summary
+            });
+        }
+
+        [HttpPost("dpu-status-detail")]
+        public async Task<IActionResult> GetDpuStatusDetail([FromBody] DpuStatusDetailRequest request)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.CurrentStatus))
+            {
+                return BadRequest("CurrentStatus không được để trống.");
+            }
+
+            var normalizedStatus = request.CurrentStatus.Trim();
+
+            IQueryable<DPUManager> query = _sqlContext.DPUManagers.AsNoTracking();
+
+            if (string.Equals(normalizedStatus, "N/A", StringComparison.OrdinalIgnoreCase))
+            {
+                query = query.Where(item => item.CurrentStatus == null || item.CurrentStatus == "");
+            }
+            else
+            {
+                query = query.Where(item => item.CurrentStatus == normalizedStatus);
+            }
+
+            var data = await query
+                .OrderBy(item => item.SerialNumber)
+                .ToListAsync();
+
+            if (!data.Any())
+            {
+                return NotFound("Không tìm thấy dữ liệu cho CurrentStatus đã chọn.");
+            }
+
+            return Ok(new
+            {
+                Success = true,
+                TotalRecord = data.Count,
+                Data = data
+            });
+        }
+
         //UPDATE FT_OFF
         [HttpPost("sync-error-ft-off")]
         public async Task<IActionResult> SyncErrorFTOff([FromBody] List<string> serialNumbers)
