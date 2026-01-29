@@ -187,6 +187,51 @@ namespace API_WEB.Controllers.DPU
             }
         }
 
+        [HttpPost("search-dpu-manager")]
+        public async Task<IActionResult> SearchDpuManager([FromBody] List<string> serialNumbers)
+        {
+            if (serialNumbers == null || !serialNumbers.Any())
+            {
+                return BadRequest("Danh sách Serial Number không được để trống.");
+            }
+
+            var distinctSerials = serialNumbers
+                .Where(sn => !string.IsNullOrWhiteSpace(sn))
+                .Select(sn => sn.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (!distinctSerials.Any())
+            {
+                return BadRequest("Danh sách Serial Number không hợp lệ.");
+            }
+
+            var data = await _sqlContext.DPUManagers
+                .AsNoTracking()
+                .Where(item => distinctSerials.Contains(item.SerialNumber))
+                .ToListAsync();
+
+            if (!data.Any())
+            {
+                return NotFound("Không tìm thấy Serial Number nào trong hệ thống.");
+            }
+
+            var orderMap = distinctSerials
+                .Select((sn, index) => new { sn, index })
+                .ToDictionary(item => item.sn, item => item.index, StringComparer.OrdinalIgnoreCase);
+
+            var orderedData = data
+                .OrderBy(item => orderMap.TryGetValue(item.SerialNumber, out var index) ? index : int.MaxValue)
+                .ToList();
+
+            return Ok(new
+            {
+                Success = true,
+                TotalRecord = orderedData.Count,
+                Data = orderedData
+            });
+        }
+
         //UPDATE FT_OFF
         [HttpPost("sync-error-ft-off")]
         public async Task<IActionResult> SyncErrorFTOff([FromBody] List<string> serialNumbers)
