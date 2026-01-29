@@ -3,54 +3,6 @@
     Layout = "~/Areas/DDR/Views/Shared/Layout_DDR.cshtml";
 }
 <section class="dashboard section">
-    <!-- Thêm nút Đồng Bộ vào giao diện -->
-    <button id="syncButton" class="btn btn-ne">Đồng Bộ</button>
-    <div class="chart-container" style="width: 80%; margin: auto; padding: 20px;">
-        <canvas id="statusChart" style="max-height: 400px;"></canvas>
-    </div>
-    <div class="modal fade" id="statusModal" tabindex="-1" aria-labelledby="statusModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-lg-custom">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="statusModalLabel">Danh Sách Serial Numbers</h5>
-                    <button type="button" class="btn-ne btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body table-responsive">
-                    <table id="modal-sn-table" class="table-bordered table-striped datatable-table">
-                        <thead>
-                            <tr>
-                                <th>SerialNumber</th>
-                                <th>ModelName</th>
-                                <th>WIPGroup</th>
-                                <th>TestCode</th>
-                                <th>Mô tả lỗi</th>
-                                <th>TestTime</th>
-                                <th>TestGroup</th>
-                                <th>DDR-TOOL</th>
-                                <th>NVInstruction</th>
-                                <th>PEInstruction</th>
-                                <th>RERepair</th>
-                                <th>FT-OFF</th>
-                                <th>HASS</th>
-                                <th>FT-HASS</th>
-                                <th>PreviousGroup</th>
-                                <th>GroupCurrent</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Dữ liệu sẽ được chèn tại đây -->
-                        </tbody>
-                    </table>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-ne">
-                        <img id="exportExcelBtn" src="~/assets/img/excel.png" alt="Excel Icon" class="flex-fill" style="width:24px; height:24px;">
-                    </button>
-                    <button type="button" class="btn btn-ne" data-bs-dismiss="modal">Đóng</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
 </section>
 @section Scripts {

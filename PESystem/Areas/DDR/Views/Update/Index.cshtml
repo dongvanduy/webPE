@@ -5,59 +5,54 @@
 @using Microsoft.AspNetCore.Http
 @inject IHttpContextAccessor HttpContextAccessor
 
-<div class="dashboard-stage">
-    <div class="dashboard-wrapper">
-        <div class="data-card" data-api-base="@ViewBag.ApiBaseUrl">
-            <form id="sn-form">
-                <div class="input-group d-flex align-items-start gap-2">
-                    <textarea id="serialNumberList" class="form-control" rows="3" placeholder="Input SERIAL NUMBER..." required></textarea>
-                    <button type="submit" id="searchButton" class="btn btn-ne">SEARCH</button>
-                    <button type="button" id="refreshButton" class="btn btn-ne">REFRESH</button>
-                </div>
-            </form>
+<div class="data-card" data-api-base="@ViewBag.ApiBaseUrl">
+    <form id="sn-form">
+        <div class="input-group d-flex align-items-start gap-2">
+            <textarea id="serialNumberList" class="form-control" rows="3" placeholder="Input SERIAL NUMBER..." required></textarea>
+            <button type="submit" id="searchButton" class="btn btn-ne">SEARCH</button>
+            <button type="button" id="refreshButton" class="btn btn-ne">REFRESH</button>
+        </div>
+    </form>
 
-            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-                <div class="btn-action-group btn-group mt-1">
-                    <button type="button" class="btn btn-outline-dark btn-update" data-update-type="DDR-TOOL">DDR-TOOL</button>
-                    <button type="button" class="btn btn-outline-dark btn-update" data-update-type="FT-OFFLINE">FT-OFFLINE</button>
-                    <button type="button" class="btn btn-outline-dark btn-update" data-update-type="FT-ONLINE">FT-ONLINE</button>
-                    <button type="button" class="btn btn-outline-dark btn-update" data-update-type="NV-INSTRUCTION">NV Instruction</button>
-                </div>
-            </div>
-
-            <div id="sn-table-wrapper" class="mt-2 datatable-wrapper d-none position-relative">
-                <table id="sn-table" class="table table-bordered datatable-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>SERIAL_NUMBER</th>
-                            <th>TYPE_BONPILE</th>
-                            <th>MODEL_NAME</th>
-                            <th>HB_MB</th>
-                            <th>TYPE</th>
-                            <th>FIRST_FAIL_TIME</th>
-                            <th>DESC_FIRST_FAIL</th>
-                            <th>DDR_TOOL_RESULT</th>
-                            <th>QTY_RAM_FAIL</th>
-                            <th>NV_INSTRUCTION</th>
-                            <th>REWORK_FXV</th>
-                            <th>CUT_IN_BP2</th>
-                            <th>CURRENT_STATUS</th>
-                            <th>REMARK</th>
-                            <th>REMARK2</th>
-                            <th>CREATED_AT</th>
-                            <th>UPDATED_AT</th>
-                        </tr>
-                    </thead>
-                    <tbody id="results-body">
-                        <!-- Các hàng sẽ được thêm ở đây -->
-                    </tbody>
-                </table>
-            </div>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div class="btn-action-group btn-group mt-1">
+            <button type="button" class="btn btn-outline-dark btn-update" data-update-type="DDR-TOOL">DDR-TOOL</button>
+            <button type="button" class="btn btn-outline-dark btn-update" data-update-type="FT-OFFLINE">FT-OFFLINE</button>
+            <button type="button" class="btn btn-outline-dark btn-update" data-update-type="FT-ONLINE">FT-ONLINE</button>
+            <button type="button" class="btn btn-outline-dark btn-update" data-update-type="NV-INSTRUCTION">NV Instruction</button>
         </div>
     </div>
-</div>
 
+    <div id="sn-table-wrapper" class="mt-2 datatable-wrapper d-none position-relative">
+        <table id="sn-table" class="table table-bordered datatable-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>SERIAL_NUMBER</th>
+                    <th>TYPE_BONPILE</th>
+                    <th>MODEL_NAME</th>
+                    <th>HB_MB</th>
+                    <th>TYPE</th>
+                    <th>FIRST_FAIL_TIME</th>
+                    <th>DESC_FIRST_FAIL</th>
+                    <th>DDR_TOOL_RESULT</th>
+                    <th>QTY_RAM_FAIL</th>
+                    <th>NV_INSTRUCTION</th>
+                    <th>REWORK_FXV</th>
+                    <th>CUT_IN_BP2</th>
+                    <th>CURRENT_STATUS</th>
+                    <th>REMARK</th>
+                    <th>REMARK2</th>
+                    <th>CREATED_AT</th>
+                    <th>UPDATED_AT</th>
+                </tr>
+            </thead>
+            <tbody id="results-body">
+                <!-- Các hàng sẽ được thêm ở đây -->
+            </tbody>
+        </table>
+    </div>
+</div>
 <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="fa fa-arrow-up"></i></a>
 
 <div class="modal fade" id="updateModal" tabindex="-1" aria-labelledby="updateModalLabel" aria-hidden="true">

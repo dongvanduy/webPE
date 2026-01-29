@@ -48,7 +48,7 @@
             <!-- Menu Items -->
             <a href="@Url.Action("Home", "Home", new { area = "" })" class="nav-link"><i class="fas fa-home"></i> <span>Trang chủ</span></a>
             <a href="@Url.Action("Index", "Home", new { area = "DDR" })" class="nav-link @ViewContext.IsActive("Home", "Index")"><i class="fa fa-dashboard"></i> <span>Dashboard</span></a>
-            <a href="@Url.Action("Index", "Search", new { area = "DDR" })" class="nav-link @ViewContext.IsActive("Search", "Index")"><i class="fa-solid fa-search"></i> <span>Search</span></a>
+            <a href="@Url.Action("Index", "Input", new { area = "DDR" })" class="nav-link @ViewContext.IsActive("Input", "Index")"><i class="fa-solid fa-search"></i> <span>Input</span></a>
             <a href="@Url.Action("Index", "Update", new { area = "DDR" })" class="nav-link @ViewContext.IsActive("Update", "Index")"><i class="fa fa-sync"></i> <span>Update</span></a>
 
         </nav>
