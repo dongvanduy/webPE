@@ -4,35 +4,34 @@
 }
 
 <section>
-    <div class="col-md-7">
-        <div class="row">
-            <div class="col-md-5">
-                <textarea name="serialNumbers" id="sn-input" rows="3" placeholder="Nhập SerialNumber" class="form-control"></textarea>
-            </div>
-            <div class="col-md-2 d-flex flex-column justify-content-between align-items-stretch">
-                <div class="mb-2">
-                    <select id="typeBonepile" class="form-select w-100" aria-label="trang thai">
+    <div class="data-card" data-api-base="@ViewBag.ApiBaseUrl">
+        <div class="col-md-7">
+            <div class="row g-2 align-items-start">
+                <div class="col-md-5">
+                    <textarea name="serialNumbers" id="sn-input" rows="3" placeholder="Nhập SerialNumber" class="form-control"></textarea>
+                </div>
+                <div class="col-md-2 d-flex flex-column gap-2">
+                    <select id="hb-mb" class="form-select w-100" aria-label="HB/MB">
+                        <option selected value="HB">HB</option>
+                        <option value="MB">MB</option>
+                    </select>
+                    <select id="typeBonepile" class="form-select w-100" aria-label="type bonepile">
                         <option selected value="BP-10">BP-10</option>
                         <option value="BP-20">BP-20</option>
                     </select>
                 </div>
-                <div>
-                    <button id="search-btn" class="btn btn-ne w-100" type="button" onclick="submitSerialNumberForm()">
-                        <i class="fas fa-search"></i>
+                <div class="col-md-2">
+                    <button id="input-btn" class="btn btn-ne w-100" type="button">
+                        <i class="fas fa-sync"></i> Input
                     </button>
                 </div>
             </div>
-            <div class="col-md-2">
-                <button id="update-btn" class="btn btn-ne w-100" type="button" data-bs-toggle="modal" onclick="openUpdateModal()" data-bs-target="#updateModal">
-                    <i class="fas fa-sync"></i> Input
-                </button>
-            </div>
         </div>
+
+        <input type="hidden" id="repairPerson" value="@User.Identity.Name" />
     </div>
-
-    <input type="hidden" id="repairPerson" value="@User.Identity.Name" />
-
 </section>
 
 @section Scripts {
+    <script src="~/assets/Areas/DDR/input.js?v=@DateTime.Now.Ticks"></script>
 }
