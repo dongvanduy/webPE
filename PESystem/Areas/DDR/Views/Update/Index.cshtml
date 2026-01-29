@@ -1,56 +1,64 @@
 ﻿@{
-    ViewData["Title"] = "DPU-MEM";
+    ViewData["Title"] = "DPU-MEM Update";
     Layout = "~/Areas/DDR/Views/Shared/Layout_DDR.cshtml";
-}
-
-@{
-    ViewData["Title"] = "SmartFA Area";
-}
-@{
-    Layout = "~/Areas/SmartFA/Views/Shared/_Layout_SmartFA.cshtml";
 }
 @using Microsoft.AspNetCore.Http
 @inject IHttpContextAccessor HttpContextAccessor
 
 <div class="dashboard-stage">
     <div class="dashboard-wrapper">
-        <div class="data-card">
+        <div class="data-card" data-api-base="@ViewBag.ApiBaseUrl">
             <form id="sn-form">
-                <div class="input-group d-flex align-items-start gap-2">
-                    <textarea id="serialNumberList" class="form-control" rows="3" placeholder="Input SERIAL NUMBER..." required></textarea>
-                    <button type="submit" id="searchButton" class="btn btn-ne">SEARCH</button>
-                    <button type="button" id="refreshButton" class="btn btn-ne">REFRESH</button>
+                <div class="input-group d-flex align-items-start gap-2 flex-wrap">
+                    <textarea id="serialNumberList" class="form-control flex-grow-1" rows="3" placeholder="Input SERIAL NUMBER..." required></textarea>
+                    <div class="d-flex flex-column gap-2">
+                        <select id="typeBonepile" class="form-select">
+                            <option value="" selected disabled>Chọn typeBonepile</option>
+                            <option value="BP-10">BP-10</option>
+                            <option value="BP-20">BP-20</option>
+                            <option value="B36R">B36R</option>
+                        </select>
+                        <input id="hbMbInput" class="form-control" placeholder="MB-HB" />
+                        <div class="d-flex gap-2">
+                            <button type="button" id="inputButton" class="btn btn-ne flex-grow-1">INPUT</button>
+                            <button type="submit" id="searchButton" class="btn btn-ne flex-grow-1">SEARCH</button>
+                        </div>
+                        <button type="button" id="refreshButton" class="btn btn-ne">REFRESH</button>
+                    </div>
                 </div>
             </form>
 
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
                 <div class="btn-action-group btn-group mt-1">
-                    <button class="btn btn-outline-dark btn-fa">DDR-TOOL</button>
-                    <button class="btn btn-outline-dark btn-retest">FT-OFFLINE</button>
-                    <button class="btn btn-outline-dark btn-thay-lieu">FT-ONLINE</button>
-                    <button class="btn btn-outline-dark btn-vi">NV Instruction</button>
+                    <button type="button" class="btn btn-outline-dark btn-update" data-update-type="DDR-TOOL">DDR-TOOL</button>
+                    <button type="button" class="btn btn-outline-dark btn-update" data-update-type="FT-OFFLINE">FT-OFFLINE</button>
+                    <button type="button" class="btn btn-outline-dark btn-update" data-update-type="FT-ONLINE">FT-ONLINE</button>
+                    <button type="button" class="btn btn-outline-dark btn-update" data-update-type="NV-INSTRUCTION">NV Instruction</button>
                 </div>
             </div>
 
             <div id="sn-table-wrapper" class="mt-2 datatable-wrapper d-none position-relative">
                 <table id="sn-table" class="table table-bordered datatable-table">
-                    <img id="exportSnTableExcelBtn" src="~/assets/img/excel.png" alt="Excel Icon" style="width:48px; height:48px;" />
                     <thead>
                         <tr>
+                            <th>ID</th>
                             <th>SERIAL_NUMBER</th>
+                            <th>TYPE_BONPILE</th>
                             <th>MODEL_NAME</th>
-                            <th>WIP_GROUP</th>
-                            <th>TEST_GROUP</th>
-                            <th>TEST_CODE</th>
-                            <th>PRE_STATUS</th>
-                            <th>STATUS</th>
-                            <th>DATE</th>
-                            <th>ID_NV</th>
-                            <th>VỊ_TRÍ</th>
-                            <th>HƯỚNG_DẪN</th>
-                            <th>SỬA_CHỮA</th>
-                            <th>LỊCH_SỬ</th>
-                            <th>ACTION</th>
+                            <th>HB_MB</th>
+                            <th>TYPE</th>
+                            <th>FIRST_FAIL_TIME</th>
+                            <th>DESC_FIRST_FAIL</th>
+                            <th>DDR_TOOL_RESULT</th>
+                            <th>QTY_RAM_FAIL</th>
+                            <th>NV_INSTRUCTION</th>
+                            <th>REWORK_FXV</th>
+                            <th>CUT_IN_BP2</th>
+                            <th>CURRENT_STATUS</th>
+                            <th>REMARK</th>
+                            <th>REMARK2</th>
+                            <th>CREATED_AT</th>
+                            <th>UPDATED_AT</th>
                         </tr>
                     </thead>
                     <tbody id="results-body">
@@ -64,7 +72,39 @@
 
 <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="fa fa-arrow-up"></i></a>
 
+<div class="modal fade" id="updateModal" tabindex="-1" aria-labelledby="updateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updateModalLabel">Cập nhật</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3" id="status-group">
+                    <label for="updateStatus" class="form-label">Trạng thái</label>
+                    <select id="updateStatus" class="form-select">
+                        <option value="PASS">PASS</option>
+                        <option value="FAIL">FAIL</option>
+                    </select>
+                </div>
+                <div class="mb-3" id="text-value-group">
+                    <label for="updateValueInput" class="form-label" id="updateValueLabel">Nội dung cập nhật</label>
+                    <textarea id="updateValueInput" class="form-control" rows="4" placeholder="Nhập nội dung..."></textarea>
+                </div>
+                <div class="mb-3 d-none" id="error-desc-group">
+                    <label for="errorDescInput" class="form-label">ERROR_DESC</label>
+                    <textarea id="errorDescInput" class="form-control" rows="4" placeholder="ERROR_DESC sẽ hiển thị tại đây..."></textarea>
+                    <small class="text-muted d-block mt-1">Nếu FAIL, hệ thống sẽ tự đồng bộ ERROR_DESC từ Oracle.</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="submitUpdateBtn">Cập nhật</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
-    <link href="~/lib/bootstrap@5.min.css" rel="stylesheet" />
-    <script src="~/assets/vendor/apexcharts/apexcharts.min.js"></script>
+    <script src="~/assets/Areas/DDR/update.js?v=@DateTime.Now.Ticks"></script>
 }
