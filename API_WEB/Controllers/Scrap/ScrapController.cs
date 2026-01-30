@@ -762,12 +762,15 @@ namespace API_WEB.Controllers.Scrap
                 var result = scrapRecords.Select(scrap =>
                 {
                     var normalizedScrapSN = scrap.SN?.Trim();
-                    var externalInfo = externalData?.FirstOrDefault(e =>
-                    {
-                        var normalizedBoardSN = e.BoardSN?.Trim();
-                        Console.WriteLine($"Comparing: scrap.SN='{normalizedScrapSN}', external.BoardSN='{normalizedBoardSN}'");
-                        return normalizedBoardSN == normalizedScrapSN;
-                    });
+                    var externalInfos = externalData?
+                        .Where(e =>
+                        {
+                            var normalizedBoardSN = e.BoardSN?.Trim();
+                            Console.WriteLine($"Comparing: scrap.SN='{normalizedScrapSN}', external.BoardSN='{normalizedBoardSN}'");
+                            return normalizedBoardSN == normalizedScrapSN;
+                        })
+                        .ToList() ?? new List<ExternalApiResponse>();
+                    var externalInfo = externalInfos.FirstOrDefault();
                     if (externalInfo == null)
                     {
                         Console.WriteLine($"No matching data found for SN: {normalizedScrapSN}");
@@ -800,6 +803,22 @@ namespace API_WEB.Controllers.Scrap
                     }
                     string plantValue = scrap.Remark == "BP-20" ? "8620" : externalInfo?.Plant;
 
+                    var consigICs = externalInfos
+                        .Select((info, index) => new { info, index })
+                        .OrderByDescending(entry => !string.IsNullOrEmpty(entry.info.IcPn)
+                            && entry.info.IcPn.StartsWith("MLX", StringComparison.OrdinalIgnoreCase))
+                        .ThenBy(entry => entry.index)
+                        .Select(entry => new ConsigIcInfo
+                        {
+                            IcPn = entry.info.IcPn,
+                            IcDetailPn = entry.info.IcDetailPn,
+                            Qty = entry.info.Qty
+                        })
+                        .Where(entry => !string.IsNullOrEmpty(entry.IcPn)
+                            || !string.IsNullOrEmpty(entry.IcDetailPn)
+                            || !string.IsNullOrEmpty(entry.Qty))
+                        .ToList();
+
                     return new
                     {
                         InternalTask = scrap.InternalTask,
@@ -824,7 +843,8 @@ namespace API_WEB.Controllers.Scrap
                         Plant = plantValue,
                         SmtTime = smtTime, // Sử dụng giá trị đã parse (hoặc null nếu không parse được)
                         Description = scrap.Desc,
-                        SpeApproveTime = scrap.SpeApproveTime
+                        SpeApproveTime = scrap.SpeApproveTime,
+                        ConsigICs = consigICs
                     };
                 }).ToList();
 
@@ -935,12 +955,15 @@ namespace API_WEB.Controllers.Scrap
                 var result = validSNs.Select(scrap =>
                 {
                     var normalizedScrapSN = scrap.SN?.Trim();
-                    var externalInfo = externalData?.FirstOrDefault(e =>
-                    {
-                        var normalizedBoardSN = e.BoardSN?.Trim();
-                        Console.WriteLine($"Comparing: scrap.SN='{normalizedScrapSN}', external.BoardSN='{normalizedBoardSN}'");
-                        return normalizedBoardSN == normalizedScrapSN;
-                    });
+                    var externalInfos = externalData?
+                        .Where(e =>
+                        {
+                            var normalizedBoardSN = e.BoardSN?.Trim();
+                            Console.WriteLine($"Comparing: scrap.SN='{normalizedScrapSN}', external.BoardSN='{normalizedBoardSN}'");
+                            return normalizedBoardSN == normalizedScrapSN;
+                        })
+                        .ToList() ?? new List<ExternalApiResponse>();
+                    var externalInfo = externalInfos.FirstOrDefault();
                     if (externalInfo == null)
                     {
                         Console.WriteLine($"No matching data found for SN: {normalizedScrapSN}");
@@ -973,6 +996,22 @@ namespace API_WEB.Controllers.Scrap
                     }
                     string plantValue = scrap.Remark == "BP-20" ? "8620" : externalInfo?.Plant;
 
+                    var consigICs = externalInfos
+                        .Select((info, index) => new { info, index })
+                        .OrderByDescending(entry => !string.IsNullOrEmpty(entry.info.IcPn)
+                            && entry.info.IcPn.StartsWith("MLX", StringComparison.OrdinalIgnoreCase))
+                        .ThenBy(entry => entry.index)
+                        .Select(entry => new ConsigIcInfo
+                        {
+                            IcPn = entry.info.IcPn,
+                            IcDetailPn = entry.info.IcDetailPn,
+                            Qty = entry.info.Qty
+                        })
+                        .Where(entry => !string.IsNullOrEmpty(entry.IcPn)
+                            || !string.IsNullOrEmpty(entry.IcDetailPn)
+                            || !string.IsNullOrEmpty(entry.Qty))
+                        .ToList();
+
                     return new
                     {
                         InternalTask = scrap.InternalTask,
@@ -997,7 +1036,8 @@ namespace API_WEB.Controllers.Scrap
                         Plant = plantValue,
                         SmtTime = smtTime, // Sử dụng giá trị đã parse (hoặc null nếu không parse được)
                         Description = scrap.Desc,
-                        SpeApproveTime = scrap.SpeApproveTime
+                        SpeApproveTime = scrap.SpeApproveTime,
+                        ConsigICs = consigICs
                     };
                 }).ToList();
 
@@ -2865,6 +2905,13 @@ namespace API_WEB.Controllers.Scrap
         public string AfterBeforeKanban { get; set; }
         public string Cm { get; set; }
         public string Plant { get; set; }
+    }
+
+    public class ConsigIcInfo
+    {
+        public string IcPn { get; set; }
+        public string IcDetailPn { get; set; }
+        public string Qty { get; set; }
     }
 
     // Class để nhận dữ liệu đầu vào cho API input-sn-wait-spe-approve
