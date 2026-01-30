@@ -94,6 +94,30 @@ const ApiService = (function () {
         }
     }
 
+    async function fetchApiSfc(endpoint, method, body = null) {
+        const options = {
+            method,
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        };
+
+        if (body) {
+            options.body = JSON.stringify(body);
+        }
+
+        try {
+            const response = await fetch(`${endpoint}`, options);
+            if (!response.ok) {
+                throw new Error(`Lỗi API: ${response.statusText}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error(`Lỗi khi gọi API ${endpoint}:`, error);
+            throw error;
+        }
+    }
+
     async function uploadFile(endpoint, formData) {
         try {
             const response = await fetch(`${BASE_URL}${endpoint}`, {
@@ -121,9 +145,9 @@ const ApiService = (function () {
         getCheckPoints: (payload) => fetchAPI('/FixGuide/GetCheckPoints', 'POST', payload),
         updateCheckPoint: (payload) => fetchAPI('/FixGuide/update-checkpoint', 'PUT', payload),
         uploadGuide: (formData) => uploadFile('/FixGuide/Upload', formData),
-        repairStatus: (payload) => fetchAPI('/RepairStatus/repair-status', 'POST', payload),
-        handOverStatus: (payload) => fetchAPI('/RepairStatus/hand-over-status', 'POST', payload),
-        receivingStatus: (payload) => fetchAPI('/RepairStatus/receiving-status', 'POST', payload),
+        repairStatus: (payload) => fetchApiSfc('https://sfc-portal.cns.myfiinet.com:443/SfcSmartRepair/api/repair_Status', 'POST', payload),
+        handOverStatus: (payload) => fetchApiSfc('https://sfc-portal.cns.myfiinet.com:443/SfcSmartRepair/api/hand_over_status', 'POST', payload),
+        receivingStatus: (payload) => fetchApiSfc('https://sfc-portal.cns.myfiinet.com:443/SfcSmartRepair/api/receiving_status', 'POST', payload),
         getAllowedAreas: (payload) => fetchAPI('/SearchFA/get-allowed-areas', 'POST', payload),
         getLatestTester: (payload) => fetchAPI('/SearchFA/get-latest-tester', 'POST', payload),
         getStatusCounts: (type) => fetchAPI('/SearchFA/get-status-counts', 'POST', type),
@@ -731,11 +755,11 @@ const StatusManager = (function () {
             DataTableManager.getAllSerialNumbers().forEach((sn) => {
                 const data = DataTableManager.getRowData(sn);
                 if (!firstStatus) {
-                    firstStatus = data[8]; //Cot STATUS
-                } else if (data[8] !== firstStatus) {
+                    firstStatus = data[6]; //Cot STATUS
+                } else if (data[6] !== firstStatus) {
                     allSameStatus = false;
                 }
-                if (validStatuses.includes(data[8])) {
+                if (validStatuses.includes(data[6])) {
                     filteredSerialNumbers.push(data[0]);
                 }
             });
@@ -895,13 +919,13 @@ const StatusManager = (function () {
         }
 
         const payload = {
-            serialNumbers: serialNumbers.join(','),
+            serialnumbers: serialNumbers.join(','),
             type: 'RETEST',
             status: selectedStatus,
-            employeeId: empId || 'default_emp_id',
+            emp_id: empId || 'default_emp_id',
             tag: 'Confirm',
             notes: notes,
-            handOverStatus: 'WAITING_HAND_OVER'
+            hand_over_status: 'WAITING_HAND_OVER'
         };
 
         //const handoverPayload = {
@@ -912,8 +936,8 @@ const StatusManager = (function () {
 
         try {
             const result = await ApiService.repairStatus(payload);
-            const cleanMessage = result.message.replace(/"/g, '').trim();
-            if (result.success && cleanMessage === "OK") {
+
+            if (result === 'OK') {
                 //await ApiService.handOverStatus(handoverPayload);
                 showSuccess("Cập nhật trạng thái thành công!");
                 ModalManager.hideModal('#modal-retest');
@@ -943,13 +967,13 @@ const StatusManager = (function () {
         }
 
         const payload = {
-            serialNumbers: serialNumbers.join(','),
+            serialnumbers: serialNumbers.join(','),
             type: 'VI-RE',
             status: selectedStatus,
-            employeeId: empId || 'default_emp_id',
+            emp_id: empId || 'default_emp_id',
             tag: 'Confirm',
             notes: notes,
-            handOverStatus: 'WAITING_HAND_OVER'
+            hand_over_status: 'WAITING_HAND_OVER'
         };
 
         //const handoverPayload = {
@@ -960,8 +984,7 @@ const StatusManager = (function () {
 
         try {
             const result = await ApiService.repairStatus(payload);
-            const cleanMessage = result.message.replace(/"/g, '').trim();
-            if (result.success && cleanMessage === "OK") {
+            if (result === 'OK') {
                 //await ApiService.handOverStatus(handoverPayload);
                 showSuccess("Cập nhật trạng thái thành công!");
                 ModalManager.hideModal('#modal-vi');
@@ -990,13 +1013,13 @@ const StatusManager = (function () {
             return;
         }
         const payload = {
-            serialNumbers: serialNumbers.join(','),
+            serialnumbers: serialNumbers.join(','),
             type: 'THAY LIỆU',
             status: selectedStatus,
-            employeeId: empId,
+            emp_id: empId,
             tag: 'Confirm',
             notes: notes,
-            handOverStatus: 'WAITING_HAND_OVER'
+            hand_over_status: 'WAITING_HAND_OVER'
         };
 
         //const handoverPayload = {
@@ -1007,8 +1030,8 @@ const StatusManager = (function () {
 
         try {
             const result = await ApiService.repairStatus(payload);
-            const cleanMessage = result.message.replace(/"/g, '').trim();
-            if (result.success && cleanMessage === "OK") {
+
+            if (result === 'OK') {
                 //await ApiService.handOverStatus(handoverPayload);
                 showSuccess("Cập nhật trạng thái thành công!");
                 ModalManager.hideModal('#modal-thaylieu');
@@ -1038,13 +1061,13 @@ const StatusManager = (function () {
         }
 
         const payload = {
-            serialNumbers: serialNumbers.join(','),
+            serialnumbers: serialNumbers.join(','),
             type: 'CHECK_LIST',
             status: selectedStatus,
-            employeeId: empId || 'default_emp_id',
+            emp_id: empId || 'default_emp_id',
             tag: 'Confirm',
             notes: notes,
-            handOverStatus: 'WAITING_HAND_OVER'
+            hand_over_status: 'WAITING_HAND_OVER'
         };
 
         //const handoverPayload = {
@@ -1055,9 +1078,8 @@ const StatusManager = (function () {
 
         try {
             const result = await ApiService.repairStatus(payload);
-            const cleanMessage = result.message.replace(/"/g, '').trim();
-            if (result.success && cleanMessage === "OK") {
-                await ApiService.handOverStatus(handoverPayload);
+            if (resul === 'OK') {
+     
                 showSuccess("Cập nhật trạng thái thành công!");
                 ModalManager.hideModal('#modal-check-list');
                 const updatedData = await ApiService.searchFA({ serialNumbers });
@@ -1108,13 +1130,13 @@ const StatusManager = (function () {
             }
 
             const payload = {
-                serialNumbers: serialNumbers.join(','),
+                serialnumbers: serialNumbers.join(','),
                 type: statusNe,
                 status: selectedType,
-                employeeId: $('#analysisPerson').val(),
+                emp_id: $('#analysisPerson').val(),
                 notes: additionalNotes || "",
                 tag: "Confirm",
-                handOverStatus: 'WAITING_HAND_OVER'
+                hand_over_status: 'WAITING_HAND_OVER'
             };
 
             //const handoverPayload = {
@@ -1125,8 +1147,7 @@ const StatusManager = (function () {
 
             try {
                 const result = await ApiService.repairStatus(payload);
-                const cleanMessage = result.message.replace(/"/g, '').trim();
-                if (result.success && cleanMessage === "OK") {
+                if (result === 'OK') {
                     //await ApiService.handOverStatus(handoverPayload);
                     showSuccess("Cập nhật trạng thái thành công!");
                     ModalManager.hideModal('#type-modal');
@@ -1190,18 +1211,17 @@ const RepairHistoryManager = (function () {
             }
 
             const payload = {
-                serialNumbers: serialNumber,
+                serialnumbers: serialNumber,
                 type: currentRow[6],
                 status: currentRow[6],
-                employeeId: $('#analysisPerson').val(),
+                emp_id: $('#analysisPerson').val(),
                 notes: notes,
-                tag: "save"
+                tag: "Save"
             };
 
             try {
                 const result = await ApiService.repairStatus(payload);
-                const cleanMessage = result.message.replace(/"/g, '').trim();
-                if (result.success && cleanMessage === "OK") {
+                if (result === 'OK') {
                     showSuccess("Lưu lịch sử sửa chữa thành công!");
                     ModalManager.hideModal('#save-repair-modal');
                 } else {
@@ -1237,15 +1257,14 @@ const HandoverManager = (function () {
         }
 
         const payload = {
-            serialNumbers: serialNumbers.join(','),
-            handOverStatus: 'WAITING_HAND_OVER',
+            serialnumbers: serialNumbers.join(','),
+            hand_over_status: 'WAITING_HAND_OVER',
             tag: 'Giao'
         };
 
         try {
             const result = await ApiService.handOverStatus(payload);
-            const clean = result.message.replace(/"/g, '').trim();
-            if (result.success && clean === 'OK') {
+            if (result === 'OK') {
                 const updatedData = await ApiService.searchFA({ serialNumbers });
                 DataTableManager.updateSnTable(serialNumbers, updatedData);
                 showSuccess('Giao bản thành công!');
@@ -1282,7 +1301,7 @@ const HandoverManager = (function () {
             }
 
             const payload = {
-                serialNumbers: serialNumbers.join(','),
+                serialnumbers: serialNumbers.join(','),
                 owner: $('#analysisPerson').val(),
                 location,
                 tag: 'Nhận'
@@ -1290,8 +1309,8 @@ const HandoverManager = (function () {
 
             try {
                 const result = await ApiService.receivingStatus(payload);
-                const clean = result.message.replace(/"/g, '').trim();
-                if (result.success && clean === 'OK') {
+
+                if (result === 'OK') {
                     const updatedData = await ApiService.searchFA({ serialNumbers });
                     DataTableManager.updateSnTable(serialNumbers, updatedData);
                     showSuccess('Nhận bản thành công!');
@@ -1325,15 +1344,15 @@ const HandoverManager = (function () {
                 return;
             }
             const payload = {
-                serialNumbers: serialNumbers.join(','),
+                serialnumbers: serialNumbers.join(','),
                 owner: $('#analysisPerson').val(),
                 location,
                 tag: 'Nhận'
             };
             try {
                 const result = await ApiService.receivingStatus(payload);
-                const clean = result.message.replace(/"/g, '').trim();
-                if (result.success && clean === 'OK') {
+
+                if (result === 'OK') {
                     const updatedData = await ApiService.searchFA({ serialNumbers });
                     DataTableManager.updateSnTable(serialNumbers, updatedData);
                     showSuccess('Cập nhật vị trí thành công!');

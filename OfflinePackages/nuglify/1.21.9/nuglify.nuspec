@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>NUglify</id>
+    <version>1.21.9</version>
+    <authors>Ron Logan,Alexandre Mutel,Andrew Bullock</authors>
+    <licenseUrl>https://github.com/trullock/NUglify/blob/master/license.txt</licenseUrl>
+    <icon>nuglify.png</icon>
+    <projectUrl>https://github.com/trullock/NUglify</projectUrl>
+    <description>NUglify provides minification and compression methods for CSS, JavaScript and HTML files for .NET</description>
+    <releaseNotes>https://github.com/trullock/NUglify/blob/master/changelog.md</releaseNotes>
+    <copyright>Alexandre Mutel;Andrew Bullock</copyright>
+    <tags>CSS JavaScript minify crunch uglify Compress HTML htmlminifier htmlcompressor</tags>
+    <repository type="git" url="git://github.com/trullock/NUglify" />
+    <dependencies>
+      <group targetFramework=".NETFramework3.5" />
+      <group targetFramework=".NETFramework4.0" />
+      <group targetFramework=".NETStandard1.3">
+        <dependency id="NETStandard.Library" version="1.6.0" exclude="Build,Analyzers" />
+        <dependency id="System.Security.Cryptography.Algorithms" version="4.2.0" exclude="Build,Analyzers" />
+      </group>
+      <group targetFramework="net5.0" />
+      <group targetFramework=".NETStandard2.0" />
+    </dependencies>
+    <frameworkAssemblies>
+      <frameworkAssembly assemblyName="mscorlib" targetFramework=".NETFramework3.5, .NETFramework4.0" />
+      <frameworkAssembly assemblyName="System.Core" targetFramework=".NETFramework3.5, .NETFramework4.0" />
+      <frameworkAssembly assemblyName="System" targetFramework=".NETFramework3.5, .NETFramework4.0" />
+      <frameworkAssembly assemblyName="System.Xml" targetFramework=".NETFramework3.5, .NETFramework4.0" />
+      <frameworkAssembly assemblyName="Microsoft.CSharp" targetFramework=".NETFramework4.0" />
+    </frameworkAssemblies>
+  </metadata>
+</package>

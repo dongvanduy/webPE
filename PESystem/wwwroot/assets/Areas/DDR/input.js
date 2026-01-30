@@ -1,6 +1,4 @@
-const apiContainer = document.querySelector("[data-api-base]");
-const apiBaseUrl = apiContainer?.dataset.apiBase?.trim() || "";
-const apiConfigBase = apiBaseUrl ? `${apiBaseUrl}/api/Config` : "";
+const apiConfigBase = 'https://pe-vnmbd-nvidia-cns.myfiinet.com/api/config';
 
 const serialInput = document.getElementById("sn-input");
 const hbMbSelect = document.getElementById("hb-mb");

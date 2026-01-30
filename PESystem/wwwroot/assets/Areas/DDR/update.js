@@ -1,6 +1,4 @@
-const apiContainer = document.querySelector("[data-api-base]");
-const apiBaseUrl = apiContainer?.dataset.apiBase?.trim() || "";
-const apiConfigBase = apiBaseUrl ? `${apiBaseUrl}/api/Config` : "";
+const apiConfigBase = 'https://pe-vnmbd-nvidia-cns.myfiinet.com/api/config';
 
 const snForm = document.getElementById("sn-form");
 const serialNumberList = document.getElementById("serialNumberList");
@@ -50,11 +48,10 @@ function getValue(item, ...keys) {
 function renderTableRows(data) {
     resultsBody.innerHTML = data.map(item => `
         <tr>
-            <td>${getValue(item, "ID", "id")}</td>
             <td>${getValue(item, "SerialNumber", "serialNumber")}</td>
             <td>${getValue(item, "TypeBonpile", "typeBonpile")}</td>
             <td>${getValue(item, "ModelName", "modelName")}</td>
-            <td>${getValue(item, "HB_MB", "hb_MB")}</td>
+            <td>${getValue(item, "HB_MB", "hB_MB")}</td>
             <td>${getValue(item, "TYPE", "type")}</td>
             <td>${formatDate(getValue(item, "First_Fail_Time", "first_Fail_Time"))}</td>
             <td>${getValue(item, "DescFirstFail", "descFirstFail")}</td>
@@ -165,6 +162,9 @@ function openUpdateModal(updateType) {
         case "FT-OFFLINE":
             updateModalLabel.textContent = "Cập nhật FT-OFFLINE";
             break;
+        case "REWORK-FXV":
+            updateModalLabel.textContent = "Cập nhật thay liệu";
+            break;
         default:
             updateModalLabel.textContent = "Cập nhật";
     }
@@ -242,6 +242,13 @@ async function submitUpdate() {
             return;
         }
         payload.NV_Instruction = updateValueInput.value.trim();
+    }
+    if (currentUpdateType === "REWORK-FXV") {
+        if (!updateValueInput.value.trim()) {
+            alert("Vui lòng nhập vị trí đã thay liệu!");
+            return;
+        }
+        payload.ReworkFXV = updateValueInput.value.trim();
     }
 
     if (currentUpdateType === "FT-ONLINE" || currentUpdateType === "FT-OFFLINE") {

@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>Oracle.ManagedDataAccess</id>
+    <version>23.6.1</version>
+    <title>Oracle Data Provider for .NET, Managed Driver</title>
+    <authors>Oracle</authors>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="file">LICENSE.txt</license>
+    <licenseUrl>https://aka.ms/deprecateLicenseUrl</licenseUrl>
+    <icon>oracle.png</icon>
+    <readme>README.md</readme>
+    <projectUrl>https://www.oracle.com/database/technologies/appdev/dotnet.html</projectUrl>
+    <iconUrl>https://www.oracle.com/a/tech/img/collateral/nuget-oracle.png</iconUrl>
+    <description>Managed Oracle Data Provider for .NET (ODP.NET) features optimized ADO.NET data access to the Oracle database for .NET Framework and is 100% managed code. ODP.NET allows developers to take advantage of advanced Oracle database functionality, including Real Application Clusters, self-tuning statement cache, Application Continuity, JSON Relational Duality, and Fast Connection Failover.</description>
+    <copyright>Copyright © 2024, Oracle and/or its affiliates</copyright>
+    <tags>ODP.NET Oracle DB database ADO.NET ODP</tags>
+    <dependencies>
+      <group targetFramework=".NETFramework4.7.2">
+        <dependency id="System.Threading.Tasks.Extensions" version="4.5.4" />
+        <dependency id="System.Text.Json" version="8.0.5" />
+        <dependency id="System.Diagnostics.DiagnosticSource" version="6.0.1" />
+        <dependency id="System.Formats.Asn1" version="8.0.1" />
+      </group>
+    </dependencies>
+  </metadata>
+</package>

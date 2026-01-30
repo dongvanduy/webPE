@@ -255,6 +255,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 const repairResultText = await repairResponse.text();
 
                 // Logic kiểm tra: Phải trả về OK hoặc "OK" mới cho đi tiếp
+
                 if (!repairResponse.ok || (repairResultText !== "OK" && repairResultText !== "\"OK\"")) {
                     // NẾU THẤT BẠI -> DỪNG LẠI NGAY, KHÔNG LƯU SQL
                     console.error("SFC Repair Failed:", repairResultText);

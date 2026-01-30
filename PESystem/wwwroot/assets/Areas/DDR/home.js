@@ -1,7 +1,5 @@
 ﻿document.addEventListener("DOMContentLoaded", () => {
-    const apiContainer = document.querySelector("[data-api-base]");
-    const apiBaseUrl = apiContainer?.dataset.apiBase?.trim() || "";
-    const apiConfigBase = apiBaseUrl ? `${apiBaseUrl}/api/Config` : "";
+    const apiConfigBase = 'https://pe-vnmbd-nvidia-cns.myfiinet.com/api/config';
 
     const chartElement = document.getElementById("current-status-chart");
     const summaryElement = document.getElementById("current-status-summary");
@@ -121,23 +119,21 @@
         data.forEach(item => {
             const row = document.createElement("tr");
             row.innerHTML = `
-                <td>${item.serialNumber ?? ""}</td>
-                <td>${item.currentStatus ?? ""}</td>
-                <td>${item.modelName ?? ""}</td>
                 <td>${item.typeBonpile ?? ""}</td>
+                <td>${item.serialNumber ?? ""}</td>
+                <td>${item.modelName ?? ""}</td>
                 <td>${item.hB_MB ?? ""}</td>
-                <td>${item.type ?? ""}</td>
-                <td>${formatDateTime(item.first_Fail_Time)}</td>
-                <td>${item.descFirstFail ?? ""}</td>
+                <td>${item.remark ?? ""}</td>
                 <td>${item.ddrToolResult ?? ""}</td>
                 <td>${item.qTY_RAM_FAIL ?? 0}</td>
                 <td>${item.nV_Instruction ?? ""}</td>
                 <td>${item.reworkFXV ?? ""}</td>
-                <td>${item.cutInBP2 ?? ""}</td>
-                <td>${item.remark ?? ""}</td>
+                <td>${item.currentStatus ?? ""}</td>
                 <td>${item.remark2 ?? ""}</td>
-                <td>${formatDateTime(item.created_At)}</td>
-                <td>${formatDateTime(item.updated_At)}</td>
+                <td>${item.type ?? ""}</td>
+                <td>${formatDateTime(item.first_Fail_Time)}</td>
+                <td>${item.descFirstFail ?? ""}</td>
+                <td>${item.cutInBP2 ?? ""}</td>
             `;
             tableBody.appendChild(row);
         });
