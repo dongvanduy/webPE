@@ -165,6 +165,9 @@ function openUpdateModal(updateType) {
         case "REWORK-FXV":
             updateModalLabel.textContent = "Cập nhật thay liệu";
             break;
+        case "CURRENT-STATUS":
+            updateModalLabel.textContent = "Cập nhật Status";
+            break;
         default:
             updateModalLabel.textContent = "Cập nhật";
     }
@@ -249,6 +252,13 @@ async function submitUpdate() {
             return;
         }
         payload.ReworkFXV = updateValueInput.value.trim();
+    }
+    if (currentUpdateType === "CURRENT-STATUS") {
+        if (!updateValueInput.value.trim()) {
+            alert("Vui lòng nhập STATUS!");
+            return;
+        }
+        payload.CurrentStatus = updateValueInput.value.trim();
     }
 
     if (currentUpdateType === "FT-ONLINE" || currentUpdateType === "FT-OFFLINE") {
