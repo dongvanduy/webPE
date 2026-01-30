@@ -187,32 +187,60 @@ async function processCreateTask(internalTasks, resultDivId) {
 
             const locationMap = await fetchLocationMap(payload.map(item => item.boardSN));
 
-            const excelData = payload.map(item => ({
-                InternalTask: item.internalTask ?? "N/A",
-                Item: item.item ?? "N/A",
-                Project: item.project ?? "N/A",
-                OPN: item.opn ?? "N/A",
-                Purpose: item.purpose ?? "N/A",
-                "IC PN": item.icPn ?? "N/A",
-                "IC Detail PN": item.icDetailPn ?? "N/A",
-                "Board SN": item.boardSN ?? "N/A",
-                "After/Before Kanban": item.afterBeforeKanban ?? "N/A",
-                Category: item.category ?? "N/A",
-                CM: item.cm ?? "N/A",
-                Plant: item.plant ?? "N/A",
-                Sloc: item.sloc ?? "N/A",
-                "Task Number": item.taskNumber ?? "N/A",
-                "PO Number": item.poNumber ?? "N/A",
-                "Create By": item.createBy ?? "N/A",
-                "Create Date": item.createDate ?? "N/A",
-                Cost: item.cost ?? "N/A",
-                Remark: item.smtTime ?? "N/A",
-                Description: item.description ?? "N/A",
-                SpeApproveTime: item.speApproveTime ?? "N/A",
-                Location: locationMap[normalizeSerialNumber(item.boardSN)] ?? "N/A",
-                ConsigIC1: item.icDetailPn ?? "N/A",
-                Qty: item.qty ?? "N/A"
-            }));
+            const normalizedPayload = payload.map(item => {
+                const consigICs = Array.isArray(item.consigICs) ? item.consigICs : [];
+                const sortedConsigICs = consigICs.slice().sort((a, b) => {
+                    const aIsMLX = typeof a.icPn === "string" && a.icPn.toUpperCase().startsWith("MLX");
+                    const bIsMLX = typeof b.icPn === "string" && b.icPn.toUpperCase().startsWith("MLX");
+                    if (aIsMLX !== bIsMLX) {
+                        return aIsMLX ? -1 : 1;
+                    }
+                    return 0;
+                });
+                return { ...item, sortedConsigICs };
+            });
+
+            const maxConsigCount = normalizedPayload.reduce(
+                (max, item) => Math.max(max, item.sortedConsigICs.length),
+                0
+            );
+
+            const excelData = normalizedPayload.map(item => {
+                const row = {
+                    InternalTask: item.internalTask ?? "N/A",
+                    Item: item.item ?? "N/A",
+                    Project: item.project ?? "N/A",
+                    OPN: item.opn ?? "N/A",
+                    Purpose: item.purpose ?? "N/A",
+                    "IC PN": item.icPn ?? "N/A",
+                    "IC Detail PN": item.icDetailPn ?? "N/A",
+                    "Board SN": item.boardSN ?? "N/A",
+                    "After/Before Kanban": item.afterBeforeKanban ?? "N/A",
+                    Category: item.category ?? "N/A",
+                    CM: item.cm ?? "N/A",
+                    Plant: item.plant ?? "N/A",
+                    Sloc: item.sloc ?? "N/A",
+                    "Task Number": item.taskNumber ?? "N/A",
+                    "PO Number": item.poNumber ?? "N/A",
+                    "Create By": item.createBy ?? "N/A",
+                    "Create Date": item.createDate ?? "N/A",
+                    Cost: item.cost ?? "N/A",
+                    Remark: item.smtTime ?? "N/A",
+                    Description: item.description ?? "N/A",
+                    SpeApproveTime: item.speApproveTime ?? "N/A",
+                    Location: locationMap[normalizeSerialNumber(item.boardSN)] ?? "N/A"
+                };
+
+                for (let index = 0; index < maxConsigCount; index += 1) {
+                    const consig = item.sortedConsigICs[index];
+                    const consigLabel = `ConsigIC${index + 1}`;
+                    const qtyLabel = `Qty ${index + 1}`;
+                    row[consigLabel] = consig?.icDetailPn ?? consig?.icPn ?? "N/A";
+                    row[qtyLabel] = consig?.qty ?? "N/A";
+                }
+
+                return row;
+            });
 
             // Sắp xếp dữ liệu theo InternalTask
             excelData.sort((a, b) => a.InternalTask.localeCompare(b.InternalTask));
@@ -283,32 +311,60 @@ async function processCreateTaskBySN(sNs, resultDivId) {
 
             const locationMap = await fetchLocationMap(payload.map(item => item.boardSN));
 
-            const excelData = payload.map(item => ({
-                InternalTask: item.internalTask ?? "N/A",
-                Item: item.item ?? "N/A",
-                Project: item.project ?? "N/A",
-                OPN: item.opn ?? "N/A",
-                Purpose: item.purpose ?? "N/A",
-                "IC PN": item.icPn ?? "N/A",
-                "IC Detail PN": item.icDetailPn ?? "N/A",
-                "Board SN": item.boardSN ?? "N/A",
-                "After/Before Kanban": item.afterBeforeKanban ?? "N/A",
-                Category: item.category ?? "N/A",
-                CM: item.cm ?? "N/A",
-                Plant: item.plant ?? "N/A",
-                Sloc: item.sloc ?? "N/A",
-                "Task Number": item.taskNumber ?? "N/A",
-                "PO Number": item.poNumber ?? "N/A",
-                "Create By": item.createBy ?? "N/A",
-                "Create Date": item.createDate ?? "N/A",
-                Cost: item.cost ?? "N/A",
-                Remark: item.smtTime ?? "N/A",
-                Description: item.description ?? "N/A",
-                SpeApproveTime: item.speApproveTime ?? "N/A",
-                Location: locationMap[normalizeSerialNumber(item.boardSN)] ?? "N/A",
-                ConsigIC1: item.icDetailPn ?? "N/A",
-                Qty: item.qty ?? "N/A"
-            }));
+            const normalizedPayload = payload.map(item => {
+                const consigICs = Array.isArray(item.consigICs) ? item.consigICs : [];
+                const sortedConsigICs = consigICs.slice().sort((a, b) => {
+                    const aIsMLX = typeof a.icPn === "string" && a.icPn.toUpperCase().startsWith("MLX");
+                    const bIsMLX = typeof b.icPn === "string" && b.icPn.toUpperCase().startsWith("MLX");
+                    if (aIsMLX !== bIsMLX) {
+                        return aIsMLX ? -1 : 1;
+                    }
+                    return 0;
+                });
+                return { ...item, sortedConsigICs };
+            });
+
+            const maxConsigCount = normalizedPayload.reduce(
+                (max, item) => Math.max(max, item.sortedConsigICs.length),
+                0
+            );
+
+            const excelData = normalizedPayload.map(item => {
+                const row = {
+                    InternalTask: item.internalTask ?? "N/A",
+                    Item: item.item ?? "N/A",
+                    Project: item.project ?? "N/A",
+                    OPN: item.opn ?? "N/A",
+                    Purpose: item.purpose ?? "N/A",
+                    "IC PN": item.icPn ?? "N/A",
+                    "IC Detail PN": item.icDetailPn ?? "N/A",
+                    "Board SN": item.boardSN ?? "N/A",
+                    "After/Before Kanban": item.afterBeforeKanban ?? "N/A",
+                    Category: item.category ?? "N/A",
+                    CM: item.cm ?? "N/A",
+                    Plant: item.plant ?? "N/A",
+                    Sloc: item.sloc ?? "N/A",
+                    "Task Number": item.taskNumber ?? "N/A",
+                    "PO Number": item.poNumber ?? "N/A",
+                    "Create By": item.createBy ?? "N/A",
+                    "Create Date": item.createDate ?? "N/A",
+                    Cost: item.cost ?? "N/A",
+                    Remark: item.smtTime ?? "N/A",
+                    Description: item.description ?? "N/A",
+                    SpeApproveTime: item.speApproveTime ?? "N/A",
+                    Location: locationMap[normalizeSerialNumber(item.boardSN)] ?? "N/A"
+                };
+
+                for (let index = 0; index < maxConsigCount; index += 1) {
+                    const consig = item.sortedConsigICs[index];
+                    const consigLabel = `ConsigIC${index + 1}`;
+                    const qtyLabel = `Qty ${index + 1}`;
+                    row[consigLabel] = consig?.icDetailPn ?? consig?.icPn ?? "N/A";
+                    row[qtyLabel] = consig?.qty ?? "N/A";
+                }
+
+                return row;
+            });
 
             // Sắp xếp dữ liệu theo InternalTask
             excelData.sort((a, b) => a.InternalTask.localeCompare(b.InternalTask));
