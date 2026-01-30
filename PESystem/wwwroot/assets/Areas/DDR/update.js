@@ -236,7 +236,9 @@ async function submitUpdate() {
             alert("Vui lòng nhập DDR_TOOL_RESULT.");
             return;
         }
-        payload.DDRToolResult = updateValueInput.value.trim();
+        const ddrToolResult = updateValueInput.value.trim();
+        payload.DDRToolResult = ddrToolResult;
+        payload.CurrentStatus = ddrToolResult.toUpperCase() === "PASS" ? "DDR TOOL PASS" : "DDR-TOOL FAIL";
     }
 
     if (currentUpdateType === "NV-INSTRUCTION") {
@@ -263,7 +265,11 @@ async function submitUpdate() {
 
     if (currentUpdateType === "FT-ONLINE" || currentUpdateType === "FT-OFFLINE") {
         const status = updateStatus.value;
-        payload.CurrentStatus = `${currentUpdateType} ${status}`;
+        if (currentUpdateType === "FT-ONLINE" && status === "FAIL") {
+            payload.CurrentStatus = "FT offline pass but FT online Failed";
+        } else {
+            payload.CurrentStatus = `${currentUpdateType} ${status}`;
+        }
 
         const errorDescValue = errorDescInput.value.trim();
         if (errorDescValue && currentSerialNumbers.length === 1) {
