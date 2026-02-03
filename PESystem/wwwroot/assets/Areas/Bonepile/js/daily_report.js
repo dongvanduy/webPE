@@ -1,7 +1,7 @@
 const apiBase = 'https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Bonepile2';
 
 const columnKeys = [
-    { key: ['modelName', 'model_name', 'MODEL_NAME', 'model'], label: 'modelName' },
+    { key: ['productLine', 'product_line', 'PRODUCT_LINE', 'modelName', 'model_name', 'MODEL_NAME', 'model'], label: 'productLine' },
     { key: ['saBpTotalQty', 'bpTotalQty', 'bpTotal', 'saBpQty', 'totalQty'], label: 'bpTotalQty' },
     { key: ['approvedScrap', 'approved_scrap', 'approvedScrapQty', 'scrapApproved'], label: 'approvedScrap' },
     { key: ['fxvOnlineWip', 'fxvOnline', 'fxvWip', 'fxvOnlineQty'], label: 'fxvOnlineWip' },
@@ -39,12 +39,36 @@ const normalizeRows = (payload) => {
     return [];
 };
 
+const sumNumber = (value) => {
+    const numeric = Number(value);
+    return Number.isNaN(numeric) ? 0 : numeric;
+};
+
+const buildGroupedRows = (rows) => {
+    const grouped = new Map();
+    rows.forEach((row) => {
+        const productLine = (pickValue(row, columnKeys[0].key) || '').toString().trim();
+        if (!productLine) return;
+        if (!grouped.has(productLine)) {
+            grouped.set(productLine, { productLine });
+        }
+        const target = grouped.get(productLine);
+        columnKeys.slice(1).forEach((config) => {
+            const current = sumNumber(target[config.label]);
+            const nextValue = sumNumber(pickValue(row, config.key));
+            target[config.label] = current + nextValue;
+        });
+    });
+    return Array.from(grouped.values());
+};
+
 const renderRows = (rows) => {
     const tableBody = document.querySelector('#reportRepairBeforeTable tbody');
     if (!tableBody) return;
-    tableBody.innerHTML = rows.map((row) => {
+    const groupedRows = buildGroupedRows(rows);
+    tableBody.innerHTML = groupedRows.map((row) => {
         const cells = columnKeys.map((config) => {
-            const value = pickValue(row, config.key);
+            const value = config.label === 'productLine' ? row.productLine : row[config.label];
             return `<td>${formatNumber(value)}</td>`;
         }).join('');
         return `<tr>${cells}</tr>`;
