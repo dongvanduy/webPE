@@ -2,7 +2,6 @@
     ViewData["Title"] = "Daily Report";
     Layout = "~/Areas/Bonepile/Views/Shared/_Layout_Bonepile.cshtml";
 }
-
 <div class="data-card chart-card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <div class="fw-bold">Switch Bonepile 2.0 Status</div>
@@ -13,19 +12,17 @@
                 <thead class="table-light">
                     <tr>
                         <th rowspan="2">Product Line</th>
-                        <th rowspan="2">0/1/2 SA BP Total Qty</th>
+                        <th rowspan="2">BP Total Qty</th>
                         <th rowspan="2">Approved scrap</th>
                         <th rowspan="2">FXV Online WIP</th>
-                        <th colspan="2">Need to Repair</th>
-                        <th colspan="2">CB repaired twice but</th>
+                        <th colspan="4">Need to Repair</th>
                         <th rowspan="2">Others</th>
-                        <th rowspan="2">Total</th>
                     </tr>
                     <tr>
-                        <th>CB repaired once but aging day &lt; 30</th>
-                        <th>CB repaired once but aging day &gt; 30</th>
-                        <th>aging day &lt; 30</th>
-                        <th>aging day &gt; 30</th>
+                        <th>Waiting repair / CB repaired once but aging day &lt; 30</th>
+                        <th>Waiting repair / CB repaired once but aging day &gt; 30</th>
+                        <th>CB repaired twice but aging day &lt; 30</th>
+                        <th>CB repaired twice but aging day &gt; 30</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -33,7 +30,6 @@
         </div>
     </div>
 </div>
-
 <div class="modal fade" id="reportDetailModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
@@ -58,7 +54,6 @@
                                 <th>TEST_CODE</th>
                                 <th>ERROR_ITEM</th>
                                 <th>ERROR_DESC</th>
-                                <th>REPAIR</th>
                                 <th>CHECKIN_DATE</th>
                             </tr>
                         </thead>
@@ -69,7 +64,6 @@
         </div>
     </div>
 </div>
-
 @section Scripts {
     <script src="~/assets/Areas/Bonepile/js/daily_report.js?v=@DateTime.Now.Ticks"></script>
 }

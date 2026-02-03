@@ -1,7 +1,5 @@
 const apiBase = 'https://pe-vnmbd-nvidia-cns.myfiinet.com/api/report';
-
-const productLineKeys = ['productLine', 'product_line', 'PRODUCT_LINE', 'modelName', 'model_name', 'MODEL_NAME', 'model'];
-
+const productLineKeys = ['productLine', 'product_line', 'PRODUCT_LINE'];
 const columnFilterMap = {
     1: 'all',
     2: 'approvedScrap',
@@ -10,10 +8,8 @@ const columnFilterMap = {
     5: 'needRepairGt30',
     6: 'repairedTwiceLt30',
     7: 'repairedTwiceGt30',
-    8: 'others',
-    9: 'all'
+    8: 'others'
 };
-
 const columnOrder = [
     'productLine',
     'bpTotalQty',
@@ -23,10 +19,8 @@ const columnOrder = [
     'needRepairGt30',
     'repairedTwiceLt30',
     'repairedTwiceGt30',
-    'others',
-    'total'
+    'others'
 ];
-
 const statusBuckets = {
     approvedScrap: new Set([
         'scraphastask',
@@ -36,26 +30,21 @@ const statusBuckets = {
         'approvedbga',
         'waitingscrap'
     ]),
-    fxvOnlineWip: new Set(['reworkfg']),
+    fxvOnlineWip: new Set(['waiting repair']),
     needRepairLt30: new Set([
-        'waiting repair aging day <30',
         'cb repaired once but aging day <30'
     ]),
     needRepairGt30: new Set([
-        'waiting repair aging day >30',
         'cb repaired once but aging day >30'
     ]),
     repairedTwiceLt30: new Set(['cb repaired twice but aging day <30']),
     repairedTwiceGt30: new Set(['cb repaired twice but aging day >30'])
 };
-
 const allBucketStatuses = new Set(
     Object.values(statusBuckets).flatMap((set) => Array.from(set))
 );
-
 let cachedRecords = [];
 let modalTable = null;
-
 const pickValue = (row, keys) => {
     if (!row) return '';
     for (const key of keys) {
@@ -65,36 +54,31 @@ const pickValue = (row, keys) => {
     }
     return '';
 };
-
 const formatNumber = (value) => {
     if (value === null || value === undefined || value === '') return '';
     const numeric = Number(value);
     if (Number.isNaN(numeric)) return value;
     return numeric.toLocaleString();
 };
-
 const formatDateTime = (value) => {
     if (!value) return '';
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
 };
-
 const normalizeRows = (payload) => {
     if (!payload) return [];
     if (Array.isArray(payload)) return payload;
     if (Array.isArray(payload.data)) return payload.data;
+    if (Array.isArray(payload.Data)) return payload.Data; // Handle potential PascalCase
     if (Array.isArray(payload.items)) return payload.items;
     if (Array.isArray(payload.rows)) return payload.rows;
     return [];
 };
-
 const sumNumber = (value) => {
     const numeric = Number(value);
     return Number.isNaN(numeric) ? 0 : numeric;
 };
-
 const normalizeStatus = (value) => (value || '').toString().trim().toLowerCase();
-
 const buildGroupedRows = (rows) => {
     const grouped = new Map();
     rows.forEach((row) => {
@@ -118,7 +102,6 @@ const buildGroupedRows = (rows) => {
         const status = normalizeStatus(row.status || row.Status);
         target.bpTotalQty += 1;
         target.total += 1;
-
         if (statusBuckets.approvedScrap.has(status)) {
             target.approvedScrap += 1;
         } else if (statusBuckets.fxvOnlineWip.has(status)) {
@@ -137,7 +120,6 @@ const buildGroupedRows = (rows) => {
     });
     return Array.from(grouped.values());
 };
-
 const renderRows = (rows) => {
     const tableBody = document.querySelector('#reportRepairBeforeTable tbody');
     if (!tableBody) return [];
@@ -151,11 +133,10 @@ const renderRows = (rows) => {
     }).join('');
     return groupedRows;
 };
-
 const appendTotalRow = (payload, groupedRows) => {
     const tableBody = document.querySelector('#reportRepairBeforeTable tbody');
     if (!tableBody) return;
-    const totalData = payload?.total || payload?.grandTotal || payload?.summary;
+    const totalData = payload?.total || payload?.grandTotal || payload?.summary || payload?.totalCount;
     const totals = {
         productLine: 'Total',
         bpTotalQty: 0,
@@ -168,10 +149,9 @@ const appendTotalRow = (payload, groupedRows) => {
         others: 0,
         total: 0
     };
-
     if (totalData) {
         totals.productLine = totalData.productLine || totalData.label || totals.productLine;
-        totals.bpTotalQty = sumNumber(totalData.bpTotalQty || totalData.totalQty || totalData.total);
+        totals.bpTotalQty = sumNumber(totalData.bpTotalQty || totalData.totalQty || totalData.total || payload.totalCount || payload.TotalCount);
         totals.approvedScrap = sumNumber(totalData.approvedScrap);
         totals.fxvOnlineWip = sumNumber(totalData.fxvOnlineWip);
         totals.needRepairLt30 = sumNumber(totalData.needRepairLt30);
@@ -179,7 +159,7 @@ const appendTotalRow = (payload, groupedRows) => {
         totals.repairedTwiceLt30 = sumNumber(totalData.repairedTwiceLt30);
         totals.repairedTwiceGt30 = sumNumber(totalData.repairedTwiceGt30);
         totals.others = sumNumber(totalData.others);
-        totals.total = sumNumber(totalData.total || totalData.totalQty);
+        totals.total = sumNumber(totalData.total || totalData.totalQty || payload.totalCount || payload.TotalCount);
     } else if (Array.isArray(groupedRows)) {
         groupedRows.forEach((row) => {
             totals.bpTotalQty += sumNumber(row.bpTotalQty);
@@ -195,15 +175,11 @@ const appendTotalRow = (payload, groupedRows) => {
     } else {
         return;
     }
-
     const cells = columnOrder.map((key) => `<td>${formatNumber(totals[key])}</td>`).join('');
     tableBody.insertAdjacentHTML('beforeend', `<tr class="table-total-row">${cells}</tr>`);
 };
-
 const getProductLineValue = (row) => (pickValue(row, productLineKeys) || '').toString().trim();
-
 const getStatusValue = (row) => normalizeStatus(row.status || row.Status);
-
 const filterRecords = (productLine, filterKey) => {
     if (!productLine) return [];
     return cachedRecords.filter((record) => {
@@ -214,7 +190,6 @@ const filterRecords = (productLine, filterKey) => {
         return statusBuckets[filterKey]?.has(status);
     });
 };
-
 const buildModalRows = (records) => records.map((record) => ({
     serialNumber: record.sn || record.Sn || record.SERIAL_NUMBER || '',
     modelName: record.modelName || record.ModelName || record.MODEL_NAME || '',
@@ -228,10 +203,8 @@ const buildModalRows = (records) => records.map((record) => ({
     testCode: record.testCode || record.TestCode || record.TEST_CODE || '',
     errorItem: record.errorCodeItem || record.ErrorCodeItem || record.ERROR_ITEM_CODE || '',
     errorDesc: record.errorDesc || record.ErrorDesc || record.ERROR_DESC || '',
-    repair: record.repair || record.Repair || record.REPAIR || '',
     checkInDate: record.checkInDate || record.CheckInDate || record.CHECKIN_DATE || ''
 }));
-
 const openDetailModal = (productLine, filterKey) => {
     if (!productLine || productLine === 'Total') return;
     const records = filterRecords(productLine, filterKey);
@@ -240,7 +213,6 @@ const openDetailModal = (productLine, filterKey) => {
     if (modalTitle) {
         modalTitle.textContent = `Product Line: ${productLine} (${rows.length})`;
     }
-
     if (modalTable) {
         modalTable.clear();
         modalTable.rows.add(rows);
@@ -264,7 +236,6 @@ const openDetailModal = (productLine, filterKey) => {
                 { data: 'testCode' },
                 { data: 'errorItem' },
                 { data: 'errorDesc' },
-                { data: 'repair' },
                 {
                     data: 'checkInDate',
                     render: (data) => formatDateTime(data)
@@ -275,10 +246,8 @@ const openDetailModal = (productLine, filterKey) => {
             info: false
         });
     }
-
     $('#reportDetailModal').modal('show');
 };
-
 const bindTableClick = () => {
     const tableBody = document.querySelector('#reportRepairBeforeTable tbody');
     if (!tableBody) return;
@@ -293,7 +262,6 @@ const bindTableClick = () => {
         openDetailModal(productLine, filterKey);
     });
 };
-
 const fetchReportRepairBefore = async () => {
     try {
         showSpinner();
@@ -310,7 +278,6 @@ const fetchReportRepairBefore = async () => {
         hideSpinner();
     }
 };
-
 document.addEventListener('DOMContentLoaded', () => {
     fetchReportRepairBefore();
     bindTableClick();

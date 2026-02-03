@@ -94,7 +94,7 @@ namespace API_WEB.Controllers.Bonepile
             {
                 "ScrapLackTask","ScrapHasTask","WaitingApprovalScrap","ApprovedBGA","WaitingApprovalBGA",
                 "Can'tRepairProcess","WaitingScrap","ReworkFG","RepairInRE","WaitingCheckOut","RepairInPD",
-                "PendingInstructions", "waiting repair aging day <30", "waiting repair aging day >30",
+                "PendingInstructions", "waiting repair",
                "CB repaired once but aging day <30", "CB repaired once but aging day >30",
                "CB repaired twice but aging day <30", "CB repaired twice but aging day >30"
             };
@@ -216,7 +216,8 @@ namespace API_WEB.Controllers.Bonepile
                             // Logic đặt tên status theo yêu cầu
                             if (failCount <= 1)
                             {
-                                baseStatusName = "waiting repair"; // Hoặc "CB repaired once but..."
+                                record.Status = "waiting repair";
+                                continue;
                             }
                             else if (failCount == 2)
                             {
