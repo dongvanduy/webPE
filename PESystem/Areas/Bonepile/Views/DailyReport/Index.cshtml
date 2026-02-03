@@ -3,55 +3,29 @@
     Layout = "~/Areas/Bonepile/Views/Shared/_Layout_Bonepile.cshtml";
 }
 
-<div class="row">
-    <div class="col-md-3">
-        <div class="card shadow-sm">
-            <div class="card-body text-center">
-                <div class="fw-bold text-muted">Total Before</div>
-                <div class="display-6" id="totalBefore">0</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card shadow-sm">
-            <div class="card-body text-center">
-                <div class="fw-bold text-muted">Total After</div>
-                <div class="display-6" id="totalAfter">0</div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="data-card chart-card">
-    <div class="chart-container-lg">
-        <div id="bonpileChart" class="echart"></div>
-    </div>
-</div>
-
 <div class="data-card chart-card">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <img src="~/assets/img/excel.png" alt="Excel Icon" id="exportAll" class="excel-button">
+        <div class="fw-bold">Switch Bonepile 2.0 Status</div>
     </div>
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-bordered table-striped bonepile-table" id="sumMaterialsTable" style="width:100%">
+            <table class="table table-bordered table-striped bonepile-table report-repair-table" id="reportRepairBeforeTable" style="width:100%">
                 <thead class="table-light">
                     <tr>
-                        <th>Type</th>
-                        <th>PRODUCT_LINE</th>
-                        <th>SERIAL_NUMBER</th>
-                        <th>FG</th>
-                        <th>MODEL_NAME</th>
-                        <th>MO_NUMBER</th>
-                        <th>WIP_GROUP</th>
-                        <th>WIP_KANBAN</th>
-                        <th>TEST_GROUP</th>
-                        <th>TEST_TIME</th>
-                        <th>TEST_CODE</th>
-                        <th>ERROR_ITEM</th>
-                        <th>ERROR_CODE</th>
-                        <th>REPAIR</th>
-                        <th>AGING</th>
+                        <th rowspan="2">Product Line</th>
+                        <th rowspan="2">0/1/2 SA BP Total Qty</th>
+                        <th rowspan="2">Approved scrap</th>
+                        <th rowspan="2">FXV Online WIP</th>
+                        <th colspan="2">Need to Repair</th>
+                        <th colspan="2">CB repaired twice but</th>
+                        <th rowspan="2">Others</th>
+                        <th rowspan="2">Total</th>
+                    </tr>
+                    <tr>
+                        <th>CB repaired once but aging day &lt; 30</th>
+                        <th>CB repaired once but aging day &gt; 30</th>
+                        <th>aging day &lt; 30</th>
+                        <th>aging day &gt; 30</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -59,36 +33,33 @@
         </div>
     </div>
 </div>
-<div class="modal fade" id="productLineModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-lg-custom">
+
+<div class="modal fade" id="reportDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
+                <h5 class="modal-title" id="reportDetailTitle">Detail</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <div class="fw-bold" id="modalProductLine"></div>
-                    <img src="~/assets/img/excel.png" alt="Excel Icon" id="exportModal" class="excel-button">
-                </div>
                 <div class="table-responsive">
-                    <table class="table table-bordered table-striped" id="productLineTable" style="width:100%">
+                    <table class="table table-bordered table-striped bonepile-table" id="reportDetailTable" style="width:100%">
                         <thead class="table-light">
                             <tr>
-                                <th>TYPE</th>
-                                <th>PRODUCT_LINE</th>
                                 <th>SERIAL_NUMBER</th>
-                                <th>FG</th>
                                 <th>MODEL_NAME</th>
+                                <th>PRODUCT_LINE</th>
+                                <th>STATUS</th>
+                                <th>AGING_DAY</th>
                                 <th>MO_NUMBER</th>
                                 <th>WIP_GROUP</th>
-                                <th>WIP_KANBAN</th>
                                 <th>TEST_GROUP</th>
                                 <th>TEST_TIME</th>
                                 <th>TEST_CODE</th>
                                 <th>ERROR_ITEM</th>
-                                <th>ERROR_CODE</th>
+                                <th>ERROR_DESC</th>
                                 <th>REPAIR</th>
-                                <th>AGING</th>
+                                <th>CHECKIN_DATE</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -100,5 +71,5 @@
 </div>
 
 @section Scripts {
-    <script src="~/assets/areas/bonepile/js/bonepile_npi.js?v=@DateTime.Now.Ticks"></script>
+    <script src="~/assets/Areas/Bonepile/js/daily_report.js?v=@DateTime.Now.Ticks"></script>
 }
