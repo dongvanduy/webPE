@@ -45,6 +45,7 @@
             <a href="@Url.Action("Home", "Home", new { area = "" })" class="nav-link"><i class="fas fa-home"></i> <span>Trang chủ</span></a>
             <a href="@Url.Action("Index", "Home", new { area = "Scrap" })" class="nav-link @ViewContext.IsActive("Home", "Index")"><i class=" fas fa-dashboard"></i> <span>Dashboard</span></a>
             <a href="@Url.Action("Index", "Function0", new { area = "Scrap" })" class="nav-link @ViewContext.IsActive("Function0", "Index")"><i class="fa fa-exclamation-triangle"></i> <span>Process can't repair</span></a>
+            <a href="@Url.Action("Index", "PendingGuide", new { area = "Scrap" })" class="nav-link @ViewContext.IsActive("PendingGuide", "Index")"><i class="fa fa-guide"></i> <span>Pending Guide</span></a>
             <a href="@Url.Action("Index", "Function1", new { area = "Scrap" })" class="nav-link @ViewContext.IsActive("Function1", "Index")"><i class="fa fa-spinner"></i> <span>Waitting SPE approve</span></a>
             <a href="@Url.Action("Index", "Function", new { area = "Scrap" })" class="nav-link @ViewContext.IsActive("Function", "Index")"><i class="fa fa-certificate"></i> <span>SPE already approved</span></a>
             <a href="@Url.Action("Index", "Progress", new { area = "Scrap" })" class="nav-link @ViewContext.IsActive("Progress", "Index")"><i class="fa fa-search"></i> <span>Search</span></a>
