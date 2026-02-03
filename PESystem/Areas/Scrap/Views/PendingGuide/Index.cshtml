@@ -1,0 +1,89 @@
+﻿@{
+    ViewData["Title"] = "Pending Instructions";
+}
+@{
+    Layout = "~/Areas/Scrap/views/Shared/Layout_scrap.cshtml";
+}
+
+<input type="hidden" id="analysisPerson" value="@User.Identity.Name" />
+
+<div class="row g-4 align-items-stretch">
+    <div class="col-lg-4">
+        <div class="nvidia-card h-100">
+            <div class="nvidia-card-header">
+                <h2>Process Can't Repair</h2>
+            </div>
+            <div class="nvidia-card-body">
+                <form id="search-form" class="d-flex flex-column gap-3">
+                    <select id="search-options" class="form-select">
+                        <option selected disabled>SELECT FUNCTION</option>
+                        <option value="INPUT_SN">INPUT SN</option>
+                        <option value="LIST_DATA">LIST DATA</option>
+                    </select>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="d-flex flex-column gap-4">
+            <form id="input-sn-form" method="post" class="hidden scrap-card" data-search-type="INPUT_SN">
+                <h3 class="h5 mb-3 text-uppercase fw-semibold">Input Serial Number</h3>
+                <div class="row g-3 align-items-stretch">
+                    <div class="col-md-6">
+                        <label for="sn-input-1" class="form-label">Serial Number</label>
+                        <textarea name="serialNumbers" id="sn-input-1" class="form-control" rows="7" placeholder="Input Serial Number (1 SN - 1 row)"></textarea>
+                    </div>
+                    <div class="col-md-6 d-flex flex-column gap-3">
+                        <div>
+                            <label for="description-input-1" class="form-label">Description</label>
+                            <input type="text" id="description-input-1" name="description" class="form-control" placeholder="input Description">
+                        </div>
+                        <div class="mt-auto d-flex justify-content-end">
+                            <button id="input-sn-btn" class="btn btn-ne" type="button">Input</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <form id="custom-form" method="post" class="hidden scrap-card" data-search-type="SN_WAIT_LIST_FORM">
+                <h3 class="h5 mb-3 text-uppercase fw-semibold">DATA</h3>
+                <div class="d-flex justify-content-end">
+                    <button id="sn-wait-list-btn" class="btn btn-ne" type="button">Export</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex flex-column">
+    <div id="input-sn-result" class="hidden scrap-card"></div>
+    <div id="sn-pending-guide-result" class="hidden scrap-card">
+        <div class="table-responsive">
+            <table id="table-sn-wait-approve" class="table table-bordered datatable-table" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>SERIAL_NUMBER</th>
+                        <th>DESCRIPTION</th>
+                        <th>CREATE_TIME</th>
+                        <th>APPLY_TASK_STATUS</th>
+                        <th>CREATE_BY</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/assets/areas/scrap/js/pending_guide.js?v=@DateTime.Now.Ticks"></script>
+    <style>
+        .flowchart-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #FFFFFF;
+        }
+    </style>
+
+}

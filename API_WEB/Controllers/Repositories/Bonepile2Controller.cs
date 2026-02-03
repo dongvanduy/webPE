@@ -563,7 +563,7 @@ namespace API_WEB.Controllers.Repositories
             var validStatuses = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
                 "ScrapLackTask","ScrapHasTask","WaitingApprovalScrap","ApprovedBGA","WaitingApprovalBGA",
-                "Can'tRepairProcess","WaitingScrap","ReworkFG","RepairInRE","WaitingCheckOut","RepairInPD","B36V"
+                "Can'tRepairProcess","WaitingScrap","ReworkFG","RepairInRE","WaitingCheckOut","RepairInPD","B36V","PendingInstructions"
             };
 
             var records = new List<AdapterRepairRecordDto>();
@@ -599,6 +599,7 @@ namespace API_WEB.Controllers.Repositories
                             2 => "WaitingApprovalScrap",
                             4 => "WaitingApprovalBGA",
                             8 => "Can'tRepairProcess",
+                            22 => "PendingInstructions",
                             _ => "ApprovedBGA"
                         };
                     }
@@ -841,7 +842,7 @@ SELECT
             await connection.OpenAsync();
 
             string query = @"
-SELECT 
+                    SELECT 
                         CASE 
                             WHEN REGEXP_LIKE(r107.MODEL_NAME, '^(900|692|930)') THEN kr.KEY_PART_SN
                             ELSE r107.SERIAL_NUMBER
@@ -1051,7 +1052,8 @@ SELECT
                     "WaitingApprovalBGA",
                     "RepairInRE",
                     "WaitingCheckOut",
-                    "Can'tRepairProcess"
+                    "Can'tRepairProcess",
+                    "PendingInstructions"
                 };
 
                 var databaseRecords = new List<BonepileAfterKanbanBasicRecord>();
@@ -1097,6 +1099,11 @@ SELECT
                         else if (applyTaskStatus == 8)
                         {
                             status = "Can'tRepairProcess";
+                            statusV2 = DetermineStatusV2(b.TEST_CODE);
+                        }
+                        else if (applyTaskStatus == 22)
+                        {
+                            status = "PendingInstructions";
                             statusV2 = DetermineStatusV2(b.TEST_CODE);
                         }
                         else if (applyTaskStatus == 19)

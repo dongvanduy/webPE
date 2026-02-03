@@ -24,7 +24,8 @@ namespace API_WEB.Services.Bonepile
             "WaitingApprovalBGA",
             "RepairInRE",
             "WaitingCheckOut",
-            "Can'tRepairProcess"
+            "Can'tRepairProcess",
+            "PendingInstructions"
         };
 
         private static readonly string[] StatusV2Order =
@@ -89,6 +90,11 @@ namespace API_WEB.Services.Bonepile
                 else if (applyTaskStatus == 8)
                 {
                     status = "Can'tRepairProcess";
+                    statusV2 = DetermineStatusV2(item.TEST_CODE);
+                }
+                else if (applyTaskStatus == 22)
+                {
+                    status = "PendingInstructions";
                     statusV2 = DetermineStatusV2(item.TEST_CODE);
                 }
                 else

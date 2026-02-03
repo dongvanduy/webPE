@@ -50,7 +50,7 @@
     const validStatuses = [
         "ScrapLackTask", "ScrapHasTask", "WaitingApprovalScrap", "ApprovedBGA",
         "WaitingApprovalBGA", "ReworkFG", "RepairInRE", "WaitingCheckOut",
-        "RepairInPD", "Can'tRepairProcess"
+        "RepairInPD", "Can'tRepairProcess", "PendingInstructions"
     ];
 
     const statusColorMap = {
@@ -124,6 +124,7 @@
         document.getElementById("underRepairPDCount").innerText = statusCounts.find(s => s.status === "RepairInPD")?.count || 0;
         document.getElementById("approvedBGACount").innerText = statusCounts.find(s => s.status === "ApprovedBGA")?.count || 0;
         document.getElementById("notRepairProcessCount").innerText = statusCounts.find(s => s.status === "Can'tRepairProcess")?.count || 0;
+        document.getElementById("pedingInstructionCount").innerText = statusCounts.find(s => s.status === "PendingInstructions")?.count || 0;
     }
 
     function createStatusBarChart(statusCounts) {
@@ -141,7 +142,8 @@
             "RepairInRE": "#FB923C",
             "WaitingCheckOut": "#FB923C",
             "RepairInPD": "#38BDF8",
-            "Can'tRepairProcess": "#9CA3AF"
+            "Can'tRepairProcess": "#9CA3AF",
+            "PendingInstructions": "#1CE3A3"
         };
         const colors = labels.map(l => colorMap[l] || "#93C5FD");
 

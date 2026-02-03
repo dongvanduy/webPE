@@ -2654,6 +2654,89 @@ namespace API_WEB.Controllers.Scrap
         }
 
 
+        [HttpPost("pending-guide")]
+        public async Task<IActionResult> PendingGuide([FromBody] ProcessCanNotRepairRequest request)
+        {
+            try
+            {
+                if (request == null || request.SNs == null || !request.SNs.Any())
+                    return BadRequest(new { message = "Danh sách SN không được để trống." });
+
+                if (string.IsNullOrEmpty(request.CreatedBy))
+                    return BadRequest(new { message = "CreatedBy không được để trống." });
+
+                if (request.SNs.Any(sn => sn.Length > 50))
+                    return BadRequest(new { message = "SN không được dài quá 50 ký tự." });
+
+                if (request.CreatedBy.Length > 50 || (request.Description != null && request.Description.Length > 100))
+                    return BadRequest(new { message = "CreatedBy và Description không được dài quá giới hạn." });
+
+                // Check duplicate từ SQL
+                var existingSNs = await _sqlContext.ScrapLists
+                    .Where(s => request.SNs.Contains(s.SN))
+                    .Select(s => s.SN)
+                    .ToListAsync();
+
+                var duplicateSNs = existingSNs.Intersect(request.SNs).ToList();
+                if (duplicateSNs.Any())
+                {
+                    return BadRequest(new
+                    {
+                        message = $"Các SN sau đã tồn tại trong ScrapList: {string.Join(", ", duplicateSNs)}"
+                    });
+                }
+
+                var scrapListEntries = new List<ScrapList>();
+                var createdAt = DateTime.Now;
+
+                foreach (var sn in request.SNs)
+                {
+                    // ⭐ LẤY MODEL_NAME + MODEL_SERIAL
+                    var (modelName, modelSerial) = await GetInforAsync(sn);
+
+                    var scrapEntry = new ScrapList
+                    {
+                        SN = sn,
+                        ModelName = modelName,        // ⭐ Ghi model name
+                        ModelType = modelSerial,    // ⭐ Ghi model serial
+                        KanBanStatus = "N/A",
+                        Sloc = "N/A",
+                        TaskNumber = null,
+                        PO = null,
+                        Cost = "N/A",
+                        Remark = null,
+                        CreatedBy = request.CreatedBy,
+                        Desc = request.Description ?? "N/A",
+                        CreateTime = createdAt,
+                        ApplyTime = createdAt,
+                        ApproveScrapperson = "N/A",
+                        ApplyTaskStatus = 22,
+                        FindBoardStatus = "N/A",
+                        InternalTask = "N/A",
+                        Purpose = "Wait for instructions from the customer",
+                        Category = "N/A"
+                    };
+
+                    scrapListEntries.Add(scrapEntry);
+                }
+
+                // Insert into ScrapList + History
+                _sqlContext.ScrapLists.AddRange(scrapListEntries);
+                await AddHistoryEntriesAsync(scrapListEntries);
+                await _sqlContext.SaveChangesAsync();
+
+                return Ok(new { message = $"Đã insert thành công {scrapListEntries.Count} SN vào ScrapList." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    message = "Đã xảy ra lỗi khi insert dữ liệu.",
+                    error = ex.Message
+                });
+            }
+        }
+
         // API: Lấy dữ liệu từ ScrapList với ApplyTaskStatus = 8
         [HttpGet("get-scrap-status-eight")]
         public async Task<IActionResult> GetScrapStatusEight()
@@ -2686,6 +2769,42 @@ namespace API_WEB.Controllers.Scrap
                 return StatusCode(500, new { message = "Đã xảy ra lỗi khi lấy dữ liệu.", error = ex.Message });
             }
         }
+
+
+        // API: Lấy dữ liệu từ ScrapList với ApplyTaskStatus = 22
+        [HttpGet("get-status-pending-guide")]
+        public async Task<IActionResult> GetStatusPending()
+        {
+            try
+            {
+                // Lấy dữ liệu từ bảng ScrapList với ApplyTaskStatus = 22
+                var scrapData = await _sqlContext.ScrapLists
+                    .Where(s => s.ApplyTaskStatus == 22) // Lọc theo ApplyTaskStatus = 22
+                    .Select(s => new
+                    {
+                        SN = s.SN,
+                        Description = s.Desc,
+                        CreateTime = s.CreateTime.ToString("yyyy-MM-dd"),
+                        ApplyTaskStatus = s.ApplyTaskStatus,
+                        Remark = s.Remark,
+                        CreateBy = s.CreatedBy
+                    })
+                    .ToListAsync();
+
+                if (!scrapData.Any())
+                {
+                    return NotFound(new { message = "Không tìm thấy dữ liệu với ApplyTaskStatus = 22" });
+                }
+
+                return Ok(scrapData);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Đã xảy ra lỗi khi lấy dữ liệu.", error = ex.Message });
+            }
+        }
+
+
 
         // API: Checking Scrap quarterly
         [HttpPost("checking-scrap-quarterly")]
