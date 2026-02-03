@@ -1,4 +1,4 @@
-const apiBase = 'https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Bonepile2';
+const apiBase = 'https://pe-vnmbd-nvidia-cns.myfiinet.com/api/report';
 
 const columnKeys = [
     { key: ['productLine', 'product_line', 'PRODUCT_LINE', 'modelName', 'model_name', 'MODEL_NAME', 'model'], label: 'productLine' },
