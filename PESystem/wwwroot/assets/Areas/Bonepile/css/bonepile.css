@@ -298,6 +298,11 @@
         white-space: nowrap !important;
     }
 
+    .bonepile-table.report-repair-table thead th {
+        text-align: center;
+        vertical-align: middle;
+    }
+
     /* BODY CELL */
     .bonepile-table tbody td {
         padding: 5px !important;
@@ -320,6 +325,15 @@
         background-color: rgba(0, 180, 255, 0.25) !important;
         font-weight: 600;
     }
+
+.report-repair-table .table-total-row {
+    background-color: #eaf4ff;
+    font-weight: 700;
+}
+
+.report-repair-table tbody td {
+    text-align: center;
+}
 
 /* TABLE WRAPPER SCROLL */
 .table-responsive,
