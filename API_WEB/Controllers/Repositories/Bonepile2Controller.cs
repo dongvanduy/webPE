@@ -608,7 +608,7 @@ namespace API_WEB.Controllers.Repositories
                 {
                     status = "ReworkFG";
                 }
-                else if (b.ERROR_FLAG != "8" && (b.WIP_GROUP.Contains("B28M") || b.WIP_GROUP.Contains("B30M")))
+                else if (b.ERROR_FLAG != "8" && (b.WIP_GROUP.Contains("B28M") || b.WIP_GROUP.Contains("B30M") || b.WORK_FLAG == "2" || b.WORK_FLAG == "5"))
                 {
                     status = "RepairInRE";
                 }
@@ -844,7 +844,7 @@ SELECT
             string query = @"
                     SELECT 
                         CASE 
-                            WHEN REGEXP_LIKE(r107.MODEL_NAME, '^(900|692|930)') THEN kr.KEY_PART_SN
+                            WHEN REGEXP_LIKE(r107.MODEL_NAME, '^(900|692|930)') THEN NVL(kr.KEY_PART_SN, r107.SERIAL_NUMBER)
                             ELSE r107.SERIAL_NUMBER
                         END AS SERIAL_NUMBER,
                         r107.MODEL_NAME,

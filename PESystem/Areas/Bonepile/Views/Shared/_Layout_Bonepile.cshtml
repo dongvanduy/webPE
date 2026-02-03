@@ -47,6 +47,7 @@
         <nav class="nav flex-column">
             <!-- Menu Items -->
             <a href="@Url.Action("Home", "Home", new { area = "" })" class="nav-link"><i class="fas fa-home"></i> <span>Trang chủ</span></a>
+            <a href="@Url.Action("Index", "DailyReport", new { area = "Bonepile" })" class="nav-link @ViewContext.IsActive("DailyReport", "Index")"><i class="fa-solid fa-dumpster"></i> <span>Daily Report</span></a>
             <a href="@Url.Action("Index", "Bonepile", new { area = "Bonepile" })" class="nav-link @ViewContext.IsActive("Bonepile", "Index")"><i class="fa-solid fa-dumpster"></i> <span>Before</span></a>
             <a href="@Url.Action("Index", "BonepileAfter", new { area = "Bonepile" })" class="nav-link @ViewContext.IsActive("BonepileAfter", "Index")"><i class="fa fa-archive"></i> <span>After</span></a>
             <a href="@Url.Action("Index", "BonepileNPI", new { area = "Bonepile" })" class="nav-link @ViewContext.IsActive("BonepileNPI", "Index")"><i class="fas fa-chart-line"></i> <span>NPI</span></a>
