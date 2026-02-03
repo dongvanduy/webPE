@@ -34,6 +34,42 @@
     </div>
 </div>
 
+<div class="modal fade" id="reportDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reportDetailTitle">Detail</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped bonepile-table" id="reportDetailTable" style="width:100%">
+                        <thead class="table-light">
+                            <tr>
+                                <th>SERIAL_NUMBER</th>
+                                <th>MODEL_NAME</th>
+                                <th>PRODUCT_LINE</th>
+                                <th>STATUS</th>
+                                <th>AGING_DAY</th>
+                                <th>MO_NUMBER</th>
+                                <th>WIP_GROUP</th>
+                                <th>TEST_GROUP</th>
+                                <th>TEST_TIME</th>
+                                <th>TEST_CODE</th>
+                                <th>ERROR_ITEM</th>
+                                <th>ERROR_DESC</th>
+                                <th>REPAIR</th>
+                                <th>CHECKIN_DATE</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script src="~/assets/Areas/Bonepile/js/daily_report.js?v=@DateTime.Now.Ticks"></script>
 }
