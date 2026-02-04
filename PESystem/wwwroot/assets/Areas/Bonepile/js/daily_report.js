@@ -1,5 +1,5 @@
 const apiBase = 'https://pe-vnmbd-nvidia-cns.myfiinet.com/api/report';
-const productLineKeys = ['productLine', 'product_line', 'PRODUCT_LINE'];
+const productLineKeys = ['productLine', 'product_line', 'PRODUCT_LINE', 'ProductLine'];
 const columnFilterMap = {
     1: 'all',
     2: 'approvedScrap',
@@ -26,7 +26,11 @@ const statusBuckets = {
         'scraphastask',
         'scraplacktask'
     ]),
-    fxvOnlineWip: new Set(['waiting repair']),
+    fxvOnlineWip: new Set([
+        'waiting repair',
+        'waiting repair aging day <30',
+        'waiting repair aging day >30'
+    ]),
     needRepairLt30: new Set([
         'cb repaired once but aging day <30'
     ]),
@@ -40,7 +44,11 @@ const allBucketStatuses = new Set(
     Object.values(statusBuckets).flatMap((set) => Array.from(set))
 );
 let cachedRecords = [];
-let modalTable = null;
+let cachedAfterRecords = [];
+const modalTables = {
+    before: null,
+    after: null
+};
 const pickValue = (row, keys) => {
     if (!row) return '';
     for (const key of keys) {
@@ -158,9 +166,9 @@ const appendTotalRow = (groupedRows) => {
 };
 const getProductLineValue = (row) => (pickValue(row, productLineKeys) || '').toString().trim();
 const getStatusValue = (row) => normalizeStatus(row.status || row.Status);
-const filterRecords = (productLine, filterKey) => {
+const filterRecords = (records, productLine, filterKey) => {
     if (!productLine) return [];
-    return cachedRecords.filter((record) => {
+    return records.filter((record) => {
         if (getProductLineValue(record) !== productLine) return false;
         if (filterKey === 'all') return true;
         const status = getStatusValue(record);
@@ -169,13 +177,18 @@ const filterRecords = (productLine, filterKey) => {
     });
 };
 const buildModalRows = (records) => records.map((record) => ({
-    serialNumber: record.sn || record.Sn || record.SERIAL_NUMBER || '',
+    serialNumber: record.sn || record.Sn || record.SN || record.SERIAL_NUMBER || '',
     modelName: record.modelName || record.ModelName || record.MODEL_NAME || '',
     productLine: getProductLineValue(record),
     status: record.status || record.Status || '',
-    agingDay: record.agingDay || record.AgingDay || record.AGING_DAY || '',
+    agingDay: record.agingDay || record.AgingDay || record.AGING_DAY || record.Aging || '',
     moNumber: record.moNumber || record.MoNumber || record.MO_NUMBER || '',
-    wipGroup: record.wipGroup || record.WipGroup || record.WIP_GROUP || '',
+    wipGroup: record.wipGroup
+        || record.WipGroup
+        || record.WIP_GROUP
+        || record.WipGroupSFC
+        || record.WipGroupKANBAN
+        || '',
     testGroup: record.testGroup || record.TestGroup || record.TEST_GROUP || '',
     testTime: record.testTime || record.TestTime || record.TEST_TIME || '',
     testCode: record.testCode || record.TestCode || record.TEST_CODE || '',
@@ -183,20 +196,28 @@ const buildModalRows = (records) => records.map((record) => ({
     errorDesc: record.errorDesc || record.ErrorDesc || record.ERROR_DESC || '',
     checkInDate: record.checkInDate || record.CheckInDate || record.CHECKIN_DATE || ''
 }));
-const openDetailModal = (productLine, filterKey) => {
+const openDetailModal = ({
+    productLine,
+    filterKey,
+    records,
+    modalKey,
+    titleId,
+    tableSelector,
+    modalSelector
+}) => {
     if (!productLine || productLine === 'Total') return;
-    const records = filterRecords(productLine, filterKey);
-    const rows = buildModalRows(records);
-    const modalTitle = document.getElementById('reportDetailTitle');
+    const filteredRecords = filterRecords(records, productLine, filterKey);
+    const rows = buildModalRows(filteredRecords);
+    const modalTitle = document.getElementById(titleId);
     if (modalTitle) {
         modalTitle.textContent = `Product Line: ${productLine} (${rows.length})`;
     }
-    if (modalTable) {
-        modalTable.clear();
-        modalTable.rows.add(rows);
-        modalTable.draw();
+    if (modalTables[modalKey]) {
+        modalTables[modalKey].clear();
+        modalTables[modalKey].rows.add(rows);
+        modalTables[modalKey].draw();
     } else {
-        modalTable = $('#reportDetailTable').DataTable({
+        modalTables[modalKey] = $(tableSelector).DataTable({
             data: rows,
             columns: [
                 { data: 'serialNumber' },
@@ -224,7 +245,7 @@ const openDetailModal = (productLine, filterKey) => {
             info: false
         });
     }
-    $('#reportDetailModal').modal('show');
+    $(modalSelector).modal('show');
 };
 const bindTableClick = () => {
     const tableBody = document.querySelector('#reportRepairBeforeTable tbody');
@@ -237,7 +258,37 @@ const bindTableClick = () => {
         const productLine = row.firstElementChild?.textContent?.trim();
         const filterKey = columnFilterMap[cell.cellIndex];
         if (!filterKey || !productLine || productLine === 'Total') return;
-        openDetailModal(productLine, filterKey);
+        openDetailModal({
+            productLine,
+            filterKey,
+            records: cachedRecords,
+            modalKey: 'before',
+            titleId: 'reportDetailTitle',
+            tableSelector: '#reportDetailTable',
+            modalSelector: '#reportDetailModal'
+        });
+    });
+};
+const bindAfterTableClick = () => {
+    const tableBody = document.querySelector('#reportRepairAfterTable tbody');
+    if (!tableBody) return;
+    tableBody.addEventListener('click', (event) => {
+        const cell = event.target.closest('td');
+        if (!cell) return;
+        const row = cell.parentElement;
+        if (!row) return;
+        const productLine = row.firstElementChild?.textContent?.trim();
+        const filterKey = columnFilterMap[cell.cellIndex];
+        if (!filterKey || !productLine || productLine === 'Total') return;
+        openDetailModal({
+            productLine,
+            filterKey,
+            records: cachedAfterRecords,
+            modalKey: 'after',
+            titleId: 'reportAfterTitle',
+            tableSelector: '#reportAfterTable',
+            modalSelector: '#reportAfterModal'
+        });
     });
 };
 const fetchReportRepairBefore = async () => {
@@ -256,7 +307,65 @@ const fetchReportRepairBefore = async () => {
         hideSpinner();
     }
 };
+const renderAfterRows = (rows) => {
+    const tableBody = document.querySelector('#reportRepairAfterTable tbody');
+    if (!tableBody) return [];
+    const groupedRows = buildGroupedRows(rows);
+    tableBody.innerHTML = groupedRows.map((row) => {
+        const cells = columnOrder.map((key) => {
+            const value = row[key];
+            return `<td>${formatNumber(value)}</td>`;
+        }).join('');
+        return `<tr>${cells}</tr>`;
+    }).join('');
+    return groupedRows;
+};
+const appendAfterTotalRow = (groupedRows) => {
+    const tableBody = document.querySelector('#reportRepairAfterTable tbody');
+    if (!tableBody) return;
+    const totals = {
+        productLine: 'Total',
+        bpTotalQty: 0,
+        approvedScrap: 0,
+        fxvOnlineWip: 0,
+        needRepairLt30: 0,
+        needRepairGt30: 0,
+        repairedTwiceLt30: 0,
+        repairedTwiceGt30: 0,
+        others: 0
+    };
+    groupedRows.forEach((row) => {
+        totals.bpTotalQty += sumNumber(row.bpTotalQty);
+        totals.approvedScrap += sumNumber(row.approvedScrap);
+        totals.fxvOnlineWip += sumNumber(row.fxvOnlineWip);
+        totals.needRepairLt30 += sumNumber(row.needRepairLt30);
+        totals.needRepairGt30 += sumNumber(row.needRepairGt30);
+        totals.repairedTwiceLt30 += sumNumber(row.repairedTwiceLt30);
+        totals.repairedTwiceGt30 += sumNumber(row.repairedTwiceGt30);
+        totals.others += sumNumber(row.others);
+    });
+    const cells = columnOrder.map((key) => `<td>${formatNumber(totals[key])}</td>`).join('');
+    tableBody.insertAdjacentHTML('beforeend', `<tr class="table-total-row">${cells}</tr>`);
+};
+const fetchReportRepairAfter = async () => {
+    try {
+        showSpinner();
+        const response = await axios.get(`${apiBase}/report-repair-after`);
+        const payload = response?.data || {};
+        const rows = normalizeRows(payload);
+        cachedAfterRecords = rows;
+        const groupedRows = renderAfterRows(rows);
+        appendAfterTotalRow(groupedRows);
+    } catch (error) {
+        console.error('Không thể tải report-repair-after', error);
+        alert('Không thể tải dữ liệu report-repair-after');
+    } finally {
+        hideSpinner();
+    }
+};
 document.addEventListener('DOMContentLoaded', () => {
     fetchReportRepairBefore();
+    fetchReportRepairAfter();
     bindTableClick();
+    bindAfterTableClick();
 });
