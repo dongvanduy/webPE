@@ -92,6 +92,7 @@
         public string TEST_CODE { get; set; }
         public string ERROR_DESC { get; set; }
         public string WIP_GROUP { get; set; }
+        public string REPOSITORY { get; set; }
         public string TEST_GROUP { get; set; }
         public string TEST_TIME { get; set; }
         public string VERSION_CODE { get; set; }

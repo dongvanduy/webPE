@@ -181,6 +181,7 @@ namespace API_WEB.Controllers.Bonepile
                     ErrorFlag = b.ERROR_FLAG,
                     WorkFlag = b.WORK_FLAG,
                     WipGroup = b.WIP_GROUP,
+                    Repository = b.REPOSITORY,
                     TestTime = b.TEST_TIME,
                     TestCode = b.TEST_CODE,
                     ErrorCodeItem = b.ERROR_ITEM_CODE,
@@ -279,6 +280,13 @@ namespace API_WEB.Controllers.Bonepile
                     r107.ERROR_FLAG,
                     r107.WORK_FLAG,
                     r107.WIP_GROUP,
+                    CASE
+                        WHEN r107.WORK_FLAG = '2'
+                             OR r107.WIP_GROUP LIKE '%B28M%' THEN 'B28M'
+                        WHEN r107.WORK_FLAG = '5'
+                             OR r107.WIP_GROUP LIKE '%B30M%' THEN 'B30M'
+                        ELSE 'SFC'
+                    END AS REPOSITORY,
                     r109_latest.TEST_GROUP,
                     r109_latest.TEST_TIME,
                     r109_latest.TEST_CODE,
@@ -359,6 +367,7 @@ namespace API_WEB.Controllers.Bonepile
                             ERROR_FLAG = reader["ERROR_FLAG"] != DBNull.Value ? reader["ERROR_FLAG"].ToString() : null,
                             WORK_FLAG = reader["WORK_FLAG"] != DBNull.Value ? reader["WORK_FLAG"].ToString() : null,
                             WIP_GROUP = reader["WIP_GROUP"] != DBNull.Value ? reader["WIP_GROUP"].ToString() : null,
+                            REPOSITORY = reader["REPOSITORY"] != DBNull.Value ? reader["REPOSITORY"].ToString() : null,
                             TEST_GROUP = reader["TEST_GROUP"] != DBNull.Value ? reader["TEST_GROUP"].ToString() : null,
                             TEST_TIME = reader["TEST_TIME"].ToString(),
                             TEST_CODE = reader["TEST_CODE"].ToString(),
@@ -392,6 +401,7 @@ namespace API_WEB.Controllers.Bonepile
                     r107.ERROR_FLAG,
                     r107.WORK_FLAG,
                     r107.WIP_GROUP,
+                    'B28M' AS REPOSITORY,
                     r109_latest.TEST_GROUP,
                     r109_latest.TEST_TIME,
                     r109_latest.TEST_CODE,
@@ -460,6 +470,7 @@ namespace API_WEB.Controllers.Bonepile
                     ERROR_FLAG = reader["ERROR_FLAG"] != DBNull.Value ? reader["ERROR_FLAG"].ToString() : null,
                     WORK_FLAG = reader["WORK_FLAG"] != DBNull.Value ? reader["WORK_FLAG"].ToString() : null,
                     WIP_GROUP = reader["WIP_GROUP"] != DBNull.Value ? reader["WIP_GROUP"].ToString() : null,
+                    REPOSITORY = reader["REPOSITORY"] != DBNull.Value ? reader["REPOSITORY"].ToString() : null,
                     TEST_GROUP = reader["TEST_GROUP"] != DBNull.Value ? reader["TEST_GROUP"].ToString() : null,
                     TEST_TIME = reader["TEST_TIME"]?.ToString(),
                     TEST_CODE = reader["TEST_CODE"]?.ToString(),
@@ -547,8 +558,6 @@ namespace API_WEB.Controllers.Bonepile
 
             return result;
         }
-
-
 
 
         //============================================AFTER STATUS================================================
