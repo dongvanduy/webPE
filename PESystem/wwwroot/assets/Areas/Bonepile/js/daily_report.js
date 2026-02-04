@@ -45,6 +45,14 @@ const allBucketStatuses = new Set(
 );
 let cachedRecords = [];
 let cachedAfterRecords = [];
+let repositoryHistoryChart = null;
+const repositoryBuckets = ['B30M', 'B28M', 'SFC', 'B36R'];
+const repositoryColors = {
+    B30M: 'rgba(54, 162, 235, 0.7)',
+    B28M: 'rgba(255, 99, 132, 0.7)',
+    SFC: 'rgba(255, 206, 86, 0.7)',
+    B36R: 'rgba(75, 192, 192, 0.7)'
+};
 const modalTables = {
     before: null,
     after: null
@@ -363,9 +371,59 @@ const fetchReportRepairAfter = async () => {
         hideSpinner();
     }
 };
+const renderRepositoryHistoryChart = (history) => {
+    const canvas = document.getElementById('repositoryHistoryChart');
+    if (!canvas || typeof Chart === 'undefined') return;
+
+    const labels = history.map((item) => item.snapshotDate);
+    const datasets = repositoryBuckets.map((bucket) => ({
+        label: bucket,
+        data: history.map((item) => sumNumber(item.repositoryCounts?.[bucket] ?? 0)),
+        backgroundColor: repositoryColors[bucket] || 'rgba(153, 102, 255, 0.7)'
+    }));
+
+    if (repositoryHistoryChart) {
+        repositoryHistoryChart.destroy();
+    }
+
+    repositoryHistoryChart = new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            },
+            scales: {
+                x: {
+                    stacked: true
+                },
+                y: {
+                    stacked: true,
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+};
+const fetchRepositoryHistory = async () => {
+    try {
+        const response = await axios.get(`${apiBase}/bonepile-repository-history`);
+        const history = normalizeRows(response?.data || {});
+        renderRepositoryHistoryChart(history);
+    } catch (error) {
+        console.error('Không thể tải bonepile-repository-history', error);
+    }
+};
 document.addEventListener('DOMContentLoaded', () => {
     fetchReportRepairBefore();
     fetchReportRepairAfter();
+    fetchRepositoryHistory();
     bindTableClick();
     bindAfterTableClick();
 });

@@ -16,6 +16,7 @@ namespace API_WEB.Controllers.Bonepile
     {
         private readonly CSDL_NE _sqlContext;
         private readonly OracleDbContext _oracleContext;
+        private static readonly string[] RepositoryBuckets = { "B28M", "B30M", "SFC", "B36R" };
 
         public ReportController(CSDL_NE sqlContext, OracleDbContext oracleContext)
         {
@@ -566,209 +567,8 @@ namespace API_WEB.Controllers.Bonepile
         {
             try
             {
-                var allData = await ExecuteBonepileAfterKanbanBasicQuery();
+                var databaseRecords = await BuildAfterKanbanBasicRecordsAsync();
 
-                var excludedSNs = GetExcludedSerialNumbers();
-                if (excludedSNs.Any())
-                {
-                    allData = allData.Where(d => !excludedSNs.Contains(d.SERIAL_NUMBER?.Trim().ToUpper())).ToList();
-                }
-
-                var snList = allData
-                    .Select(d => d.SERIAL_NUMBER?.Trim().ToUpper())
-                    .Where(s => !string.IsNullOrEmpty(s))
-                    .ToList();
-
-                var scrapCategories = await _sqlContext.ScrapLists
-                    .Where(s => snList.Contains(s.SN.Trim().ToUpper()))
-                    .Select(s => new { SN = s.SN, ApplyTaskStatus = s.ApplyTaskStatus, TaskNumber = s.TaskNumber })
-                    .ToListAsync();
-
-                var scrapDict = scrapCategories.ToDictionary(
-                    c => c.SN?.Trim().ToUpper() ?? "",
-                    c => (ApplyTaskStatus: c.ApplyTaskStatus, TaskNumber: c.TaskNumber),
-                    StringComparer.OrdinalIgnoreCase
-                );
-
-                var khoOkSet = (await _sqlContext.KhoOks
-                        .Where(k => snList.Contains(k.SERIAL_NUMBER.Trim().ToUpper()))
-                        .Select(k => k.SERIAL_NUMBER)
-                        .ToListAsync())
-                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-                var exportRecords = await _sqlContext.Exports
-                    .Where(e => snList.Contains(e.SerialNumber.Trim().ToUpper()) && e.CheckingB36R > 0 && e.CheckingB36R <= 4)
-                    .ToListAsync();
-
-                var exportDict = exportRecords
-                    .GroupBy(e => e.SerialNumber?.Trim().ToUpper() ?? "")
-                    .Select(g => g.OrderByDescending(e => e.ExportDate).First())
-                    .ToDictionary(
-                        e => e.SerialNumber.Trim().ToUpper(),
-                        e => (e.CheckingB36R, e.ExportDate),
-                        StringComparer.OrdinalIgnoreCase);
-
-                var validStatuses = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-                {
-                    "ScrapLackTask",
-                    "ScrapHasTask",
-                    "WaitingLink",
-                    "Linked",
-                    "WaitingApprovalScrap",
-                    "ApprovedBGA",
-                    "WaitingApprovalBGA",
-                    "RepairInRE",
-                    "WaitingCheckOut",
-                    "Can'tRepairProcess",
-                    "PendingInstructions"
-                };
-
-                var databaseRecords = new List<BonepileAfterKanbanBasicRecord>();
-                // List chứa các SN cần check lịch sử R109 (chỉ check máy đang RepairInRE)
-                var repairSnsToCheck = new List<string>();
-
-                foreach (var b in allData)
-                {
-                    if (string.IsNullOrWhiteSpace(b.SERIAL_NUMBER))
-                    {
-                        continue;
-                    }
-
-                    var snKey = b.SERIAL_NUMBER.Trim().ToUpper();
-                    string status;
-
-                    if (scrapDict.TryGetValue(snKey, out var scrapInfo))
-                    {
-                        var applyTaskStatus = scrapInfo.ApplyTaskStatus;
-
-                        if (applyTaskStatus == 5 || applyTaskStatus == 6 || applyTaskStatus == 7)
-                        {
-                            status = "ScrapHasTask";
-                        }
-                        else if (applyTaskStatus == 0 || applyTaskStatus == 1)
-                        {
-                            if (string.IsNullOrEmpty(scrapInfo.TaskNumber) || scrapInfo.TaskNumber == "N/A")
-                                status = "ScrapLackTask";
-                            else status = "ScrapHasTask";
-                        }
-                        else if (applyTaskStatus == 2)
-                        {
-                            status = "WaitingApprovalScrap";
-                        }
-                        else if (applyTaskStatus == 4)
-                        {
-                            status = "WaitingApprovalBGA";
-                        }
-                        else if (applyTaskStatus == 8)
-                        {
-                            status = "Can'tRepairProcess";
-                        }
-                        else if (applyTaskStatus == 22)
-                        {
-                            status = "PendingInstructions";
-                        }
-                        else
-                        {
-                            status = "ApprovedBGA";
-                        }
-                    }
-                    else if (exportDict.TryGetValue(snKey, out var exportInfo))
-                    {
-                        switch (exportInfo.CheckingB36R)
-                        {
-                            case 1:
-                                status = "WaitingLink";
-                                break;
-                            case 2:
-                                status = "Linked";
-                                break;
-                            default:
-                                status = "RepairInRE";
-                                break;
-                        }
-                    }
-                    else
-                    {
-                        status = "RepairInRE";
-                    }
-
-                    var isInKhoOk = khoOkSet.Contains(snKey);
-                    if (string.Equals(status, "RepairInRE", StringComparison.OrdinalIgnoreCase) && isInKhoOk)
-                    {
-                        status = "WaitingCheckOut";
-                    }
-
-                    if (!validStatuses.Contains(status))
-                    {
-                        continue;
-                    }
-                    // **LOGIC MỚI**: Nếu là RepairInRE, thêm vào danh sách cần check history
-                    if (status == "RepairInRE")
-                    {
-                        repairSnsToCheck.Add(b.SERIAL_NUMBER);
-                    }
-
-                    databaseRecords.Add(new BonepileAfterKanbanBasicRecord
-                    {
-                        SN = b.SERIAL_NUMBER,
-                        ModelName = b.MODEL_NAME,
-                        MoNumber = b.MO_NUMBER,
-                        ProductLine = b.PRODUCT_LINE,
-                        WipGroupSFC = b.WIP_GROUP_SFC,
-                        WipGroupKANBAN = b.WIP_GROUP_KANBAN,
-                        ErrorFlag = b.ERROR_FLAG,
-                        WorkFlag = b.WORK_FLAG,
-                        TestGroup = b.TEST_GROUP,
-                        TestTime = b.TEST_TIME?.ToString("yyyy-MM-dd HH:mm:ss"),
-                        TestCode = b.TEST_CODE,
-                        ErrorCodeItem = b.ERROR_ITEM_CODE,
-                        ErrorDesc = b.ERROR_DESC,
-                        Aging = b.AGING,
-                        AgingOld = b.AGING_OLD,
-                        Status = status
-                    });
-                }
-
-                // 5. Xử lý Logic Nâng cao (Consecutive Failures + Aging)
-                if (repairSnsToCheck.Any())
-                {
-                    // Gọi hàm helper để lấy số lần fail liên tiếp
-                    var consecutiveFailCounts = await GetConsecutiveFailCountsAsync(repairSnsToCheck);
-
-                    foreach (var record in databaseRecords)
-                    {
-                        if (record.Status == "RepairInRE")
-                        {
-                            if (consecutiveFailCounts.TryGetValue(record.SN, out int failCount))
-                            {
-                                // Xác định Aging Suffix (<30 hay >30)
-                                // record.Aging là double?, cần check null
-                                double agingVal = record.Aging ?? 0;
-                                string agingSuffix = agingVal > 30 ? ">30" : "<30";
-                                string baseStatusName = "";
-
-                                // Đặt tên status theo số lần fail
-                                if (failCount <= 1)
-                                {
-                                    baseStatusName = "waiting repair";
-                                }
-                                else if (failCount == 2)
-                                {
-                                    baseStatusName = "CB repaired once but";
-                                }
-                                else // > 2
-                                {
-                                    baseStatusName = "CB repaired twice but";
-                                }
-
-                                // Cập nhật lại Status cuối cùng
-                                record.Status = $"{baseStatusName} aging day {agingSuffix}";
-                            }
-                        }
-                    }
-                }
-
-                // 6. Tính toán thống kê (Status Counts)
                 var statusCounts = databaseRecords
                     .Where(r => !string.IsNullOrWhiteSpace(r.Status))
                     .GroupBy(r => r.Status, StringComparer.OrdinalIgnoreCase)
@@ -784,7 +584,6 @@ namespace API_WEB.Controllers.Bonepile
                     return NotFound(new { message = "Khong tim thay du lieu!", totalCount = 0 });
                 }
 
-                // Gom nhóm chi tiết để trả về (nếu cần thiết cho FE)
                 var statusDetails = databaseRecords
                     .Where(r => !string.IsNullOrWhiteSpace(r.Status))
                     .GroupBy(r => r.Status, StringComparer.OrdinalIgnoreCase)
@@ -798,6 +597,289 @@ namespace API_WEB.Controllers.Bonepile
                     statusDetails,
                 });
 
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Xay ra loi", error = ex.Message });
+            }
+        }
+
+        private async Task<List<BonepileAfterKanbanBasicRecord>> BuildAfterKanbanBasicRecordsAsync()
+        {
+            var allData = await ExecuteBonepileAfterKanbanBasicQuery();
+
+            var excludedSNs = GetExcludedSerialNumbers();
+            if (excludedSNs.Any())
+            {
+                allData = allData.Where(d => !excludedSNs.Contains(d.SERIAL_NUMBER?.Trim().ToUpper())).ToList();
+            }
+
+            var snList = allData
+                .Select(d => d.SERIAL_NUMBER?.Trim().ToUpper())
+                .Where(s => !string.IsNullOrEmpty(s))
+                .ToList();
+
+            var scrapCategories = await _sqlContext.ScrapLists
+                .Where(s => snList.Contains(s.SN.Trim().ToUpper()))
+                .Select(s => new { SN = s.SN, ApplyTaskStatus = s.ApplyTaskStatus, TaskNumber = s.TaskNumber })
+                .ToListAsync();
+
+            var scrapDict = scrapCategories.ToDictionary(
+                c => c.SN?.Trim().ToUpper() ?? "",
+                c => (ApplyTaskStatus: c.ApplyTaskStatus, TaskNumber: c.TaskNumber),
+                StringComparer.OrdinalIgnoreCase
+            );
+
+            var khoOkSet = (await _sqlContext.KhoOks
+                    .Where(k => snList.Contains(k.SERIAL_NUMBER.Trim().ToUpper()))
+                    .Select(k => k.SERIAL_NUMBER)
+                    .ToListAsync())
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            var exportRecords = await _sqlContext.Exports
+                .Where(e => snList.Contains(e.SerialNumber.Trim().ToUpper()) && e.CheckingB36R > 0 && e.CheckingB36R <= 4)
+                .ToListAsync();
+
+            var exportDict = exportRecords
+                .GroupBy(e => e.SerialNumber?.Trim().ToUpper() ?? "")
+                .Select(g => g.OrderByDescending(e => e.ExportDate).First())
+                .ToDictionary(
+                    e => e.SerialNumber.Trim().ToUpper(),
+                    e => (e.CheckingB36R, e.ExportDate),
+                    StringComparer.OrdinalIgnoreCase);
+
+            var validStatuses = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "ScrapLackTask",
+                "ScrapHasTask",
+                "WaitingLink",
+                "Linked",
+                "WaitingApprovalScrap",
+                "ApprovedBGA",
+                "WaitingApprovalBGA",
+                "RepairInRE",
+                "WaitingCheckOut",
+                "Can'tRepairProcess",
+                "PendingInstructions"
+            };
+
+            var databaseRecords = new List<BonepileAfterKanbanBasicRecord>();
+            var repairSnsToCheck = new List<string>();
+
+            foreach (var b in allData)
+            {
+                if (string.IsNullOrWhiteSpace(b.SERIAL_NUMBER))
+                {
+                    continue;
+                }
+
+                var snKey = b.SERIAL_NUMBER.Trim().ToUpper();
+                string status;
+
+                if (scrapDict.TryGetValue(snKey, out var scrapInfo))
+                {
+                    var applyTaskStatus = scrapInfo.ApplyTaskStatus;
+
+                    if (applyTaskStatus == 5 || applyTaskStatus == 6 || applyTaskStatus == 7)
+                    {
+                        status = "ScrapHasTask";
+                    }
+                    else if (applyTaskStatus == 0 || applyTaskStatus == 1)
+                    {
+                        if (string.IsNullOrEmpty(scrapInfo.TaskNumber) || scrapInfo.TaskNumber == "N/A")
+                            status = "ScrapLackTask";
+                        else status = "ScrapHasTask";
+                    }
+                    else if (applyTaskStatus == 2)
+                    {
+                        status = "WaitingApprovalScrap";
+                    }
+                    else if (applyTaskStatus == 4)
+                    {
+                        status = "WaitingApprovalBGA";
+                    }
+                    else if (applyTaskStatus == 8)
+                    {
+                        status = "Can'tRepairProcess";
+                    }
+                    else if (applyTaskStatus == 22)
+                    {
+                        status = "PendingInstructions";
+                    }
+                    else
+                    {
+                        status = "ApprovedBGA";
+                    }
+                }
+                else if (exportDict.TryGetValue(snKey, out var exportInfo))
+                {
+                    switch (exportInfo.CheckingB36R)
+                    {
+                        case 1:
+                            status = "WaitingLink";
+                            break;
+                        case 2:
+                            status = "Linked";
+                            break;
+                        default:
+                            status = "RepairInRE";
+                            break;
+                    }
+                }
+                else
+                {
+                    status = "RepairInRE";
+                }
+
+                var isInKhoOk = khoOkSet.Contains(snKey);
+                if (string.Equals(status, "RepairInRE", StringComparison.OrdinalIgnoreCase) && isInKhoOk)
+                {
+                    status = "WaitingCheckOut";
+                }
+
+                if (!validStatuses.Contains(status))
+                {
+                    continue;
+                }
+
+                if (status == "RepairInRE")
+                {
+                    repairSnsToCheck.Add(b.SERIAL_NUMBER);
+                }
+
+                databaseRecords.Add(new BonepileAfterKanbanBasicRecord
+                {
+                    SN = b.SERIAL_NUMBER,
+                    ModelName = b.MODEL_NAME,
+                    MoNumber = b.MO_NUMBER,
+                    ProductLine = b.PRODUCT_LINE,
+                    WipGroupSFC = b.WIP_GROUP_SFC,
+                    WipGroupKANBAN = b.WIP_GROUP_KANBAN,
+                    ErrorFlag = b.ERROR_FLAG,
+                    WorkFlag = b.WORK_FLAG,
+                    TestGroup = b.TEST_GROUP,
+                    TestTime = b.TEST_TIME?.ToString("yyyy-MM-dd HH:mm:ss"),
+                    TestCode = b.TEST_CODE,
+                    ErrorCodeItem = b.ERROR_ITEM_CODE,
+                    ErrorDesc = b.ERROR_DESC,
+                    Aging = b.AGING,
+                    AgingOld = b.AGING_OLD,
+                    Status = status
+                });
+            }
+
+            if (repairSnsToCheck.Any())
+            {
+                var consecutiveFailCounts = await GetConsecutiveFailCountsAsync(repairSnsToCheck);
+
+                foreach (var record in databaseRecords)
+                {
+                    if (record.Status == "RepairInRE")
+                    {
+                        if (consecutiveFailCounts.TryGetValue(record.SN, out int failCount))
+                        {
+                            double agingVal = record.Aging ?? 0;
+                            string agingSuffix = agingVal > 30 ? ">30" : "<30";
+                            string baseStatusName = "";
+
+                            if (failCount <= 1)
+                            {
+                                baseStatusName = "waiting repair";
+                            }
+                            else if (failCount == 2)
+                            {
+                                baseStatusName = "CB repaired once but";
+                            }
+                            else
+                            {
+                                baseStatusName = "CB repaired twice but";
+                            }
+
+                            record.Status = $"{baseStatusName} aging day {agingSuffix}";
+                        }
+                    }
+                }
+            }
+
+            return databaseRecords;
+        }
+
+        [HttpPost("bonepile-repository-history/snapshot")]
+        public async Task<IActionResult> CaptureBonepileRepositorySnapshot()
+        {
+            try
+            {
+                var snapshotDate = DateTime.Today;
+                var beforeData = await BuildAdapterRepairDataAsync();
+                var afterRecords = await BuildAfterKanbanBasicRecordsAsync();
+
+                var repositoryCounts = RepositoryBuckets.ToDictionary(bucket => bucket, _ => 0, StringComparer.OrdinalIgnoreCase);
+
+                foreach (var record in beforeData.Records)
+                {
+                    var repository = (record.Repository ?? string.Empty).Trim();
+                    if (repositoryCounts.ContainsKey(repository))
+                    {
+                        repositoryCounts[repository] += 1;
+                    }
+                }
+
+                repositoryCounts["B36R"] = afterRecords.Count;
+
+                var existingSnapshots = await _sqlContext.BonepileRepositoryDailyHistories
+                    .Where(h => h.SnapshotDate == snapshotDate)
+                    .ToListAsync();
+
+                if (existingSnapshots.Any())
+                {
+                    _sqlContext.BonepileRepositoryDailyHistories.RemoveRange(existingSnapshots);
+                }
+
+                var newSnapshots = repositoryCounts.Select(entry => new BonepileRepositoryDailyHistory
+                {
+                    SnapshotDate = snapshotDate,
+                    Repository = entry.Key,
+                    Count = entry.Value
+                }).ToList();
+
+                _sqlContext.BonepileRepositoryDailyHistories.AddRange(newSnapshots);
+                await _sqlContext.SaveChangesAsync();
+
+                return Ok(new
+                {
+                    snapshotDate = snapshotDate.ToString("yyyy-MM-dd"),
+                    repositoryCounts
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Xay ra loi", error = ex.Message });
+            }
+        }
+
+        [HttpGet("bonepile-repository-history")]
+        public async Task<IActionResult> GetBonepileRepositoryHistory()
+        {
+            try
+            {
+                var history = await _sqlContext.BonepileRepositoryDailyHistories
+                    .AsNoTracking()
+                    .OrderBy(h => h.SnapshotDate)
+                    .ToListAsync();
+
+                var groupedHistory = history
+                    .GroupBy(h => h.SnapshotDate.Date)
+                    .Select(group => new
+                    {
+                        snapshotDate = group.Key.ToString("yyyy-MM-dd"),
+                        repositoryCounts = RepositoryBuckets.ToDictionary(
+                            bucket => bucket,
+                            bucket => group.FirstOrDefault(item => string.Equals(item.Repository, bucket, StringComparison.OrdinalIgnoreCase))?.Count ?? 0,
+                            StringComparer.OrdinalIgnoreCase)
+                    })
+                    .ToList();
+
+                return Ok(groupedHistory);
             }
             catch (Exception ex)
             {

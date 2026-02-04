@@ -151,6 +151,7 @@ builder.Services.AddHostedService<ScrapToProduct>();
 builder.Services.AddHostedService<LinkMoCheckingService>();
 builder.Services.AddHostedService<BonepileWaitingSyncService>();
 builder.Services.AddHostedService<BonepileAfterSnapshotService>();
+builder.Services.AddHostedService<BonepileRepositorySnapshotService>();
 builder.Services.AddHostedService<OtpCleanupService>();
 
 // Đăng ký TokenService
