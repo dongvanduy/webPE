@@ -40,6 +40,7 @@ namespace API_WEB.ModelsDB
         public virtual DbSet<BonepileAfterStatusHistory> BonepileAfterStatusHistories { get; set; } = null!;
         public virtual DbSet<BonepileAfterTotalHistory> BonepileAfterTotalHistories { get; set; } = null!;
         public virtual DbSet<BonepileAfterProductLineAgingHistory> BonepileAfterProductLineAgingHistories { get; set; } = null!;
+        public virtual DbSet<BonepileRepositoryDailyHistory> BonepileRepositoryDailyHistories { get; set; } = null!;
         public DbSet<BlacklistedToken> BlacklistedTokens { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         public virtual DbSet<Cookbook> Cookbooks { get; set; } = null!;
@@ -183,6 +184,12 @@ namespace API_WEB.ModelsDB
                 entity.ToTable("BonepileAfterProductLineAgingHistory");
                 entity.Property(e => e.ProductLine).HasMaxLength(100);
                 entity.Property(e => e.AgeRange).HasMaxLength(20);
+            });
+
+            modelBuilder.Entity<BonepileRepositoryDailyHistory>(entity =>
+            {
+                entity.ToTable("BonepileRepositoryDailyHistory");
+                entity.Property(e => e.Repository).HasMaxLength(20);
             });
 
             modelBuilder.Entity<BlacklistedToken>(e =>
