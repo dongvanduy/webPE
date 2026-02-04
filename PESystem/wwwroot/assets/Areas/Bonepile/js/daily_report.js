@@ -24,11 +24,7 @@ const columnOrder = [
 const statusBuckets = {
     approvedScrap: new Set([
         'scraphastask',
-        'scraplacktask',
-        'waitingapprovalscrap',
-        'waitingapprovalbga',
-        'approvedbga',
-        'waitingscrap'
+        'scraplacktask'
     ]),
     fxvOnlineWip: new Set(['waiting repair']),
     needRepairLt30: new Set([
@@ -133,10 +129,9 @@ const renderRows = (rows) => {
     }).join('');
     return groupedRows;
 };
-const appendTotalRow = (payload, groupedRows) => {
+const appendTotalRow = (groupedRows) => {
     const tableBody = document.querySelector('#reportRepairBeforeTable tbody');
     if (!tableBody) return;
-    const totalData = payload?.total || payload?.grandTotal || payload?.summary || payload?.totalCount;
     const totals = {
         productLine: 'Total',
         bpTotalQty: 0,
@@ -146,35 +141,18 @@ const appendTotalRow = (payload, groupedRows) => {
         needRepairGt30: 0,
         repairedTwiceLt30: 0,
         repairedTwiceGt30: 0,
-        others: 0,
-        total: 0
+        others: 0
     };
-    if (totalData) {
-        totals.productLine = totalData.productLine || totalData.label || totals.productLine;
-        totals.bpTotalQty = sumNumber(totalData.bpTotalQty || totalData.totalQty || totalData.total || payload.totalCount || payload.TotalCount);
-        totals.approvedScrap = sumNumber(totalData.approvedScrap);
-        totals.fxvOnlineWip = sumNumber(totalData.fxvOnlineWip);
-        totals.needRepairLt30 = sumNumber(totalData.needRepairLt30);
-        totals.needRepairGt30 = sumNumber(totalData.needRepairGt30);
-        totals.repairedTwiceLt30 = sumNumber(totalData.repairedTwiceLt30);
-        totals.repairedTwiceGt30 = sumNumber(totalData.repairedTwiceGt30);
-        totals.others = sumNumber(totalData.others);
-        totals.total = sumNumber(totalData.total || totalData.totalQty || payload.totalCount || payload.TotalCount);
-    } else if (Array.isArray(groupedRows)) {
-        groupedRows.forEach((row) => {
-            totals.bpTotalQty += sumNumber(row.bpTotalQty);
-            totals.approvedScrap += sumNumber(row.approvedScrap);
-            totals.fxvOnlineWip += sumNumber(row.fxvOnlineWip);
-            totals.needRepairLt30 += sumNumber(row.needRepairLt30);
-            totals.needRepairGt30 += sumNumber(row.needRepairGt30);
-            totals.repairedTwiceLt30 += sumNumber(row.repairedTwiceLt30);
-            totals.repairedTwiceGt30 += sumNumber(row.repairedTwiceGt30);
-            totals.others += sumNumber(row.others);
-            totals.total += sumNumber(row.total);
-        });
-    } else {
-        return;
-    }
+    groupedRows.forEach((row) => {
+        totals.bpTotalQty += sumNumber(row.bpTotalQty);
+        totals.approvedScrap += sumNumber(row.approvedScrap);
+        totals.fxvOnlineWip += sumNumber(row.fxvOnlineWip);
+        totals.needRepairLt30 += sumNumber(row.needRepairLt30);
+        totals.needRepairGt30 += sumNumber(row.needRepairGt30);
+        totals.repairedTwiceLt30 += sumNumber(row.repairedTwiceLt30);
+        totals.repairedTwiceGt30 += sumNumber(row.repairedTwiceGt30);
+        totals.others += sumNumber(row.others);
+    });
     const cells = columnOrder.map((key) => `<td>${formatNumber(totals[key])}</td>`).join('');
     tableBody.insertAdjacentHTML('beforeend', `<tr class="table-total-row">${cells}</tr>`);
 };
@@ -270,7 +248,7 @@ const fetchReportRepairBefore = async () => {
         const rows = normalizeRows(payload);
         cachedRecords = rows;
         const groupedRows = renderRows(rows);
-        appendTotalRow(payload, groupedRows);
+        appendTotalRow(groupedRows);
     } catch (error) {
         console.error('Không thể tải report-repair-before', error);
         alert('Không thể tải dữ liệu report-repair-before');

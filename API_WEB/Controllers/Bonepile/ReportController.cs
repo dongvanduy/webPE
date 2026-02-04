@@ -4,6 +4,7 @@ using API_WEB.ModelsDB;
 using API_WEB.ModelsOracle;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using OfficeOpenXml;
 using Oracle.ManagedDataAccess.Client;
 using System.Globalization;
 
@@ -546,5 +547,455 @@ namespace API_WEB.Controllers.Bonepile
 
             return result;
         }
+
+
+
+
+        //============================================AFTER STATUS================================================
+        [HttpGet("report-repair-after")]
+        public async Task<IActionResult> RepairAfterKanbanBasic()
+        {
+            try
+            {
+                var allData = await ExecuteBonepileAfterKanbanBasicQuery();
+
+                var excludedSNs = GetExcludedSerialNumbers();
+                if (excludedSNs.Any())
+                {
+                    allData = allData.Where(d => !excludedSNs.Contains(d.SERIAL_NUMBER?.Trim().ToUpper())).ToList();
+                }
+
+                var snList = allData
+                    .Select(d => d.SERIAL_NUMBER?.Trim().ToUpper())
+                    .Where(s => !string.IsNullOrEmpty(s))
+                    .ToList();
+
+                var scrapCategories = await _sqlContext.ScrapLists
+                    .Where(s => snList.Contains(s.SN.Trim().ToUpper()))
+                    .Select(s => new { SN = s.SN, ApplyTaskStatus = s.ApplyTaskStatus, TaskNumber = s.TaskNumber })
+                    .ToListAsync();
+
+                var scrapDict = scrapCategories.ToDictionary(
+                    c => c.SN?.Trim().ToUpper() ?? "",
+                    c => (ApplyTaskStatus: c.ApplyTaskStatus, TaskNumber: c.TaskNumber),
+                    StringComparer.OrdinalIgnoreCase
+                );
+
+                var khoOkSet = (await _sqlContext.KhoOks
+                        .Where(k => snList.Contains(k.SERIAL_NUMBER.Trim().ToUpper()))
+                        .Select(k => k.SERIAL_NUMBER)
+                        .ToListAsync())
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                var exportRecords = await _sqlContext.Exports
+                    .Where(e => snList.Contains(e.SerialNumber.Trim().ToUpper()) && e.CheckingB36R > 0 && e.CheckingB36R <= 4)
+                    .ToListAsync();
+
+                var exportDict = exportRecords
+                    .GroupBy(e => e.SerialNumber?.Trim().ToUpper() ?? "")
+                    .Select(g => g.OrderByDescending(e => e.ExportDate).First())
+                    .ToDictionary(
+                        e => e.SerialNumber.Trim().ToUpper(),
+                        e => (e.CheckingB36R, e.ExportDate),
+                        StringComparer.OrdinalIgnoreCase);
+
+                var validStatuses = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    "ScrapLackTask",
+                    "ScrapHasTask",
+                    "WaitingLink",
+                    "Linked",
+                    "WaitingApprovalScrap",
+                    "ApprovedBGA",
+                    "WaitingApprovalBGA",
+                    "RepairInRE",
+                    "WaitingCheckOut",
+                    "Can'tRepairProcess",
+                    "PendingInstructions"
+                };
+
+                var databaseRecords = new List<BonepileAfterKanbanBasicRecord>();
+                // List chứa các SN cần check lịch sử R109 (chỉ check máy đang RepairInRE)
+                var repairSnsToCheck = new List<string>();
+
+                foreach (var b in allData)
+                {
+                    if (string.IsNullOrWhiteSpace(b.SERIAL_NUMBER))
+                    {
+                        continue;
+                    }
+
+                    var snKey = b.SERIAL_NUMBER.Trim().ToUpper();
+                    string status;
+
+                    if (scrapDict.TryGetValue(snKey, out var scrapInfo))
+                    {
+                        var applyTaskStatus = scrapInfo.ApplyTaskStatus;
+
+                        if (applyTaskStatus == 5 || applyTaskStatus == 6 || applyTaskStatus == 7)
+                        {
+                            status = "ScrapHasTask";
+                        }
+                        else if (applyTaskStatus == 0 || applyTaskStatus == 1)
+                        {
+                            if (string.IsNullOrEmpty(scrapInfo.TaskNumber) || scrapInfo.TaskNumber == "N/A")
+                                status = "ScrapLackTask";
+                            else status = "ScrapHasTask";
+                        }
+                        else if (applyTaskStatus == 2)
+                        {
+                            status = "WaitingApprovalScrap";
+                        }
+                        else if (applyTaskStatus == 4)
+                        {
+                            status = "WaitingApprovalBGA";
+                        }
+                        else if (applyTaskStatus == 8)
+                        {
+                            status = "Can'tRepairProcess";
+                        }
+                        else if (applyTaskStatus == 22)
+                        {
+                            status = "PendingInstructions";
+                        }
+                        else
+                        {
+                            status = "ApprovedBGA";
+                        }
+                    }
+                    else if (exportDict.TryGetValue(snKey, out var exportInfo))
+                    {
+                        switch (exportInfo.CheckingB36R)
+                        {
+                            case 1:
+                                status = "WaitingLink";
+                                break;
+                            case 2:
+                                status = "Linked";
+                                break;
+                            default:
+                                status = "RepairInRE";
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        status = "RepairInRE";
+                    }
+
+                    var isInKhoOk = khoOkSet.Contains(snKey);
+                    if (string.Equals(status, "RepairInRE", StringComparison.OrdinalIgnoreCase) && isInKhoOk)
+                    {
+                        status = "WaitingCheckOut";
+                    }
+
+                    if (!validStatuses.Contains(status))
+                    {
+                        continue;
+                    }
+                    // **LOGIC MỚI**: Nếu là RepairInRE, thêm vào danh sách cần check history
+                    if (status == "RepairInRE")
+                    {
+                        repairSnsToCheck.Add(b.SERIAL_NUMBER);
+                    }
+
+                    databaseRecords.Add(new BonepileAfterKanbanBasicRecord
+                    {
+                        SN = b.SERIAL_NUMBER,
+                        ModelName = b.MODEL_NAME,
+                        MoNumber = b.MO_NUMBER,
+                        ProductLine = b.PRODUCT_LINE,
+                        WipGroupSFC = b.WIP_GROUP_SFC,
+                        WipGroupKANBAN = b.WIP_GROUP_KANBAN,
+                        ErrorFlag = b.ERROR_FLAG,
+                        WorkFlag = b.WORK_FLAG,
+                        TestGroup = b.TEST_GROUP,
+                        TestTime = b.TEST_TIME?.ToString("yyyy-MM-dd HH:mm:ss"),
+                        TestCode = b.TEST_CODE,
+                        ErrorCodeItem = b.ERROR_ITEM_CODE,
+                        ErrorDesc = b.ERROR_DESC,
+                        Aging = b.AGING,
+                        AgingOld = b.AGING_OLD,
+                        Status = status
+                    });
+                }
+
+                // 5. Xử lý Logic Nâng cao (Consecutive Failures + Aging)
+                if (repairSnsToCheck.Any())
+                {
+                    // Gọi hàm helper để lấy số lần fail liên tiếp
+                    var consecutiveFailCounts = await GetConsecutiveFailCountsAsync(repairSnsToCheck);
+
+                    foreach (var record in databaseRecords)
+                    {
+                        if (record.Status == "RepairInRE")
+                        {
+                            if (consecutiveFailCounts.TryGetValue(record.SN, out int failCount))
+                            {
+                                // Xác định Aging Suffix (<30 hay >30)
+                                // record.Aging là double?, cần check null
+                                double agingVal = record.Aging ?? 0;
+                                string agingSuffix = agingVal > 30 ? ">30" : "<30";
+                                string baseStatusName = "";
+
+                                // Đặt tên status theo số lần fail
+                                if (failCount <= 1)
+                                {
+                                    baseStatusName = "waiting repair";
+                                }
+                                else if (failCount == 2)
+                                {
+                                    baseStatusName = "CB repaired once but";
+                                }
+                                else // > 2
+                                {
+                                    baseStatusName = "CB repaired twice but";
+                                }
+
+                                // Cập nhật lại Status cuối cùng
+                                record.Status = $"{baseStatusName} aging day {agingSuffix}";
+                            }
+                        }
+                    }
+                }
+
+                // 6. Tính toán thống kê (Status Counts)
+                var statusCounts = databaseRecords
+                    .Where(r => !string.IsNullOrWhiteSpace(r.Status))
+                    .GroupBy(r => r.Status, StringComparer.OrdinalIgnoreCase)
+                    .Select(g => new
+                    {
+                        Status = g.Key,
+                        Count = g.Count()
+                    })
+                    .ToList();
+
+                if (!databaseRecords.Any())
+                {
+                    return NotFound(new { message = "Khong tim thay du lieu!", totalCount = 0 });
+                }
+
+                // Gom nhóm chi tiết để trả về (nếu cần thiết cho FE)
+                var statusDetails = databaseRecords
+                    .Where(r => !string.IsNullOrWhiteSpace(r.Status))
+                    .GroupBy(r => r.Status, StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(g => g.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
+
+                return Ok(new
+                {
+                    totalCount = databaseRecords.Count,
+                    data = databaseRecords,
+                    statusCounts,
+                    statusDetails,
+                });
+
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Xay ra loi", error = ex.Message });
+            }
+        }
+
+        private async Task<List<BonepileAfterKanbanResult>> ExecuteBonepileAfterKanbanBasicQuery()
+        {
+            var result = new List<BonepileAfterKanbanResult>();
+
+            await using var connection = new OracleConnection(_oracleContext.Database.GetDbConnection().ConnectionString);
+            await connection.OpenAsync();
+
+            string query = @"
+                SELECT /*+ LEADING(A) USE_NL(A B R107 KP R109X R109_OLD) */
+                  A.SERIAL_NUMBER,
+                  KP.PARENT_SN AS FG,
+                  R107.MO_NUMBER,
+                  A.MODEL_NAME,
+                  B.PRODUCT_LINE,
+                  A.WIP_GROUP AS WIP_GROUP_KANBAN,
+                  R107.WIP_GROUP AS WIP_GROUP_SFC,
+                  R107.ERROR_FLAG,
+                  R107.WORK_FLAG,
+                  rep_detail.DATA19_COMBINED,
+                  R109X.TEST_GROUP,
+                  R109X.TEST_TIME,
+                  R109X.TEST_CODE,
+                  R109X.ERROR_ITEM_CODE,
+                  E.ERROR_DESC,
+
+                  -- AGING theo test_time mới nhất
+                  TRUNC(SYSDATE) - TRUNC(R109X.TEST_TIME) AS AGING,
+
+                  -- AGING theo test_time cũ nhất
+                  TRUNC(SYSDATE) - TRUNC(R109_OLD.TEST_TIME) AS AGING_OLDEST
+
+                FROM SFISM4.Z_KANBAN_TRACKING_T A
+                JOIN SFIS1.C_MODEL_DESC_T B ON A.MODEL_NAME = B.MODEL_NAME
+                JOIN SFISM4.R107 R107 ON R107.SERIAL_NUMBER = A.SERIAL_NUMBER
+
+                /* mapping Parent_SN theo WORK_TIME mới nhất */
+                LEFT JOIN (
+                  SELECT SERIAL_NUMBER AS PARENT_SN, KEY_PART_SN
+                  FROM (
+                    SELECT kp.SERIAL_NUMBER, kp.KEY_PART_SN,
+                           ROW_NUMBER() OVER (PARTITION BY kp.KEY_PART_SN ORDER BY kp.WORK_TIME DESC) rn
+                    FROM SFISM4.P_WIP_KEYPARTS_T kp
+                    WHERE kp.GROUP_NAME = 'SFG_LINK_FG'
+                      AND LENGTH(kp.SERIAL_NUMBER) IN (11,12,18,20,21,23)
+                      AND LENGTH(kp.KEY_PART_SN)   IN (13,14)
+                  ) WHERE rn = 1
+                ) KP ON KP.KEY_PART_SN = A.SERIAL_NUMBER
+
+                /* Test mới nhất (SN ∪ Parent_SN) */
+                LEFT JOIN (
+                  SELECT *
+                  FROM (
+                    SELECT
+                      base.SN,
+                      r.TEST_GROUP,
+                      r.TEST_TIME,
+                      r.TEST_CODE,
+                      r.ERROR_ITEM_CODE,
+                      ROW_NUMBER() OVER (
+                        PARTITION BY base.SN
+                        ORDER BY r.TEST_TIME DESC, r.TEST_CODE DESC
+                      ) AS rn
+                    FROM (
+                      SELECT A.SERIAL_NUMBER AS SN, A.SERIAL_NUMBER AS CAND_SN
+                      FROM SFISM4.Z_KANBAN_TRACKING_T A
+                      UNION ALL
+                      SELECT A.SERIAL_NUMBER AS SN, KP.PARENT_SN AS CAND_SN
+                      FROM SFISM4.Z_KANBAN_TRACKING_T A
+                      JOIN (
+                        SELECT SERIAL_NUMBER AS PARENT_SN, KEY_PART_SN
+                        FROM (
+                          SELECT kp.SERIAL_NUMBER, kp.KEY_PART_SN,
+                                 ROW_NUMBER() OVER (PARTITION BY kp.KEY_PART_SN ORDER BY kp.WORK_TIME DESC) rn
+                          FROM SFISM4.P_WIP_KEYPARTS_T kp
+                          WHERE kp.GROUP_NAME = 'SFG_LINK_FG'
+                        ) WHERE rn = 1
+                      ) KP ON KP.KEY_PART_SN = A.SERIAL_NUMBER
+                    ) base
+                    JOIN SFISM4.R109 r
+                      ON r.SERIAL_NUMBER = base.CAND_SN
+                    WHERE r.TEST_TIME IS NOT NULL
+                  )
+                  WHERE rn = 1
+                ) R109X ON R109X.SN = A.SERIAL_NUMBER
+
+                LEFT JOIN (
+                    SELECT SERIAL_NUMBER,
+                           LISTAGG(TRIM(DATA19), ' | ') 
+                             WITHIN GROUP (ORDER BY MIN_DATE) AS DATA19_COMBINED
+                    FROM (
+                        SELECT DISTINCT SERIAL_NUMBER, TRIM(DATA19) AS DATA19,
+                                        MIN(DATE3) AS MIN_DATE
+                        FROM sfism4.R_REPAIR_TASK_DETAIL_T
+                        WHERE UPPER(DATA17) IN ('CONFIRM', 'SAVE')
+                          AND DATA19 IS NOT NULL
+                          AND DATA19 != 'CONFIRM_PUT_B36R'
+                          AND MODEL_NAME IN (SELECT model_name FROM sfis1.c_model_desc_t WHERE model_serial = 'ADAPTER')
+                        GROUP BY SERIAL_NUMBER, TRIM(DATA19)
+                    )
+                    GROUP BY SERIAL_NUMBER
+                ) rep_detail
+                ON rep_detail.SERIAL_NUMBER = A.SERIAL_NUMBER
+                /* Test cũ nhất (SN ∪ Parent_SN) */
+                LEFT JOIN (
+                  SELECT *
+                  FROM (
+                    SELECT
+                      base.SN,
+                      r.TEST_TIME,
+                      ROW_NUMBER() OVER (
+                        PARTITION BY base.SN
+                        ORDER BY r.TEST_TIME ASC
+                      ) AS rn
+                    FROM (
+                      SELECT A.SERIAL_NUMBER AS SN, A.SERIAL_NUMBER AS CAND_SN
+                      FROM SFISM4.Z_KANBAN_TRACKING_T A
+                      UNION ALL
+                      SELECT A.SERIAL_NUMBER AS SN, KP.PARENT_SN AS CAND_SN
+                      FROM SFISM4.Z_KANBAN_TRACKING_T A
+                      JOIN (
+                        SELECT SERIAL_NUMBER AS PARENT_SN, KEY_PART_SN
+                        FROM (
+                          SELECT kp.SERIAL_NUMBER, kp.KEY_PART_SN,
+                                 ROW_NUMBER() OVER (PARTITION BY kp.KEY_PART_SN ORDER BY kp.WORK_TIME DESC) rn
+                          FROM SFISM4.P_WIP_KEYPARTS_T kp
+                          WHERE kp.GROUP_NAME = 'SFG_LINK_FG'
+                        ) WHERE rn = 1
+                      ) KP ON KP.KEY_PART_SN = A.SERIAL_NUMBER
+                    ) base
+                    JOIN SFISM4.R109 r
+                      ON r.SERIAL_NUMBER = base.CAND_SN
+                    WHERE r.TEST_TIME IS NOT NULL
+                  )
+                  WHERE rn = 1
+                ) R109_OLD ON R109_OLD.SN = A.SERIAL_NUMBER
+
+                LEFT JOIN SFIS1.C_ERROR_CODE_T E ON E.ERROR_CODE = R109X.TEST_CODE
+
+                WHERE
+                  A.WIP_GROUP LIKE '%B36R%'
+                  AND B.MODEL_SERIAL = 'ADAPTER'
+                  AND R107.WIP_GROUP NOT LIKE '%BR2C%'
+                  AND R107.WIP_GROUP NOT LIKE '%B36R_STOCKIN%'";
+
+            using var command = new OracleCommand(query, connection);
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                result.Add(new BonepileAfterKanbanResult
+                {
+                    SERIAL_NUMBER = reader["SERIAL_NUMBER"]?.ToString(),
+                    MO_NUMBER = reader["MO_NUMBER"]?.ToString(),
+                    MODEL_NAME = reader["MODEL_NAME"]?.ToString(),
+                    PRODUCT_LINE = reader["PRODUCT_LINE"]?.ToString(),
+                    WIP_GROUP_KANBAN = reader["WIP_GROUP_KANBAN"]?.ToString(),
+                    WIP_GROUP_SFC = reader["WIP_GROUP_SFC"]?.ToString(),
+                    ERROR_FLAG = reader["ERROR_FLAG"]?.ToString(),
+                    WORK_FLAG = reader["WORK_FLAG"]?.ToString(),
+                    TEST_GROUP = reader["TEST_GROUP"]?.ToString(),
+                    TEST_TIME = reader["TEST_TIME"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(reader["TEST_TIME"]),
+                    TEST_CODE = reader["TEST_CODE"]?.ToString(),
+                    ERROR_ITEM_CODE = reader["ERROR_ITEM_CODE"]?.ToString(),
+                    ERROR_DESC = reader["ERROR_DESC"]?.ToString(),
+                    AGING = reader["AGING"] == DBNull.Value ? (double?)null : Convert.ToDouble(reader["AGING"]),
+                    AGING_OLD = reader["AGING_OLDEST"] == DBNull.Value ? (double?)null : Convert.ToDouble(reader["AGING_OLDEST"])
+                });
+            }
+            return result;
+        }
+
+        //Lay nhung SN scrap trong file excel.
+        private List<string> GetExcludedSerialNumbers()
+        {
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "Uploads");
+            var filePath = Path.Combine(uploadsFolder, "ScrapOk.xlsx");
+            var snList = new List<string>();
+
+            if (System.IO.File.Exists(filePath))
+            {
+                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+                using var package = new ExcelPackage(new FileInfo(filePath));
+                var worksheet = package.Workbook.Worksheets.FirstOrDefault();
+
+                if (worksheet != null)
+                {
+                    int rowCount = worksheet.Dimension.Rows;
+                    for (int row = 1; row <= rowCount; row++)
+                    {
+                        var sn = worksheet.Cells[row, 1].Text.Trim();
+                        if (!string.IsNullOrEmpty(sn))
+                        {
+                            snList.Add(sn.ToUpper());
+                        }
+                    }
+                }
+            }
+
+            return snList;
+        }
+
+
     }
 }

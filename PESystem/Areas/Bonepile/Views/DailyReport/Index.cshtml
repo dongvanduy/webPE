@@ -4,7 +4,7 @@
 }
 <div class="data-card chart-card">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <div class="fw-bold">Switch Bonepile 2.0 Status</div>
+        <div class="fw-bold">Bonepile Before Status</div>
     </div>
     <div class="card-body">
         <div class="table-responsive">
@@ -14,13 +14,13 @@
                         <th rowspan="2">Product Line</th>
                         <th rowspan="2">BP Total Qty</th>
                         <th rowspan="2">Approved scrap</th>
-                        <th rowspan="2">FXV Online WIP</th>
-                        <th colspan="4">Need to Repair</th>
+                        <th colspan="5">Need to Repair</th>
                         <th rowspan="2">Others</th>
                     </tr>
                     <tr>
-                        <th>Waiting repair / CB repaired once but aging day &lt; 30</th>
-                        <th>Waiting repair / CB repaired once but aging day &gt; 30</th>
+                        <th>Waiting Repair</th>
+                        <th>CB repaired once but aging day &lt; 30</th>
+                        <th>CB repaired once but aging day &gt; 30</th>
                         <th>CB repaired twice but aging day &lt; 30</th>
                         <th>CB repaired twice but aging day &gt; 30</th>
                     </tr>
@@ -40,6 +40,70 @@
             <div class="modal-body">
                 <div class="table-responsive">
                     <table class="table table-bordered table-striped bonepile-table" id="reportDetailTable" style="width:100%">
+                        <thead class="table-light">
+                            <tr>
+                                <th>SERIAL_NUMBER</th>
+                                <th>MODEL_NAME</th>
+                                <th>PRODUCT_LINE</th>
+                                <th>STATUS</th>
+                                <th>AGING_DAY</th>
+                                <th>MO_NUMBER</th>
+                                <th>WIP_GROUP</th>
+                                <th>TEST_GROUP</th>
+                                <th>TEST_TIME</th>
+                                <th>TEST_CODE</th>
+                                <th>ERROR_ITEM</th>
+                                <th>ERROR_DESC</th>
+                                <th>CHECKIN_DATE</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="data-card chart-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="fw-bold">Bonepile After Status</div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped bonepile-table report-repair-table" id="reportRepairAfterTable" style="width:100%">
+                <thead class="table-light">
+                    <tr>
+                        <th rowspan="2">ProductLine</th>
+                        <th rowspan="2">BPTotalQty</th>
+                        <th rowspan="2">ApprovedScrap</th>
+                        <th colspan="5">NeedtoRepair</th>
+                        <th rowspan="2">Others</th>
+                    </tr>
+                    <tr>
+                        <th>Waiting Repair</th>
+                        <th>Repaired once but aging day &lt; 30</th>
+                        <th>Repaired once but aging day &gt; 30</th>
+                        <th>Repaired twice but aging day &lt; 30</th>
+                        <th>Repaired twice but aging day &gt; 30</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="reportAfterModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reportAfterTitle">Detail</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped bonepile-table" id="reportAfterTable" style="width:100%">
                         <thead class="table-light">
                             <tr>
                                 <th>SERIAL_NUMBER</th>
