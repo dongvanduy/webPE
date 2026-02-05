@@ -1,4 +1,9 @@
-﻿const analysisApiBaseUrl = "https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Switch";
+﻿const defaultApiBaseUrl = "https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Switch";
+
+function getApiBaseUrl() {
+    const container = document.querySelector(".data-card[data-api-base]");
+    return container?.dataset.apiBase || defaultApiBaseUrl;
+}
 
 function normalizeHeader(value) {
     return String(value ?? "")
@@ -17,21 +22,19 @@ function htmlEscape(value) {
 }
 
 function buildItemsFromInput() {
-    const snInput = document.getElementById("analysis-sn-input").value
+    const snInput = document.getElementById("sn-input").value
         .split(/\r?\n|,/)
         .map(value => value.trim())
         .filter(Boolean);
 
-    const failStation = document.getElementById("analysis-fail-station").value.trim();
-    const errorCode = document.getElementById("analysis-error-code").value.trim();
-    const fa = document.getElementById("analysis-fa").value.trim();
-    const status = document.getElementById("analysis-status").value.trim();
-    const owner = document.getElementById("analysis-owner").value.trim();
-    const customerOwner = document.getElementById("analysis-customer-owner").value.trim();
+    const errorCode = document.getElementById("error-code-input").value.trim();
+    const fa = document.getElementById("fa-input").value.trim();
+    const status = document.getElementById("status-input").value.trim();
+    const owner = document.getElementById("pe-owner-input").value.trim();
+    const customerOwner = document.getElementById("customer-input").value.trim();
 
     return snInput.map(sn => ({
         serialNumber: sn,
-        failStation,
         errorCode,
         fa,
         status,
@@ -55,7 +58,6 @@ function buildItemsFromSheet(sheetData) {
 
             return {
                 serialNumber: String(serialNumber).trim(),
-                failStation: normalizedRow.FAIL_STATION ? String(normalizedRow.FAIL_STATION).trim() : "",
                 errorCode: normalizedRow.ERROR_CODE ? String(normalizedRow.ERROR_CODE).trim() : "",
                 fa: normalizedRow.FA ? String(normalizedRow.FA).trim() : "",
                 status: normalizedRow.STATUS ? String(normalizedRow.STATUS).trim() : "",
@@ -74,8 +76,6 @@ function renderResult(data, missingSerials) {
         <tr>
             <th>#</th>
             <th>SERIAL_NUMBER</th>
-            <th>MODEL_NAME</th>
-            <th>FAIL_STATION</th>
             <th>ERROR_CODE</th>
             <th>WIP_GROUP</th>
             <th>ERROR_CODE (CURRENT)</th>
@@ -91,8 +91,6 @@ function renderResult(data, missingSerials) {
         <tr>
             <td>${index + 1}</td>
             <td>${htmlEscape(item.serialNumber)}</td>
-            <td>${htmlEscape(item.modelName)}</td>
-            <td>${htmlEscape(item.failStation)}</td>
             <td>${htmlEscape(item.errorCode)}</td>
             <td>${htmlEscape(item.wipGroup)}</td>
             <td>${htmlEscape(item.currentErrorCode)}</td>
@@ -115,7 +113,7 @@ function renderResult(data, missingSerials) {
         <div class="table-container soft-scroll">
             <table class="stacked-result-table">
                 <thead>${header}</thead>
-                <tbody>${rows || `<tr><td colspan="13" class="text-center text-muted">No data</td></tr>`}</tbody>
+                <tbody>${rows || `<tr><td colspan="11" class="text-center text-muted">No data</td></tr>`}</tbody>
             </table>
         </div>
         ${warning}
@@ -141,7 +139,7 @@ async function submitAnalysis(items) {
     }
 
     try {
-        const response = await fetch(`${analysisApiBaseUrl}/analysis-history`, {
+        const response = await fetch(`${getApiBaseUrl()}/analysis-history`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ items })
@@ -163,58 +161,47 @@ async function submitAnalysis(items) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    const optionSelect = document.getElementById("analysis-options");
-    const inputForm = document.getElementById("analysis-input-form");
-    const uploadForm = document.getElementById("analysis-upload-form");
-
-    optionSelect?.addEventListener("change", () => {
-        inputForm.classList.add("hidden");
-        uploadForm.classList.add("hidden");
-
-        if (optionSelect.value === "INPUT") {
-            inputForm.classList.remove("hidden");
-        }
-
-        if (optionSelect.value === "UPLOAD") {
-            uploadForm.classList.remove("hidden");
-        }
-    });
-
-    document.getElementById("analysis-input-submit")?.addEventListener("click", () => {
+    document.getElementById("input-btn")?.addEventListener("click", () => {
         const items = buildItemsFromInput();
         submitAnalysis(items);
     });
 
-    document.getElementById("analysis-upload-submit")?.addEventListener("click", async () => {
-        const fileInput = document.getElementById("analysis-file-input");
-        if (!fileInput?.files?.length) {
-            submitAnalysis([]);
-            return;
-        }
+    document.getElementById("upload-file-btn")?.addEventListener("click", async () => {
+        const fileInput = document.createElement("input");
+        fileInput.type = "file";
+        fileInput.accept = ".xlsx,.xls";
+        fileInput.addEventListener("change", () => {
+            if (!fileInput.files?.length) {
+                submitAnalysis([]);
+                return;
+            }
 
-        const file = fileInput.files[0];
-        const reader = new FileReader();
+            const file = fileInput.files[0];
+            const reader = new FileReader();
 
-        reader.onload = event => {
-            const data = new Uint8Array(event.target.result);
-            const workbook = XLSX.read(data, { type: "array" });
-            const sheetName = workbook.SheetNames[0];
-            const sheet = workbook.Sheets[sheetName];
-            const sheetData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-            const items = buildItemsFromSheet(sheetData);
-            submitAnalysis(items);
-        };
+            reader.onload = event => {
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, { type: "array" });
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+                const sheetData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+                const items = buildItemsFromSheet(sheetData);
+                submitAnalysis(items);
+            };
 
-        reader.onerror = () => {
-            const resultDiv = document.getElementById("analysis-history-result");
-            resultDiv.classList.remove("hidden");
-            resultDiv.innerHTML = `
-                <div class="alert alert-danger">
-                    <strong>Error:</strong> Không thể đọc file.
-                </div>
-            `;
-        };
+            reader.onerror = () => {
+                const resultDiv = document.getElementById("analysis-history-result");
+                resultDiv.classList.remove("hidden");
+                resultDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <strong>Error:</strong> Không thể đọc file.
+                    </div>
+                `;
+            };
 
-        reader.readAsArrayBuffer(file);
+            reader.readAsArrayBuffer(file);
+        });
+
+        fileInput.click();
     });
 });
