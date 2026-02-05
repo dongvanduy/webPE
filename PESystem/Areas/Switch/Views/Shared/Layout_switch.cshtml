@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DPU-MEM</title>
-    <link rel="icon" href="~/assets/img/bonepile.png" type="image/png">
+    <title>SWITCH</title>
+    <link rel="icon" href="~/assets/img/switch.png" type="image/png">
     <!-- Bootstrap + Global -->
     <link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="~/css/site.min.css" rel="stylesheet" />
@@ -34,7 +34,7 @@
         <!-- Logo and Dashboard with fixed checkbox -->
         <div class="dashboard-container">
             <a href="@Url.Action("Home", "Home", new { area = "" })">
-                <img src="~/assets/img/bonepile.png" style="width:36px; height:36px;" class="logo" />
+                <img src="~/assets/img/switch.png" style="width:36px; height:36px;" class="logo" />
             </a>
             <span class="spanTitle" style="font-size: 1.0rem; font-weight: bold;">SWITCH</span>
             <div class="fixed-checkbox">
@@ -48,7 +48,7 @@
             <!-- Menu Items -->
             <a href="@Url.Action("Home", "Home", new { area = "" })" class="nav-link"><i class="fas fa-home"></i> <span>Trang chủ</span></a>
             <a href="@Url.Action("Index", "Home", new { area = "Switch" })" class="nav-link @ViewContext.IsActive("Home", "Index")"><i class="fa-solid fa-search"></i> <span>Input</span></a>
-            <a href="@Url.Action("Index", "Search", new { area = "Switch" })" class="nav-link @ViewContext.IsActive("Search", "Index")"><i class="fa fa-sync"></i> <span>Search</span></a>
+            <a href="@Url.Action("Index", "Search", new { area = "Switch" })" class="nav-link @ViewContext.IsActive("Search", "Index")"><i class="fa fa-search"></i> <span>Search</span></a>
 
         </nav>
 

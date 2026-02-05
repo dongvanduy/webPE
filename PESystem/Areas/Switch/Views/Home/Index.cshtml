@@ -1,48 +1,47 @@
 ﻿@{
     Layout = "~/Areas/Switch/Views/Shared/Layout_switch.cshtml";
-
 }
+
 <section>
     <div class="data-card" data-api-base="@ViewBag.ApiBaseUrl">
         <div class="col-md-12">
             <div class="row g-2 align-items-start">
                 <div class="col-md-3">
-                    <textarea name="serialNumbers" id="sn-input" rows="3" placeholder="Nhập SerialNumber" class="form-control"></textarea>
+                    <textarea id="sn-input" rows="3" placeholder="Nhập SerialNumber (mỗi dòng hoặc dấu ,)" class="form-control"></textarea>
                 </div>
+
                 <div class="col-md-3">
-                    <div>
-                        <input type="text" id="error-code-input" class="form-control" placeholder="Input Error Code">
-                    </div>
-                    <div>
-                        <input type="text" id="fail-station-input" class="form-control mt-2" placeholder="Input Fail Station">
-                    </div>
+                    <input type="text" id="enter-error-code-input" class="form-control" placeholder="EnterErrorCode">
+                    <input type="text" id="fail-station-input" class="form-control mt-2" placeholder="FailStation">
                 </div>
+
                 <div class="col-md-3">
-                    <div>
-                        <input type="text" id="fa-input"  class="form-control" placeholder="FA">
-                    </div>
-                    <div>
-                        <input type="text" id="status-input" class="form-control mt-2" placeholder="Status">
-                    </div>
+                    <input type="text" id="fa-input" class="form-control" placeholder="FA">
+                    <input type="text" id="status-input" class="form-control mt-2" placeholder="Status">
                 </div>
+
                 <div class="col-md-3">
-                    <div>
-                        <input type="text" id="pe-owner-input" class="form-control" placeholder="PE Owner">
-                    </div>
-                    <div>
-                        <input type="text" id="customer-input" class="form-control mt-2" placeholder="Customer">
-                    </div>
+                    <input type="text" id="pe-owner-input" class="form-control" placeholder="OwnerPE">
+                    <input type="text" id="customer-input" class="form-control mt-2" placeholder="Customer">
                 </div>
+
                 <div class="col-md-1">
                     <button id="input-btn" class="btn btn-ne w-100" type="button">
                         <i class="fas fa-sync"></i> Input
                     </button>
                 </div>
+
                 <div class="col-md-1">
                     <button id="upload-file-btn" class="btn btn-ne w-100" type="button">
-                        <i class="fas fa-sync"></i> Upload File
+                        <i class="fas fa-upload"></i> Upload
                     </button>
                 </div>
+            </div>
+
+            <div id="analysis-history-alert" class="mt-2"></div>
+
+            <div class="mt-2">
+                <table id="analysis-history-table" class="table table-bordered table-striped table-sm w-100"></table>
             </div>
         </div>
 

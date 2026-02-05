@@ -9,9 +9,9 @@ namespace API_WEB.ModelsDB
         public string SerialNumber { get; set; } = string.Empty;
         public string? ModelName { get; set; }
         public string? FailStation { get; set; }
-        public string? ErrorCode { get; set; }
+        public string? EnterErrorCode { get; set; }
         public string? WipGroup { get; set; }
-        public string? CurrentErrorCode { get; set; }
+        public string? ErrorCode { get; set; }
         public string? ErrorDesc { get; set; }
         public string? Fa { get; set; }
         public string? Status { get; set; }

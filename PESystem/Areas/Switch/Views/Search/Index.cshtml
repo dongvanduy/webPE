@@ -1,0 +1,28 @@
+﻿@{
+    Layout = "~/Areas/Switch/Views/Shared/Layout_switch.cshtml";
+}
+
+<section>
+    <div class="data-card" data-api-base="@ViewBag.ApiBaseUrl">
+        <div class="row g-2 align-items-start">
+            <div class="col-md-10">
+                <textarea id="search-sn-input" rows="3" placeholder="Nhập list SerialNumber để tìm (mỗi dòng hoặc dấu ,)" class="form-control"></textarea>
+            </div>
+            <div class="col-md-2">
+                <button id="search-btn" class="btn btn-ne w-100" type="button">
+                    <i class="fas fa-search"></i> Search
+                </button>
+            </div>
+        </div>
+
+        <div id="search-alert" class="mt-2"></div>
+
+        <div class="mt-2">
+            <table id="search-result-table" class="table table-bordered table-striped table-sm w-100"></table>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="~/assets/areas/switchrepair/js/search-sw-repair.js?v=@DateTime.Now.Ticks"></script>
+}

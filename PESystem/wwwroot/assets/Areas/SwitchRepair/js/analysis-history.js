@@ -1,4 +1,5 @@
-﻿const defaultApiBaseUrl = "https://pe-vnmbd-nvidia-cns.myfiinet.com/api/Switch";
+﻿// analysis-history.js
+const defaultApiBaseUrl = "https://pe-vnmbd-nvidia-cns.myfiinet.com/api/SwitchRepair";
 
 function getApiBaseUrl() {
     const container = document.querySelector(".data-card[data-api-base]");
@@ -6,197 +7,295 @@ function getApiBaseUrl() {
 }
 
 function normalizeHeader(value) {
-    return String(value ?? "")
-        .trim()
-        .toUpperCase()
-        .replace(/\s+/g, "_");
+    return String(value ?? "").trim().toUpperCase().replace(/\s+/g, "_");
 }
 
-function htmlEscape(value) {
-    return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#39;");
+function toStr(v) {
+    return String(v ?? "").trim();
+}
+
+function uniqueSerials(serials) {
+    const seen = new Set();
+    const out = [];
+    for (const sn of serials) {
+        const key = toStr(sn).toUpperCase();
+        if (!key) continue;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push(toStr(sn));
+    }
+    return out;
+}
+
+function parseSerials(text) {
+    return uniqueSerials(
+        (text || "")
+            .split(/\r?\n|,|;|\t/)
+            .map((x) => x.trim())
+            .filter(Boolean)
+    );
 }
 
 function buildItemsFromInput() {
-    const snInput = document.getElementById("sn-input").value
-        .split(/\r?\n|,/)
-        .map(value => value.trim())
-        .filter(Boolean);
+    const serialNumbers = parseSerials(document.getElementById("sn-input")?.value);
 
-    const errorCode = document.getElementById("error-code-input").value.trim();
-    const fa = document.getElementById("fa-input").value.trim();
-    const status = document.getElementById("status-input").value.trim();
-    const owner = document.getElementById("pe-owner-input").value.trim();
-    const customerOwner = document.getElementById("customer-input").value.trim();
+    const enterErrorCode = toStr(document.getElementById("enter-error-code-input")?.value);
+    const failStation = toStr(document.getElementById("fail-station-input")?.value);
+    const fa = toStr(document.getElementById("fa-input")?.value);
+    const status = toStr(document.getElementById("status-input")?.value);
+    const ownerPE = toStr(document.getElementById("pe-owner-input")?.value);
+    const customer = toStr(document.getElementById("customer-input")?.value);
 
-    return snInput.map(sn => ({
+    return serialNumbers.map((sn) => ({
         serialNumber: sn,
-        errorCode,
+        enterErrorCode,
         fa,
+        ownerPE,
+        customer,
+        failStation,
         status,
-        owner,
-        customerOwner
     }));
 }
 
 function buildItemsFromSheet(sheetData) {
-    return sheetData
-        .map(row => {
-            const normalizedRow = {};
-            Object.keys(row || {}).forEach(key => {
-                normalizedRow[normalizeHeader(key)] = row[key];
-            });
+    const rows = Array.isArray(sheetData) ? sheetData : [];
+    const items = [];
 
-            const serialNumber = normalizedRow.SERIAL_NUMBER || normalizedRow.SN || normalizedRow.SERIAL;
-            if (!serialNumber) {
-                return null;
-            }
+    for (const row of rows) {
+        const normalized = {};
+        for (const k of Object.keys(row || {})) normalized[normalizeHeader(k)] = row[k];
 
-            return {
-                serialNumber: String(serialNumber).trim(),
-                errorCode: normalizedRow.ERROR_CODE ? String(normalizedRow.ERROR_CODE).trim() : "",
-                fa: normalizedRow.FA ? String(normalizedRow.FA).trim() : "",
-                status: normalizedRow.STATUS ? String(normalizedRow.STATUS).trim() : "",
-                owner: normalizedRow.OWNER ? String(normalizedRow.OWNER).trim() : "",
-                customerOwner: normalizedRow.CUSTOMER_OWNER ? String(normalizedRow.CUSTOMER_OWNER).trim() : ""
-            };
-        })
-        .filter(Boolean);
+        const sn = normalized.SERIAL_NUMBER || normalized.SN || normalized.SERIAL;
+        if (!toStr(sn)) continue;
+
+        items.push({
+            serialNumber: toStr(sn),
+            enterErrorCode: toStr(normalized.ENTERERRORCODE || normalized.ENTER_ERROR_CODE || normalized.ENTER_ERRORCODE),
+            fa: toStr(normalized.FA),
+            ownerPE: toStr(normalized.OWNERPE || normalized.OWNER_PE || normalized.PE_OWNER),
+            customer: toStr(normalized.CUSTOMER),
+            failStation: toStr(normalized.FAILSTATION || normalized.FAIL_STATION || normalized.STATION),
+            status: toStr(normalized.STATUS),
+        });
+    }
+
+    // remove duplicate SN keep first
+    const dedup = [];
+    const seen = new Set();
+    for (const it of items) {
+        const key = it.serialNumber.toUpperCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        dedup.push(it);
+    }
+    return dedup;
 }
 
-function renderResult(data, missingSerials) {
-    const resultDiv = document.getElementById("analysis-history-result");
-    resultDiv.classList.remove("hidden");
-
-    const header = `
-        <tr>
-            <th>#</th>
-            <th>SERIAL_NUMBER</th>
-            <th>ERROR_CODE</th>
-            <th>WIP_GROUP</th>
-            <th>ERROR_CODE (CURRENT)</th>
-            <th>ERROR_DESC</th>
-            <th>FA</th>
-            <th>STATUS</th>
-            <th>OWNER</th>
-            <th>CUSTOMER_OWNER</th>
-            <th>TIME_UPDATE</th>
-        </tr>`;
-
-    const rows = (data || []).map((item, index) => `
-        <tr>
-            <td>${index + 1}</td>
-            <td>${htmlEscape(item.serialNumber)}</td>
-            <td>${htmlEscape(item.errorCode)}</td>
-            <td>${htmlEscape(item.wipGroup)}</td>
-            <td>${htmlEscape(item.currentErrorCode)}</td>
-            <td>${htmlEscape(item.errorDesc)}</td>
-            <td>${htmlEscape(item.fa)}</td>
-            <td>${htmlEscape(item.status)}</td>
-            <td>${htmlEscape(item.owner)}</td>
-            <td>${htmlEscape(item.customerOwner)}</td>
-            <td>${htmlEscape(item.timeUpdate)}</td>
-        </tr>
-    `).join("");
-
-    const warning = missingSerials && missingSerials.length
-        ? `<div class="alert alert-warning mt-3">
-                <strong>Warning:</strong> Không tìm thấy dữ liệu R109 cho ${missingSerials.length} SN.
-           </div>`
+function showAlert(containerId, type, message) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    el.innerHTML = message
+        ? `<div class="alert ${type} mb-2">${message}</div>`
         : "";
-
-    resultDiv.innerHTML = `
-        <div class="table-container soft-scroll">
-            <table class="stacked-result-table">
-                <thead>${header}</thead>
-                <tbody>${rows || `<tr><td colspan="11" class="text-center text-muted">No data</td></tr>`}</tbody>
-            </table>
-        </div>
-        ${warning}
-    `;
 }
 
-async function submitAnalysis(items) {
-    const resultDiv = document.getElementById("analysis-history-result");
-    resultDiv.classList.remove("hidden");
-    resultDiv.innerHTML = `
-        <div class="alert alert-info">
-            <strong>Thông báo:</strong> Loading data...
-        </div>
-    `;
+let inputTable = null;
+let lastInputSerialSet = new Set();
 
-    if (!items.length) {
-        resultDiv.innerHTML = `
-            <div class="alert alert-warning">
-                <strong>Warning:</strong> Vui lòng nhập dữ liệu hợp lệ.
-            </div>
-        `;
+function initInputTable() {
+    const tableEl = $("#analysis-history-table");
+    if (!tableEl.length) return;
+
+    if ($.fn.DataTable.isDataTable(tableEl)) {
+        inputTable = tableEl.DataTable();
         return;
     }
 
+    inputTable = tableEl.DataTable({
+        data: [],
+        columns: [
+            { data: null, title: "#", width: "40px", render: (d, t, r, meta) => meta.row + 1 },
+            { data: "serialNumber", title: "SERIAL_NUMBER" },
+            { data: "enterErrorCode", title: "ENTER_ERROR_CODE" },
+            { data: "fa", title: "FA" },
+            { data: "ownerPE", title: "OWNER_PE" },
+            { data: "customer", title: "CUSTOMER" },
+            { data: "failStation", title: "FAIL_STATION" },
+            { data: "status", title: "STATUS" },
+            { data: "errorCode", title: "ERROR_CODE (CURRENT)" },
+            { data: "descCode", title: "DESC_CODE" },
+            { data: "wipGroup", title: "WIP_GROUP" },
+            { data: "modelName", title: "MODEL_NAME" },
+            { data: "errorDesc", title: "ERROR_DESC" },
+            {
+                data: "timeUpdate",
+                title: "TIME_UPDATE",
+                render: (v) => (v ? toStr(v) : ""),
+            },
+        ],
+        pageLength: 25,
+        autoWidth: false,
+        scrollX: true,
+        order: [],
+        rowCallback: function (row, data) {
+            const sn = toStr(data.serialNumber).toUpperCase();
+            if (lastInputSerialSet.has(sn)) {
+                row.style.background = "#fff8d6";
+            }
+        },
+    });
+}
+
+async function postJson(url, payload) {
+    const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+    });
+
+    const text = await res.text();
+    let json = null;
     try {
-        const response = await fetch(`${getApiBaseUrl()}/analysis-history`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ items })
-        });
-
-        const result = await response.json();
-        if (!response.ok) {
-            throw new Error(result.message || "Không thể lưu dữ liệu.");
-        }
-
-        renderResult(result.data || [], result.missingR109 || []);
-    } catch (error) {
-        resultDiv.innerHTML = `
-            <div class="alert alert-danger">
-                <strong>Error:</strong> ${htmlEscape(error.message)}
-            </div>
-        `;
+        json = text ? JSON.parse(text) : null;
+    } catch {
+        json = null;
     }
+    return { ok: res.ok, status: res.status, json, raw: text };
+}
+
+function normalizeApiRow(x) {
+    // chấp nhận nhiều kiểu key từ backend
+    const o = x || {};
+    return {
+        serialNumber: toStr(o.serialNumber ?? o.SerialNumber),
+        enterErrorCode: toStr(o.enterErrorCode ?? o.EnterErrorCode),
+        fa: toStr(o.fa ?? o.Fa),
+        ownerPE: toStr(o.ownerPE ?? o.OwnerPE ?? o.Owner),
+        customer: toStr(o.customer ?? o.Customer ?? o.CustomerOwner),
+        failStation: toStr(o.failStation ?? o.FailStation),
+        status: toStr(o.status ?? o.Status),
+        errorCode: toStr(o.errorCode ?? o.ErrorCode),
+        descCode: toStr(o.descCode ?? o.DescCode),
+        wipGroup: toStr(o.wipGroup ?? o.WipGroup),
+        modelName: toStr(o.modelName ?? o.ModelName),
+        errorDesc: toStr(o.errorDesc ?? o.ErrorDesc),
+        timeUpdate: toStr(o.timeUpdate ?? o.TimeUpdate),
+    };
+}
+
+function mergePreferApi(apiRows, inputItems) {
+    // bảo đảm luôn hiển thị đúng list SN người dùng vừa nhập
+    const apiMap = new Map();
+    for (const r of apiRows) {
+        apiMap.set(r.serialNumber.toUpperCase(), r);
+    }
+
+    return inputItems.map((it) => {
+        const key = it.serialNumber.toUpperCase();
+        const api = apiMap.get(key);
+
+        // nếu api trả về thì ưu tiên api cho các trường oracle, còn user input giữ theo it
+        return {
+            serialNumber: it.serialNumber,
+            enterErrorCode: it.enterErrorCode,
+            fa: it.fa,
+            ownerPE: it.ownerPE,
+            customer: it.customer,
+            failStation: it.failStation,
+            status: it.status,
+
+            // oracle/from server (nếu có)
+            errorCode: api?.errorCode || "",
+            descCode: api?.descCode || "",
+            wipGroup: api?.wipGroup || "",
+            modelName: api?.modelName || "",
+            errorDesc: api?.errorDesc || "",
+            timeUpdate: api?.timeUpdate || "",
+        };
+    });
+}
+
+async function submitInput(items) {
+    showAlert("analysis-history-alert", "alert-info", "Đang xử lý...");
+
+    if (!items || items.length === 0) {
+        showAlert("analysis-history-alert", "alert-warning", "Vui lòng nhập SerialNumber.");
+        return;
+    }
+
+    lastInputSerialSet = new Set(items.map((x) => x.serialNumber.toUpperCase()));
+
+    const base = getApiBaseUrl();
+    const url = `${base}/sw-input`;
+
+    const { ok, status, json, raw } = await postJson(url, { items });
+
+    if (!ok) {
+        const msg = json?.message || `Lỗi API (${status}).`;
+        showAlert("analysis-history-alert", "alert-danger", msg);
+
+        // vẫn show SN vừa nhập
+        const fallback = items.map((it) => ({
+            serialNumber: it.serialNumber,
+            enterErrorCode: it.enterErrorCode,
+            fa: it.fa,
+            ownerPE: it.ownerPE,
+            customer: it.customer,
+            failStation: it.failStation,
+            status: it.status,
+            errorCode: "",
+            descCode: "",
+            wipGroup: "",
+            modelName: "",
+            errorDesc: "",
+            timeUpdate: "",
+        }));
+        inputTable.clear().rows.add(fallback).draw();
+        return;
+    }
+
+    const apiData = Array.isArray(json?.data) ? json.data.map(normalizeApiRow) : [];
+    const merged = mergePreferApi(apiData, items);
+
+    showAlert("analysis-history-alert", "alert-success", json?.message || "Thêm thành công.");
+    inputTable.clear().rows.add(merged).draw();
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+    initInputTable();
+
     document.getElementById("input-btn")?.addEventListener("click", () => {
         const items = buildItemsFromInput();
-        submitAnalysis(items);
+        submitInput(items);
     });
 
-    document.getElementById("upload-file-btn")?.addEventListener("click", async () => {
+    document.getElementById("upload-file-btn")?.addEventListener("click", () => {
         const fileInput = document.createElement("input");
         fileInput.type = "file";
         fileInput.accept = ".xlsx,.xls";
+
         fileInput.addEventListener("change", () => {
-            if (!fileInput.files?.length) {
-                submitAnalysis([]);
-                return;
-            }
+            if (!fileInput.files?.length) return;
 
             const file = fileInput.files[0];
             const reader = new FileReader();
 
-            reader.onload = event => {
-                const data = new Uint8Array(event.target.result);
-                const workbook = XLSX.read(data, { type: "array" });
-                const sheetName = workbook.SheetNames[0];
-                const sheet = workbook.Sheets[sheetName];
-                const sheetData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-                const items = buildItemsFromSheet(sheetData);
-                submitAnalysis(items);
+            reader.onload = (event) => {
+                try {
+                    const data = new Uint8Array(event.target.result);
+                    const workbook = XLSX.read(data, { type: "array" });
+                    const sheetName = workbook.SheetNames[0];
+                    const sheet = workbook.Sheets[sheetName];
+                    const sheetData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+                    const items = buildItemsFromSheet(sheetData);
+                    submitInput(items);
+                } catch (e) {
+                    showAlert("analysis-history-alert", "alert-danger", "Không thể đọc file Excel.");
+                }
             };
 
             reader.onerror = () => {
-                const resultDiv = document.getElementById("analysis-history-result");
-                resultDiv.classList.remove("hidden");
-                resultDiv.innerHTML = `
-                    <div class="alert alert-danger">
-                        <strong>Error:</strong> Không thể đọc file.
-                    </div>
-                `;
+                showAlert("analysis-history-alert", "alert-danger", "Không thể đọc file Excel.");
             };
 
             reader.readAsArrayBuffer(file);
