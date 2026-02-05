@@ -4,8 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Oracle.ManagedDataAccess.Client;
 using System.Data;
-using System.Net.Http;
-using System.Text.Json;
 
 namespace API_WEB.Controllers.Scrap
 {
@@ -56,9 +54,9 @@ namespace API_WEB.Controllers.Scrap
             return results;
         }
 
-        private async Task<Dictionary<string, (string? ModelName, string? CurrentErrorCode, string? ErrorDesc)>> FetchLatestR109Async(IReadOnlyCollection<string> serialNumbers)
+        private async Task<Dictionary<string, (string? CurrentErrorCode, string? ErrorDesc)>> FetchLatestR109Async(IReadOnlyCollection<string> serialNumbers)
         {
-            var results = new Dictionary<string, (string? ModelName, string? CurrentErrorCode, string? ErrorDesc)>(StringComparer.OrdinalIgnoreCase);
+            var results = new Dictionary<string, (string? CurrentErrorCode, string? ErrorDesc)>(StringComparer.OrdinalIgnoreCase);
 
             if (serialNumbers == null || serialNumbers.Count == 0)
                 return results;
@@ -73,20 +71,17 @@ namespace API_WEB.Controllers.Scrap
 
             command.CommandText = $@"
                 SELECT r109_latest.SERIAL_NUMBER,
-                       r109_latest.MODEL_NAME,
                        r109_latest.TEST_CODE AS CURRENT_ERROR_CODE,
-                       err.ERROR_DESC
+                       r109_latest.ERROR_DESC
                 FROM (
                     SELECT r109.SERIAL_NUMBER,
-                           r109.MODEL_NAME,
                            r109.TEST_CODE,
+                           r109.ERROR_DESC,
                            r109.TEST_TIME,
                            ROW_NUMBER() OVER (PARTITION BY r109.SERIAL_NUMBER ORDER BY r109.TEST_TIME DESC) AS rn
                     FROM SFISM4.R109 r109
                     WHERE r109.SERIAL_NUMBER IN ({string.Join(",", paramNames)})
                 ) r109_latest
-                LEFT JOIN SFIS1.C_ERROR_CODE_T err
-                  ON r109_latest.TEST_CODE = err.ERROR_CODE
                 WHERE r109_latest.rn = 1";
 
             for (var i = 0; i < serialList.Count; i++)
@@ -101,11 +96,10 @@ namespace API_WEB.Controllers.Scrap
                 if (string.IsNullOrWhiteSpace(serial))
                     continue;
 
-                var modelName = reader["MODEL_NAME"]?.ToString();
                 var currentErrorCode = reader["CURRENT_ERROR_CODE"]?.ToString();
                 var errorDesc = reader["ERROR_DESC"]?.ToString();
 
-                results[serial] = (modelName, currentErrorCode, errorDesc);
+                results[serial] = (currentErrorCode, errorDesc);
             }
 
             return results;
@@ -126,7 +120,6 @@ namespace API_WEB.Controllers.Scrap
                     .Select(item => new SwitchAnalysisHistoryItemRequest
                     {
                         SerialNumber = item.SerialNumber.Trim(),
-                        FailStation = item.FailStation?.Trim(),
                         ErrorCode = item.ErrorCode?.Trim(),
                         Fa = item.Fa?.Trim(),
                         Status = item.Status?.Trim(),
@@ -157,8 +150,6 @@ namespace API_WEB.Controllers.Scrap
                     return new SwitchRepair
                     {
                         SerialNumber = item.SerialNumber,
-                        ModelName = r109Info.ModelName,
-                        FailStation = item.FailStation,
                         ErrorCode = item.ErrorCode,
                         WipGroup = wipGroup,
                         CurrentErrorCode = r109Info.CurrentErrorCode,
@@ -181,8 +172,6 @@ namespace API_WEB.Controllers.Scrap
                 var responseData = historyEntries.Select(entry => new
                 {
                     entry.SerialNumber,
-                    entry.ModelName,
-                    entry.FailStation,
                     entry.ErrorCode,
                     entry.WipGroup,
                     entry.CurrentErrorCode,
@@ -216,7 +205,6 @@ namespace API_WEB.Controllers.Scrap
     public class SwitchAnalysisHistoryItemRequest
     {
         public string SerialNumber { get; set; } = string.Empty;
-        public string? FailStation { get; set; }
         public string? ErrorCode { get; set; }
         public string? Fa { get; set; }
         public string? Status { get; set; }
