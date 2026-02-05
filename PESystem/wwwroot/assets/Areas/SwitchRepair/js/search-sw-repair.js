@@ -120,6 +120,7 @@ async function doSearch() {
     showAlert("search-alert", "alert-info", "Đang tìm kiếm...");
 
     const serialNumbers = parseSerials(document.getElementById("search-sn-input")?.value);
+    const searchMode = toStr(document.getElementById("search-mode")?.value || "current").toLowerCase();
 
     if (!serialNumbers.length) {
         showAlert("search-alert", "alert-warning", "Vui lòng nhập SerialNumber.");
@@ -129,7 +130,7 @@ async function doSearch() {
     const base = getApiBaseUrl();
     const url = `${base}/sw-search`;
 
-    const { ok, status, json } = await postJson(url, { serialNumbers });
+    const { ok, status, json } = await postJson(url, { serialNumbers, searchMode });
 
     if (!ok) {
         showAlert("search-alert", "alert-danger", json?.message || `Lỗi API (${status}).`);

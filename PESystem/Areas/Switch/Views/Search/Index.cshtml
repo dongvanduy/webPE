@@ -5,8 +5,14 @@
 <section>
     <div class="data-card" data-api-base="@ViewBag.ApiBaseUrl">
         <div class="row g-2 align-items-start">
-            <div class="col-md-10">
+            <div class="col-md-8">
                 <textarea id="search-sn-input" rows="3" placeholder="Nhập list SerialNumber để tìm (mỗi dòng hoặc dấu ,)" class="form-control"></textarea>
+            </div>
+            <div class="col-md-2">
+                <select id="search-mode" class="form-select">
+                    <option value="current" selected>Tìm hiện tại</option>
+                    <option value="history">Tìm lịch sử</option>
+                </select>
             </div>
             <div class="col-md-2">
                 <button id="search-btn" class="btn btn-ne w-100" type="button">
