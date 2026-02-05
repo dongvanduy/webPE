@@ -192,9 +192,37 @@ namespace API_WEB.Controllers.Scrap
                 .Select(x => x.Trim())
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList() ?? new();
+            var mode = request?.SearchMode?.Trim().ToLowerInvariant() ?? "current";
+            var isHistory = mode == "history";
 
             if (serials.Count == 0)
                 return BadRequest(new { message = "Danh sách SN không được để trống." });
+
+            if (isHistory)
+            {
+                var historyLocal = await _sqlContext.SwitchRepairs
+                    .Where(x => serials.Contains(x.SerialNumber))
+                    .OrderByDescending(x => x.TimeUpdate)
+                    .ToListAsync();
+
+                var results = historyLocal.Select(local => new
+                {
+                    SerialNumber = local.SerialNumber,
+                    EnterErrorCode = local.EnterErrorCode ?? "",
+                    Fa = local.Fa ?? "",
+                    OwnerPE = local.Owner ?? "",
+                    Customer = local.CustomerOwner ?? "",
+                    FailStation = local.FailStation ?? "",
+                    Status = local.Status ?? "",
+                    ErrorCode = local.ErrorCode ?? "",
+                    WipGroup = local.WipGroup ?? "",
+                    ModelName = local.ModelName ?? "",
+                    ErrorDesc = local.ErrorDesc ?? "",
+                    TimeUpdate = local.TimeUpdate
+                });
+
+                return Ok(new { message = "OK", data = results, missingR107 = new List<string>(), missingR109 = new List<string>() });
+            }
 
             // lấy latest theo TimeUpdate từ SQL
             var latestLocal = await _sqlContext.SwitchRepairs
@@ -211,7 +239,7 @@ namespace API_WEB.Controllers.Scrap
             var r107 = await FetchR107Async(serials);
             var r109 = await FetchLatestR109Async(serials);
 
-            var results = serials.Select(sn =>
+            var resultsLatest = serials.Select(sn =>
             {
                 localDict.TryGetValue(sn, out var local);
                 r107.TryGetValue(sn, out var r107Info);
@@ -242,7 +270,7 @@ namespace API_WEB.Controllers.Scrap
             var missingR107 = serials.Where(sn => !r107.ContainsKey(sn)).ToList();
             var missingR109 = serials.Where(sn => !r109.ContainsKey(sn)).ToList();
 
-            return Ok(new { message = "OK", data = results, missingR107, missingR109 });
+            return Ok(new { message = "OK", data = resultsLatest, missingR107, missingR109 });
         }
 
     }
@@ -268,6 +296,7 @@ namespace API_WEB.Controllers.Scrap
     public class SwitchSearchRequest
     {
         public List<string> SerialNumbers { get; set; } = new();
+        public string? SearchMode { get; set; }
     }
 
 }
