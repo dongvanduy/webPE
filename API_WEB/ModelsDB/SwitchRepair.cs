@@ -2,8 +2,8 @@
 
 namespace API_WEB.ModelsDB
 {
-    [Table("SwitchAnalysisHistory")]
-    public class SwitchAnalysisHistory
+    [Table("SwitchRepair")]
+    public class SwitchRepair
     {
         public int Id { get; set; }
         public string SerialNumber { get; set; } = string.Empty;
