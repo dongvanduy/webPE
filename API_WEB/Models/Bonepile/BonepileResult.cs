@@ -53,6 +53,7 @@
         public string ErrorFlag { get; set; }
         public string WorkFlag { get; set; }
         public string WipGroup { get; set; }
+        public string Repository { get; set; }
         public string Data11 { get; set; }
         public string Status { get; set; }
         public string TestTime { get; set; }

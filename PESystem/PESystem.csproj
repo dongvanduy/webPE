@@ -9,6 +9,8 @@
 		<Folder Include="Areas\CheckList\Views\Home\" />
 		<Folder Include="Areas\CheckList\Views\ListIssue\" />
 		<Folder Include="Areas\NPI\" />
+		<Folder Include="Areas\Switch\Data\" />
+		<Folder Include="Areas\Switch\Models\" />
 		<Folder Include="Data\" />
 		<Folder Include="wwwroot\assets\Areas\CheckList\css\" />
 		<Folder Include="wwwroot\assets\Areas\Material\css\" />
