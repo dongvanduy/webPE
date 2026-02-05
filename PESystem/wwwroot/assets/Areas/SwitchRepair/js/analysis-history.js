@@ -116,16 +116,15 @@ function initInputTable() {
         columns: [
             { data: null, title: "#", width: "40px", render: (d, t, r, meta) => meta.row + 1 },
             { data: "serialNumber", title: "SERIAL_NUMBER" },
+            { data: "wipGroup", title: "WIP_GROUP" },
+            { data: "modelName", title: "MODEL_NAME" },
             { data: "enterErrorCode", title: "ENTER_ERROR_CODE" },
             { data: "fa", title: "FA" },
             { data: "ownerPE", title: "OWNER_PE" },
             { data: "customer", title: "CUSTOMER" },
             { data: "failStation", title: "FAIL_STATION" },
             { data: "status", title: "STATUS" },
-            { data: "errorCode", title: "ERROR_CODE (CURRENT)" },
-            { data: "descCode", title: "DESC_CODE" },
-            { data: "wipGroup", title: "WIP_GROUP" },
-            { data: "modelName", title: "MODEL_NAME" },
+            { data: "errorCode", title: "ERROR_CODE" },
             { data: "errorDesc", title: "ERROR_DESC" },
             {
                 data: "timeUpdate",
@@ -175,7 +174,6 @@ function normalizeApiRow(x) {
         failStation: toStr(o.failStation ?? o.FailStation),
         status: toStr(o.status ?? o.Status),
         errorCode: toStr(o.errorCode ?? o.ErrorCode),
-        descCode: toStr(o.descCode ?? o.DescCode),
         wipGroup: toStr(o.wipGroup ?? o.WipGroup),
         modelName: toStr(o.modelName ?? o.ModelName),
         errorDesc: toStr(o.errorDesc ?? o.ErrorDesc),
@@ -206,7 +204,6 @@ function mergePreferApi(apiRows, inputItems) {
 
             // oracle/from server (nếu có)
             errorCode: api?.errorCode || "",
-            descCode: api?.descCode || "",
             wipGroup: api?.wipGroup || "",
             modelName: api?.modelName || "",
             errorDesc: api?.errorDesc || "",
@@ -244,7 +241,6 @@ async function submitInput(items) {
             failStation: it.failStation,
             status: it.status,
             errorCode: "",
-            descCode: "",
             wipGroup: "",
             modelName: "",
             errorDesc: "",
