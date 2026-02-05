@@ -59,6 +59,7 @@
             <a href="@Url.Action("Index", "Approved", new { area = "ScrapSW" })" class="nav-link @ViewContext.IsActive("Approved", "Index")"><i class="fa fa-certificate"></i> <span>SPE Already Approved</span></a>
             <a href="@Url.Action("Index", "MRBSW", new { area = "ScrapSW" })" class="nav-link @ViewContext.IsActive("MRBSW", "Index")"><i class="fa fa-plane"></i> <span>Move MRB Status</span></a>
             <a href="@Url.Action("Index", "Search", new { area = "ScrapSW" })" class="nav-link @ViewContext.IsActive("Search", "Index")"><i class="fa fa-search"></i> <span>Search</span></a>
+            <a href="@Url.Action("Index", "AnalysisHistory", new { area = "ScrapSW" })" class="nav-link @ViewContext.IsActive("AnalysisHistory", "Index")"><i class="fa fa-history"></i> <span>Analysis History</span></a>
         </nav>
 
         <ul class="d-flex align-items-center list-unstyled m-0 user-panel">
@@ -128,4 +129,3 @@
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
-

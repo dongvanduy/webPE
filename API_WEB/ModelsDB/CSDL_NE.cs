@@ -27,6 +27,7 @@ namespace API_WEB.ModelsDB
         public DbSet<CheckList> CheckLists { get; set; }
         public virtual DbSet<ScrapList> ScrapLists { get; set; }
         public virtual DbSet<HistoryScrapList> HistoryScrapLists { get; set; }
+        public virtual DbSet<SwitchAnalysisHistory> SwitchAnalysisHistories { get; set; }
         public DbSet<InternalTaskCounter> InternalTaskCounters { get; set; }
         public virtual DbSet<HistoryMaterial> HistoryMaterials { get; set; }
         public virtual DbSet<SumMaterial> SumMaterials { get; set; }
