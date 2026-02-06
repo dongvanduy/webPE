@@ -6,15 +6,14 @@ document.addEventListener("DOMContentLoaded", function () {
     const linkedEl = document.getElementById("b36r-linked-aging-chart");
     const baseUrl = typeof API_BASE_URL !== "undefined" ? API_BASE_URL : "";
 
-    function renderPieChart(element, title, items) {
+    function renderBarChart(element, title, items) {
         if (!element) {
             return null;
         }
 
-        const data = (items || []).map(item => ({
-            value: item.count || 0,
-            name: item.label || ""
-        }));
+        const safeItems = items || [];
+        const labels = safeItems.map(item => item.label || "");
+        const values = safeItems.map(item => item.count || 0);
 
         const chart = echarts.init(element);
         chart.setOption({
@@ -27,20 +26,40 @@ document.addEventListener("DOMContentLoaded", function () {
                     fontWeight: 600
                 }
             },
-            tooltip: { trigger: "item" },
-            legend: {
-                bottom: 0,
-                type: "scroll"
+            tooltip: {
+                trigger: "axis",
+                axisPointer: { type: "shadow" }
+            },
+            grid: {
+                left: "3%",
+                right: "4%",
+                bottom: "10%",
+                containLabel: true
+            },
+            xAxis: {
+                type: "category",
+                data: labels,
+                axisTick: { alignWithLabel: true },
+                axisLabel: {
+                    interval: 0,
+                    fontSize: 11
+                }
+            },
+            yAxis: {
+                type: "value"
             },
             series: [
                 {
-                    type: "pie",
-                    radius: ["35%", "65%"],
-                    center: ["50%", "45%"],
-                    label: {
-                        formatter: "{b}: {c}"
+                    type: "bar",
+                    data: values,
+                    barMaxWidth: 40,
+                    itemStyle: {
+                        color: "#5470c6"
                     },
-                    data
+                    label: {
+                        show: true,
+                        position: "top"
+                    }
                 }
             ]
         });
@@ -139,7 +158,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (!payload.success) {
                 throw new Error(payload.message || "Warehouse aging failed");
             }
-            const chart = renderPieChart(warehouseEl, "Aging kho", payload.data);
+            const chart = renderBarChart(warehouseEl, "Aging kho", payload.data);
             if (chart) {
                 chart.on("click", function (params) {
                     const bucketKey = getBucketKey(params.name);
@@ -167,7 +186,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 throw new Error(payload.message || "B36R aging failed");
             }
 
-            const openedChart = renderPieChart(openedMO, "ĐÃ MỞ MO", payload.openedMo);
+            const openedChart = renderBarChart(openedMO, "ĐÃ MỞ MO", payload.openedMo);
             if (openedChart) {
                 openedChart.on("click", function (params) {
                     const bucketKey = getBucketKey(params.name);
@@ -178,7 +197,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 });
             }
 
-            const openingChart = renderPieChart(waitingMO, "CHỜ MỞ MO", payload.waitingOpenMo);
+            const openingChart = renderBarChart(waitingMO, "CHỜ MỞ MO", payload.waitingOpenMo);
             if (openingChart) {
                 openingChart.on("click", function (params) {
                     const bucketKey = getBucketKey(params.name);
@@ -189,7 +208,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 });
             }
 
-            const linkedChart = renderPieChart(linkedEl, "Linked", payload.linked);
+            const linkedChart = renderBarChart(linkedEl, "Linked", payload.linked);
             if (linkedChart) {
                 linkedChart.on("click", function (params) {
                     const bucketKey = getBucketKey(params.name);
