@@ -472,26 +472,108 @@ namespace API_WEB.Controllers.Repositories
             {
                 var now = DateTime.Now;
 
+                // ✅ Lấy latest export theo SN toàn cục trước (fix bug cũ)
                 var latestExports = await _sqlContext.Exports
-                    .Where(e => (e.CheckingB36R == 1 || e.CheckingB36R == 2) && e.ExportDate != null)
+                    .Where(e => e.ExportDate != null)
                     .GroupBy(e => e.SerialNumber)
                     .Select(g => g.OrderByDescending(x => x.ExportDate)
                                   .ThenByDescending(x => x.LinkTime)
                                   .First())
                     .ToListAsync();
 
-                var waiting = latestExports.Where(e => e.CheckingB36R == 1);
-                var linked = latestExports.Where(e => e.CheckingB36R == 2);
+                // Chỉ quan tâm trạng thái hiện tại 1/2
+                latestExports = latestExports
+                    .Where(e => e.CheckingB36R == 1 || e.CheckingB36R == 2)
+                    .ToList();
 
-                var waitingSummary = BuildAgingSummary(waiting, now);
-                var linkedSummary = BuildAgingSummary(linked, now);
+                var waitingList = latestExports.Where(e => e.CheckingB36R == 1).ToList();
+                var linkedList = latestExports.Where(e => e.CheckingB36R == 2).ToList();
+
+                // ===== WaitingLink => tra Oracle để phân station "ĐÃ MỞ MO" vs "CHỜ MỞ MO" =====
+                var waitingSNs = waitingList
+                    .Select(x => x.SerialNumber)
+                    .Where(sn => !string.IsNullOrWhiteSpace(sn))
+                    .Distinct()
+                    .ToList();
+
+                Dictionary<string, DateTime?> inStationTimes = new(StringComparer.OrdinalIgnoreCase);
+
+                if (waitingSNs.Count > 0)
+                {
+                    await using var oracleConnection = new OracleConnection(_oracleContext.Database.GetDbConnection().ConnectionString);
+                    await oracleConnection.OpenAsync();
+                    inStationTimes = await GetLinkMoInStationTimesAsync(oracleConnection, waitingSNs);
+                }
+
+                // Build items for waiting categories
+                var openedMoItems = new List<AgingItem>();
+                var waitingOpenMoItems = new List<AgingItem>();
+
+                foreach (var e in waitingList)
+                {
+                    if (!e.ExportDate.HasValue) continue;
+                    var exportDate = e.ExportDate.Value;
+
+                    inStationTimes.TryGetValue(e.SerialNumber, out var inTime);
+
+                    // Rule: chỉ tính "ĐÃ MỞ MO" nếu IN_STATION_TIME tồn tại và >= ExportDate mới nhất
+                    if (inTime.HasValue && inTime.Value >= exportDate)
+                    {
+                        openedMoItems.Add(new AgingItem(
+                            e.SerialNumber,
+                            e.ProductLine,
+                            e.ModelName,
+                            StartTime: inTime.Value,
+                            ExportDate: exportDate,
+                            InStationTime: inTime,
+                            Station: "ĐÃ MỞ MO"
+                        ));
+                    }
+                    else
+                    {
+                        waitingOpenMoItems.Add(new AgingItem(
+                            e.SerialNumber,
+                            e.ProductLine,
+                            e.ModelName,
+                            StartTime: exportDate,
+                            ExportDate: exportDate,
+                            InStationTime: inTime, // có thể có nhưng < exportDate => coi như không hợp lệ cho cycle này
+                            Station: "CHỜ MỞ MO"
+                        ));
+                    }
+                }
+
+                // Linked: giữ aging theo ExportDate (nếu muốn theo LinkTime thì nói mình đổi)
+                var linkedItems = linkedList
+                    .Where(e => e.ExportDate.HasValue)
+                    .Select(e => new AgingItem(
+                        e.SerialNumber,
+                        e.ProductLine,
+                        e.ModelName,
+                        StartTime: e.ExportDate!.Value,
+                        ExportDate: e.ExportDate!.Value,
+                        InStationTime: null,
+                        Station: "ĐÃ LINK MO"
+                    ))
+                    .ToList();
+
+                var openedMoSummary = BuildAgingSummary(openedMoItems, now);
+                var waitingOpenMoSummary = BuildAgingSummary(waitingOpenMoItems, now);
+                var linkedSummary = BuildAgingSummary(linkedItems, now);
 
                 return Ok(new
                 {
                     success = true,
-                    waitingLink = waitingSummary.Buckets,
+
+                    // ✅ bỏ waitingLink, thay bằng 2 nhóm station cho trạng thái = 1
+                    openedMo = openedMoSummary.Buckets,
+                    waitingOpenMo = waitingOpenMoSummary.Buckets,
+
+                    // giữ linked
                     linked = linkedSummary.Buckets,
-                    waitingLinkDetails = waitingSummary.Details,
+
+                    openedMoDetails = openedMoSummary.Details,
+                    waitingOpenMoDetails = waitingOpenMoSummary.Details,
                     linkedDetails = linkedSummary.Details
                 });
             }
@@ -502,13 +584,24 @@ namespace API_WEB.Controllers.Repositories
             }
         }
 
+
         private sealed class AgingSummary
         {
             public List<object> Buckets { get; init; } = new();
             public object Details { get; init; } = new();
         }
+        private sealed record AgingItem(
+            string SerialNumber,
+            string? ProductLine,
+            string? ModelName,
+            DateTime StartTime,
+            DateTime ExportDate,
+            DateTime? InStationTime,
+            string Station
+        );
 
-        private static AgingSummary BuildAgingSummary(IEnumerable<Export> exports, DateTime now)
+
+        private static AgingSummary BuildAgingSummary(IEnumerable<AgingItem> items, DateTime now)
         {
             var lessThanOne = 0;
             var oneToThree = 0;
@@ -518,20 +611,17 @@ namespace API_WEB.Controllers.Repositories
             var oneToThreeDetails = new List<object>();
             var moreThanThreeDetails = new List<object>();
 
-            foreach (var item in exports)
+            foreach (var item in items)
             {
-                if (!item.ExportDate.HasValue)
-                {
-                    continue;
-                }
-
-                var agingDays = (now - item.ExportDate.Value).TotalDays;
+                var agingDays = (now - item.StartTime).TotalDays;
                 var detail = new
                 {
                     item.SerialNumber,
                     item.ProductLine,
                     item.ModelName,
-                    item.ExportDate,
+                    item.Station,
+                    ExportDate = item.ExportDate.ToString("yyyy-MM-dd HH:mm:ss"),
+                    InStationTime = item.InStationTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "",
                     AgingDays = Math.Round(agingDays, 2)
                 };
 
@@ -555,11 +645,11 @@ namespace API_WEB.Controllers.Repositories
             return new AgingSummary
             {
                 Buckets = new List<object>
-                {
-                    new { label = "<1 ngày", count = lessThanOne },
-                    new { label = "1-3 ngày", count = oneToThree },
-                    new { label = ">3 ngày", count = moreThanThree }
-                },
+        {
+            new { label = "<1 ngày", count = lessThanOne },
+            new { label = "1-3 ngày", count = oneToThree },
+            new { label = ">3 ngày", count = moreThanThree }
+        },
                 Details = new
                 {
                     LessThanOneDay = lessThanOneDetails,
@@ -569,5 +659,49 @@ namespace API_WEB.Controllers.Repositories
             };
         }
 
+
+        private async Task<Dictionary<string, DateTime?>> GetLinkMoInStationTimesAsync(
+        OracleConnection connection,
+        List<string> serialNumbers)
+        {
+            var result = new Dictionary<string, DateTime?>(StringComparer.OrdinalIgnoreCase);
+            if (serialNumbers == null || serialNumbers.Count == 0) return result;
+
+            var batchSize = 1000;
+            for (var i = 0; i < serialNumbers.Count; i += batchSize)
+            {
+                var batch = serialNumbers.Skip(i).Take(batchSize).ToList();
+                var serialList = string.Join(",", batch.Select(sn => $"'{sn}'"));
+
+                var query = $@"
+            SELECT KEY_PART_SN, MAX(IN_STATION_TIME) AS IN_STATION_TIME
+            FROM SFISM4.R_KEYPART_BLACK_WHITE_LIST_T
+            WHERE TYPE = 'LINK_MO'
+              AND KEY_PART_SN IN ({serialList})
+            GROUP BY KEY_PART_SN";
+
+                using var cmd = new OracleCommand(query, connection);
+                using var reader = await cmd.ExecuteReaderAsync();
+
+                while (await reader.ReadAsync())
+                {
+                    var sn = reader["KEY_PART_SN"]?.ToString();
+                    if (string.IsNullOrWhiteSpace(sn)) continue;
+
+                    DateTime? inStationTime = null;
+                    var raw = reader["IN_STATION_TIME"];
+                    if (raw != DBNull.Value && raw != null)
+                        inStationTime = Convert.ToDateTime(raw);
+
+                    if (!result.ContainsKey(sn))
+                        result.Add(sn, inStationTime);
+                }
+            }
+
+            return result;
+        }
+
     }
+
+
 }

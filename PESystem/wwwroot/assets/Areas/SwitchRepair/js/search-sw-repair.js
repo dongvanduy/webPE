@@ -84,6 +84,8 @@ function initSearchTable() {
         columns: [
             { data: null, title: "#", width: "40px", render: (d, t, r, meta) => meta.row + 1 },
             { data: "serialNumber", title: "SERIAL_NUMBER" },
+            { data: "wipGroup", title: "WIP_GROUP" },
+            { data: "modelName", title: "MODEL_NAME" },
             { data: "enterErrorCode", title: "ENTER_ERROR_CODE" },
             { data: "fa", title: "FA" },
             { data: "ownerPE", title: "OWNER_PE" },
@@ -91,8 +93,6 @@ function initSearchTable() {
             { data: "failStation", title: "FAIL_STATION" },
             { data: "status", title: "STATUS" },
             { data: "errorCode", title: "ERROR_CODE" },
-            { data: "wipGroup", title: "WIP_GROUP" },
-            { data: "modelName", title: "MODEL_NAME" },
             { data: "errorDesc", title: "ERROR_DESC" },
             { data: "timeUpdate", title: "TIME_UPDATE" },
         ],

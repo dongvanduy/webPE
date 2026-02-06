@@ -1,6 +1,8 @@
 document.addEventListener("DOMContentLoaded", function () {
     const warehouseEl = document.getElementById("warehouse-aging-chart");
     const waitingEl = document.getElementById("b36r-waiting-aging-chart");
+    const waitingMO = document.getElementById("b36r-waiting-open-chart");
+    const openedMO = document.getElementById("b36r-opened-aging-chart");
     const linkedEl = document.getElementById("b36r-linked-aging-chart");
     const baseUrl = typeof API_BASE_URL !== "undefined" ? API_BASE_URL : "";
 
@@ -154,7 +156,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     async function loadB36RAging() {
-        if (!waitingEl && !linkedEl) {
+        if (!openedMO && !linkedEl && !waitingMO) {
             return;
         }
 
@@ -165,14 +167,25 @@ document.addEventListener("DOMContentLoaded", function () {
                 throw new Error(payload.message || "B36R aging failed");
             }
 
-            const waitingChart = renderPieChart(waitingEl, "WaitingLink", payload.waitingLink);
-            if (waitingChart) {
-                waitingChart.on("click", function (params) {
+            const openedChart = renderPieChart(openedMO, "ĐÃ MỞ MO", payload.openedMo);
+            if (openedChart) {
+                openedChart.on("click", function (params) {
                     const bucketKey = getBucketKey(params.name);
-                    if (!bucketKey || !payload.waitingLinkDetails) {
+                    if (!bucketKey || !payload.openedMoDetails) {
                         return;
                     }
-                    openAgingModal(`B36R WaitingLink: ${params.name}`, payload.waitingLinkDetails[bucketKey] || [], "WaitingLink");
+                    openAgingModal(`B36R Đã mở MO: ${params.name}`, payload.openedMoDetails[bucketKey] || [], "ĐÃ MỞ MO");
+                });
+            }
+
+            const openingChart = renderPieChart(waitingMO, "CHỜ MỞ MO", payload.waitingOpenMo);
+            if (openingChart) {
+                openingChart.on("click", function (params) {
+                    const bucketKey = getBucketKey(params.name);
+                    if (!bucketKey || !payload.waitingOpenMoDetails) {
+                        return;
+                    }
+                    openAgingModal(`B36R Chờ mở MO: ${params.name}`, payload.waitingOpenMoDetails[bucketKey] || [], "CHỜ MỞ MO");
                 });
             }
 
@@ -188,8 +201,11 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         } catch (error) {
             console.error("B36R aging error", error);
-            if (waitingEl) {
-                waitingEl.innerHTML = `<div class="text-danger">Không tải được dữ liệu.</div>`;
+            if (waitingMO) {
+                waitingMO.innerHTML = `<div class="text-danger">Không tải được dữ liệu.</div>`;
+            }
+            if (openedMO) {
+                openedMO.innerHTML = `<div class="text-danger">Không tải được dữ liệu.</div>`;
             }
             if (linkedEl) {
                 linkedEl.innerHTML = `<div class="text-danger">Không tải được dữ liệu.</div>`;
