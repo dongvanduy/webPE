@@ -5,7 +5,7 @@
 <section>
     <div class="data-card" data-api-base="@ViewBag.ApiBaseUrl">
         <div class="row g-2 align-items-start">
-            <div class="col-md-8">
+            <div class="col-md-6">
                 <textarea id="search-sn-input" rows="3" placeholder="Nhập list SerialNumber để tìm (mỗi dòng hoặc dấu ,)" class="form-control"></textarea>
             </div>
             <div class="col-md-2">
@@ -17,6 +17,11 @@
             <div class="col-md-2">
                 <button id="search-btn" class="btn btn-ne w-100" type="button">
                     <i class="fas fa-search"></i> Search
+                </button>
+            </div>
+            <div class="col-md-2">
+                <button id="export-excel-btn" class="btn btn-success w-100" type="button">
+                    <i class="fas fa-file-excel"></i> Excel
                 </button>
             </div>
         </div>

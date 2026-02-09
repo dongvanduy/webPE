@@ -2,6 +2,7 @@
 using API_WEB.ModelsOracle;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using OfficeOpenXml;
 using Oracle.ManagedDataAccess.Client;
 using System.Data;
 
@@ -271,6 +272,61 @@ namespace API_WEB.Controllers.Scrap
             var missingR109 = serials.Where(sn => !r109.ContainsKey(sn)).ToList();
 
             return Ok(new { message = "OK", data = resultsLatest, missingR107, missingR109 });
+        }
+
+        [HttpGet("export-excel")]
+        public async Task<IActionResult> ExportExcel()
+        {
+            var data = await _sqlContext.SwitchRepairs
+                .AsNoTracking()
+                .OrderBy(x => x.SerialNumber)
+                .ToListAsync();
+
+            if (data.Count == 0)
+            {
+                return NotFound(new { message = "Không có dữ liệu để xuất." });
+            }
+
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            using var package = new ExcelPackage();
+            var ws = package.Workbook.Worksheets.Add("SwitchRepairs");
+
+            ws.Cells[1, 1].Value = "SERIAL_NUMBER";
+            ws.Cells[1, 2].Value = "MODEL_NAME";
+            ws.Cells[1, 3].Value = "FAIL_STATION";
+            ws.Cells[1, 4].Value = "ENTER_ERROR_CODE";
+            ws.Cells[1, 5].Value = "WIP_GROUP";
+            ws.Cells[1, 6].Value = "ERROR_CODE";
+            ws.Cells[1, 7].Value = "ERROR_DESC";
+            ws.Cells[1, 8].Value = "FA";
+            ws.Cells[1, 9].Value = "STATUS";
+            ws.Cells[1, 10].Value = "OWNER";
+            ws.Cells[1, 11].Value = "CUSTOMER_OWNER";
+            ws.Cells[1, 12].Value = "TIME_UPDATE";
+
+            for (var i = 0; i < data.Count; i++)
+            {
+                var row = i + 2;
+                var item = data[i];
+                ws.Cells[row, 1].Value = item.SerialNumber;
+                ws.Cells[row, 2].Value = item.ModelName;
+                ws.Cells[row, 3].Value = item.FailStation;
+                ws.Cells[row, 4].Value = item.EnterErrorCode;
+                ws.Cells[row, 5].Value = item.WipGroup;
+                ws.Cells[row, 6].Value = item.ErrorCode;
+                ws.Cells[row, 7].Value = item.ErrorDesc;
+                ws.Cells[row, 8].Value = item.Fa;
+                ws.Cells[row, 9].Value = item.Status;
+                ws.Cells[row, 10].Value = item.Owner;
+                ws.Cells[row, 11].Value = item.CustomerOwner;
+                ws.Cells[row, 12].Value = item.TimeUpdate.ToString("yyyy-MM-dd HH:mm:ss");
+            }
+
+            ws.Cells.AutoFitColumns();
+
+            var fileBytes = package.GetAsByteArray();
+            var fileName = $"SwitchRepair_{DateTime.Now:yyyyMMddHHmmss}.xlsx";
+            return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
 
     }
