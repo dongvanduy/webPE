@@ -141,8 +141,15 @@ async function doSearch() {
     searchTable.clear().rows.add(rows).draw();
 }
 
+function exportExcel() {
+    const base = getApiBaseUrl();
+    const url = `${base}/export-excel`;
+    window.location.href = url;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     initSearchTable();
 
     document.getElementById("search-btn")?.addEventListener("click", doSearch);
+    document.getElementById("export-excel-btn")?.addEventListener("click", exportExcel);
 });
