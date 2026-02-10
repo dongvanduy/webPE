@@ -443,6 +443,11 @@ namespace API_WEB.Controllers.SFC
                             TO_DATE(:endTime, 'YYYYMMDDHH24') AS END_TIME
                         FROM DUAL
                     ),
+                    TARGET_MODELS AS (
+                        SELECT DISTINCT MODEL_NAME
+                        FROM SFIS1.C_MODEL_DESC
+                        WHERE MODEL_SERIAL = 'ADAPTER'
+                    ),
                     PROD_DATA AS (
                         SELECT
                             r.MODEL_NAME,
@@ -451,7 +456,9 @@ namespace API_WEB.Controllers.SFC
                             SUM(NVL(r.SECOND_PASS_QTY, 0)) AS SUM_SECOND_PASS,
                             SUM(NVL(r.FAIL_QTY, 0)) AS SUM_FAIL,
                             SUM(NVL(r.FIRST_FAIL_QTY, 0)) AS SUM_FIRST_FAIL
-                        FROM SFISM4.r_station_rec_t r, PARAMS p
+                        FROM SFISM4.r_station_rec_t r
+                        INNER JOIN TARGET_MODELS tm ON r.MODEL_NAME = tm.MODEL_NAME
+                        CROSS JOIN PARAMS p
                         WHERE TO_DATE(r.WORK_DATE || LPAD(r.WORK_SECTION, 2, '0'), 'YYYYMMDDHH24')
                               BETWEEN p.START_TIME AND p.END_TIME
                         GROUP BY r.MODEL_NAME, r.GROUP_NAME
@@ -465,7 +472,9 @@ namespace API_WEB.Controllers.SFC
                                 PARTITION BY rep.SERIAL_NUMBER, rep.MODEL_NAME, rep.TEST_GROUP
                                 ORDER BY rep.TIME_REPAIR DESC
                             ) AS RN
-                        FROM SFISM4.R109 rep, PARAMS p
+                        FROM SFISM4.R109 rep
+                        INNER JOIN TARGET_MODELS tm ON rep.MODEL_NAME = tm.MODEL_NAME
+                        CROSS JOIN PARAMS p
                         WHERE rep.REASON_CODE IS NOT NULL
                           AND rep.TIME_REPAIR BETWEEN p.START_TIME AND p.END_TIME
                     ),
@@ -503,12 +512,19 @@ namespace API_WEB.Controllers.SFC
                             TO_DATE(:endTime, 'YYYYMMDDHH24') AS END_TIME
                         FROM DUAL
                     ),
+                    TARGET_MODELS AS (
+                        SELECT DISTINCT MODEL_NAME
+                        FROM SFIS1.C_MODEL_DESC
+                        WHERE MODEL_SERIAL = 'ADAPTER'
+                    ),
                     TARGET_FAIL_MOS AS (
                         SELECT DISTINCT
                             r.MO_NUMBER,
                             r.MODEL_NAME,
                             r.GROUP_NAME
-                        FROM SFISM4.r_station_rec_t r, PARAMS p
+                        FROM SFISM4.r_station_rec_t r
+                        INNER JOIN TARGET_MODELS tm ON r.MODEL_NAME = tm.MODEL_NAME
+                        CROSS JOIN PARAMS p
                         WHERE TO_DATE(r.WORK_DATE || LPAD(r.WORK_SECTION, 2, '0'), 'YYYYMMDDHH24')
                               BETWEEN p.START_TIME AND p.END_TIME
                           AND r.FAIL_QTY > 0
