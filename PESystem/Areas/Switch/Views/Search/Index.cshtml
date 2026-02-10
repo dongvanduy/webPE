@@ -20,9 +20,7 @@
                 </button>
             </div>
             <div class="col-md-2">
-                <button id="export-excel-btn" class="btn btn-success w-100" type="button">
-                    <i class="fas fa-file-excel"></i> Excel
-                </button>
+                <img id="export-excel-btn" src="~/assets/img/excel.png" alt="Excel Icon" class="excel-icon">
             </div>
         </div>
 
@@ -35,5 +33,17 @@
 </section>
 
 @section Scripts {
+    <style>
+        .excel-icon {
+            width: 48px;
+            height: 48px;
+            transition: transform 0.2s ease-in-out;
+            cursor: pointer;
+        }
+
+            .excel-icon:hover {
+                transform: scale(1.1);
+            }
+    </style>
     <script src="~/assets/areas/switchrepair/js/search-sw-repair.js?v=@DateTime.Now.Ticks"></script>
 }

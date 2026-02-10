@@ -1,6 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
     const warehouseEl = document.getElementById("warehouse-aging-chart");
-    const waitingEl = document.getElementById("b36r-waiting-aging-chart");
     const waitingMO = document.getElementById("b36r-waiting-open-chart");
     const openedMO = document.getElementById("b36r-opened-aging-chart");
     const linkedEl = document.getElementById("b36r-linked-aging-chart");
@@ -17,15 +16,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const chart = echarts.init(element);
         chart.setOption({
-            title: {
-                text: title,
-                left: "center",
-                top: 0,
-                textStyle: {
-                    fontSize: 12,
-                    fontWeight: 600
-                }
-            },
             tooltip: {
                 trigger: "axis",
                 axisPointer: { type: "shadow" }
@@ -54,7 +44,13 @@ document.addEventListener("DOMContentLoaded", function () {
                     data: values,
                     barMaxWidth: 40,
                     itemStyle: {
-                        color: "#5470c6"
+                        color: function (params) {
+                            const label = labels[params.dataIndex]; // "<1 ngày" | "1-3 ngày" | ">3 ngày"
+                            if (label === ">3 ngày") return "#ff0000";   // đỏ
+                            if (label === "1-3 ngày") return "#ffc107";  // vàng
+                            if (label === "<1 ngày") return "#28a745";   // xanh
+                            return "#5470c6"; // fallback
+                        }
                     },
                     label: {
                         show: true,

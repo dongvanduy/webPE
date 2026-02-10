@@ -368,7 +368,7 @@ body::before {
     border: none !important;
     color: #000 !important;
     font-weight: bold !important;
-    border-radius: 999px;
+    border-radius: 10px;
     aspect-ratio: 1 / 0.3;
     width: 10vw;
     min-width: 80px;

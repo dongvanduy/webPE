@@ -237,13 +237,85 @@ namespace API_WEB.Controllers
             }
         }
 
-        // Thống kê số lượng SN trong kho theo aging (tính từ ngày nhập kho)
+
+
+
+        //HELPER lấy danh sách SN hợp lệ từ Oracle R107
+        private async Task<HashSet<string>> GetExistingSerialsInKanbanAsync(
+        OracleConnection connection,
+        List<string> serialNumbers)
+        {
+            var exists = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            if (serialNumbers == null || serialNumbers.Count == 0) return exists;
+
+            const int batchSize = 1000;
+
+            for (int i = 0; i < serialNumbers.Count; i += batchSize)
+            {
+                var batch = serialNumbers.Skip(i).Take(batchSize).ToList();
+                var serialList = string.Join(",", batch.Select(sn => $"'{sn.Replace("'", "''")}'"));
+
+                var query = $@"
+            SELECT DISTINCT SERIAL_NUMBER
+            FROM SFISM4.Z_KANBAN_TRACKING_T
+            WHERE SERIAL_NUMBER IN ({serialList})";
+
+                using var cmd = new OracleCommand(query, connection);
+                using var reader = await cmd.ExecuteReaderAsync();
+
+                while (await reader.ReadAsync())
+                {
+                    var sn = reader["SERIAL_NUMBER"]?.ToString();
+                    if (!string.IsNullOrWhiteSpace(sn))
+                        exists.Add(sn);
+                }
+            }
+
+            return exists;
+        }
+
+        // Thống kê số lượng SN trong kho OK theo aging (tính từ ngày nhập kho)
         [HttpGet("warehouse-aging")]
         public async Task<IActionResult> GetWarehouseAging()
         {
             try
             {
                 var now = DateTime.Now;
+
+                // 1) Lấy danh sách SN trong kho OK (SQL)
+                var serialNumbers = await _sqlContext.KhoOks
+                    .Where(k => k.entryDate != null && k.SERIAL_NUMBER != null)
+                    .Select(k => k.SERIAL_NUMBER!)
+                    .Distinct()
+                    .ToListAsync();
+
+                if (serialNumbers.Count == 0)
+                {
+                    return Ok(new
+                    {
+                        success = true,
+                        data = new object[]
+                        {
+                    new { label = "<1 ngày", count = 0 },
+                    new { label = "1-3 ngày", count = 0 },
+                    new { label = ">3 ngày", count = 0 },
+                        },
+                        details = new
+                        {
+                            LessThanOneDay = new object[0],
+                            OneToThreeDays = new object[0],
+                            MoreThanThreeDays = new object[0],
+                        }
+                    });
+                }
+
+                // 2) Query Oracle: chỉ giữ SN tồn tại trong Z_KANBAN_TRACKING_T
+                await using var oracleConnection = new OracleConnection(_oracleContext.Database.GetDbConnection().ConnectionString);
+                await oracleConnection.OpenAsync();
+
+                var existsInKanban = await GetExistingSerialsInKanbanAsync(oracleConnection, serialNumbers);
+
+                // 3) Lấy detail từ SQL rồi lọc bằng HashSet (tránh lỗi 2100 params)
                 var detailRows = await _sqlContext.KhoOks
                     .Where(k => k.entryDate != null)
                     .Select(k => new
@@ -257,43 +329,24 @@ namespace API_WEB.Controllers
                     })
                     .ToListAsync();
 
+                detailRows = detailRows
+                    .Where(r => !string.IsNullOrWhiteSpace(r.SerialNumber) && existsInKanban.Contains(r.SerialNumber))
+                    .ToList();
+
+                // 4) Bucket + details như cũ
                 var bucketOrder = new[] { "<1 ngày", "1-3 ngày", ">3 ngày" };
+
                 var counts = detailRows
                     .GroupBy(row => row.AgingDays < 1 ? "<1 ngày" : row.AgingDays <= 3 ? "1-3 ngày" : ">3 ngày")
                     .ToDictionary(g => g.Key, g => g.Count());
+
                 var result = bucketOrder
                     .Select(label => new { label, count = counts.TryGetValue(label, out var count) ? count : 0 })
                     .ToList();
 
-                var lessThanOne = detailRows.Where(row => row.AgingDays < 1).Select(row => new
-                {
-                    row.SerialNumber,
-                    row.ShelfCode,
-                    row.ColumnNumber,
-                    row.LevelNumber,
-                    row.EntryDate,
-                    AgingDays = row.AgingDays
-                }).ToList();
-
-                var oneToThree = detailRows.Where(row => row.AgingDays >= 1 && row.AgingDays <= 3).Select(row => new
-                {
-                    row.SerialNumber,
-                    row.ShelfCode,
-                    row.ColumnNumber,
-                    row.LevelNumber,
-                    row.EntryDate,
-                    AgingDays = row.AgingDays
-                }).ToList();
-
-                var moreThanThree = detailRows.Where(row => row.AgingDays > 3).Select(row => new
-                {
-                    row.SerialNumber,
-                    row.ShelfCode,
-                    row.ColumnNumber,
-                    row.LevelNumber,
-                    row.EntryDate,
-                    AgingDays = row.AgingDays
-                }).ToList();
+                var lessThanOne = detailRows.Where(row => row.AgingDays < 1).ToList();
+                var oneToThree = detailRows.Where(row => row.AgingDays >= 1 && row.AgingDays <= 3).ToList();
+                var moreThanThree = detailRows.Where(row => row.AgingDays > 3).ToList();
 
                 return Ok(new
                 {
@@ -312,6 +365,7 @@ namespace API_WEB.Controllers
                 return StatusCode(500, new { success = false, message = ex.Message });
             }
         }
+
 
         [HttpPost("report")]
         public async Task<IActionResult> GetProductReportByTime([FromBody] TimeRangeRequest request)

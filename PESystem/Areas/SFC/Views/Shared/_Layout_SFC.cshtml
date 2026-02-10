@@ -5,13 +5,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SFC</title>
-    <link href="~/css/site.min.css" rel="stylesheet" />
+
+    <!-- Bootstrap -->
     <link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="~/lib/select2/dist/css/select2.min.css" rel="stylesheet" />
-    <link href="~/lib/datatable/jquery.datatables.min.css" rel="stylesheet" />
+
+    <!-- DataTables Bootstrap5 CSS -->
+    <link href="~/lib/datatables.bootstrap5.min.css" rel="stylesheet" />
+    <link href="~/lib/buttons.bootstrap5.min.css" rel="stylesheet" />
+
+    <!-- Icons -->
     <link href="~/lib/all-fa-icon/css/all.min.css" rel="stylesheet" />
-    <script src="~/lib/gsap-particles/particles.min.js"></script>
-    <script src="~/lib/gsap-particles/gsap.min.js"></script>
+    <link href="~/assets/vendor/remixicon/remixicon.css" rel="stylesheet" />
+
+    <!-- Custom (Load after Bootstrap + DataTables) -->
+    <link href="~/css/site.min.css" rel="stylesheet" />
+    <link href="~/assets/areas/smartfa/css/smartFA.css" rel="stylesheet" />
 </head>
 
 <body>
@@ -45,29 +53,40 @@
             <!-- Menu Items -->
             <a href="@Url.Action("Home", "Home", new { area = "" })" class="nav-link"><i class="fas fa-home"></i> <span>Trang chủ</span></a>
             <a href="@Url.Action("Index", "Home", new { area = "SFC" })" class="nav-link @ViewContext.IsActive("Home", "Index")"><i class="fas fa-dashboard"></i> <span>Search</span></a>
+            <a href="@Url.Action("Index", "YieldRate", new { area = "SFC" })" class="nav-link @ViewContext.IsActive("YieldRate", "Index")"><i class="fas fa-dashboard"></i> <span>Yield Rate</span></a>
         </nav>
     </div>
 
     <div class="dashboard-stage">
         <div class="dashboard-wrapper">
         <!--HTML CỦA SPINER-->
-        <div id="spinner-overlay">
-            <span class="loader"></span>
+            <div id="spinner-overlay">
+                <span class="loader"></span>
+            </div>
+            @RenderBody()
         </div>
-        @RenderBody()
     </div>
-    </div>
-    <script src="~/lib/jquery-3.7.0.min.js"></script> <!-- jQuery -->
-    <script src="~/lib/datatable/jquery.datatables.min.js"></script> <!-- DataTables core -->
-    <script src="~/lib/datatables.bootstrap5.min.js"></script> <!-- Bootstrap5 integration -->
-    <script src="~/lib/datatables.buttons.min.js"></script> <!-- Buttons extension -->
-    <script src="~/lib/buttons.html5.min.js"></script> <!-- HTML5 export -->
-    <script src="~/js/site.js?v=3"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script>
+
+    <script src="~/lib/jquery-3.7.0.min.js"></script>
+
+    <!-- DataTables core + Bootstrap -->
+    <script src="~/lib/datatable/jquery.datatables.min.js"></script>
+    <script src="~/lib/datatables.bootstrap5.min.js"></script>
+
+    <!-- DataTables Export -->
+    <script src="~/lib/jszip.min.js"></script>
+    <script src="~/lib/datatables.buttons.min.js"></script>
+    <script src="~/lib/buttons.html5.min.js"></script>
+
+    <!-- UI Libraries -->
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/lib/sweetalert2/dist/sweetalert2.all.js"></script>
+    <script src="~/lib/echarts/echarts.min.js"></script>
     <script src="~/lib/select2/dist/js/select2.full.min.js"></script>
-    <script src="~/lib/datatable/datatables.fixedheader.min.js"></script>
     <script src="~/lib/excel/xlsx.full.min.js"></script>
+
+    <!--custom JS -->
+    <script src="~/js/site.min.js?v=4"></script>
 
     @RenderSection("Scripts", required: false)
 </body>
