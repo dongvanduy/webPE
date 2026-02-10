@@ -445,7 +445,7 @@ namespace API_WEB.Controllers.SFC
                     ),
                     TARGET_MODELS AS (
                         SELECT DISTINCT MODEL_NAME
-                        FROM SFIS1.C_MODEL_DESC
+                        FROM SFIS1.C_MODEL_DESC_T
                         WHERE MODEL_SERIAL = 'ADAPTER'
                     ),
                     PROD_DATA AS (
@@ -514,7 +514,7 @@ namespace API_WEB.Controllers.SFC
                     ),
                     TARGET_MODELS AS (
                         SELECT DISTINCT MODEL_NAME
-                        FROM SFIS1.C_MODEL_DESC
+                        FROM SFIS1.C_MODEL_DESC_T
                         WHERE MODEL_SERIAL = 'ADAPTER'
                     ),
                     TARGET_FAIL_MOS AS (
