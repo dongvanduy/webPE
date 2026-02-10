@@ -183,7 +183,6 @@ namespace API_WEB.Controllers.Repositories
             return Ok(new { success = true, updated });
         }
 
-
         [HttpGet]
         public async Task<IActionResult> Get([
             FromQuery] string? serialNumber,
