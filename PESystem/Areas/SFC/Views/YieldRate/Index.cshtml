@@ -63,7 +63,7 @@
 
 @section Scripts {
     <script>
-        const API_URL = 'https://pe-vnmbd-nvidia-cns.myfiinet.com/SFC/yield-rate-by-time';
+        const API_URL = 'https://pe-vnmbd-nvidia-cns.myfiinet.com/api/SFC/yield-rate-by-time';
 
         function formatInputToYmdh(datetimeValue) {
             if (!datetimeValue) return '';
@@ -167,10 +167,24 @@
                     body: JSON.stringify({ startTime, endTime })
                 });
 
-                const data = await response.json();
+                const rawText = await response.text();
+                let data = null;
+
+                if (rawText) {
+                    try {
+                        data = JSON.parse(rawText);
+                    } catch {
+                        data = null;
+                    }
+                }
 
                 if (!response.ok) {
-                    throw new Error(data?.message || 'Không thể lấy dữ liệu yield rate.');
+                    const serverMessage = data?.message || data?.title || rawText || 'Không thể lấy dữ liệu yield rate.';
+                    throw new Error(serverMessage);
+                }
+
+                if (!data) {
+                    throw new Error('API không trả về dữ liệu JSON hợp lệ.');
                 }
 
                 renderSummaryRows(data.summary || []);
