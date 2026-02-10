@@ -421,6 +421,206 @@ namespace API_WEB.Controllers.SFC
             }
         }
 
+        [HttpPost("yield-rate-by-time")]
+        public async Task<IActionResult> GetYieldRateByTime([FromBody] YieldRateRequest request)
+        {
+            try
+            {
+                if (request == null || string.IsNullOrWhiteSpace(request.StartTime) || string.IsNullOrWhiteSpace(request.EndTime))
+                {
+                    return BadRequest("Invalid request: StartTime and EndTime are required (YYYYMMDDHH24).");
+                }
+
+                if (request.StartTime.Length != 10 || request.EndTime.Length != 10)
+                {
+                    return BadRequest("Invalid request: StartTime and EndTime must follow YYYYMMDDHH24 format.");
+                }
+
+                const string summaryQuery = @"
+                    WITH PARAMS AS (
+                        SELECT
+                            TO_DATE(:startTime, 'YYYYMMDDHH24') AS START_TIME,
+                            TO_DATE(:endTime, 'YYYYMMDDHH24') AS END_TIME
+                        FROM DUAL
+                    ),
+                    PROD_DATA AS (
+                        SELECT
+                            r.MODEL_NAME,
+                            r.GROUP_NAME,
+                            SUM(NVL(r.FIRST_PASS_QTY, 0)) AS SUM_FIRST_PASS,
+                            SUM(NVL(r.SECOND_PASS_QTY, 0)) AS SUM_SECOND_PASS,
+                            SUM(NVL(r.FAIL_QTY, 0)) AS SUM_FAIL,
+                            SUM(NVL(r.FIRST_FAIL_QTY, 0)) AS SUM_FIRST_FAIL
+                        FROM SFISM4.r_station_rec_t r, PARAMS p
+                        WHERE TO_DATE(r.WORK_DATE || LPAD(r.WORK_SECTION, 2, '0'), 'YYYYMMDDHH24')
+                              BETWEEN p.START_TIME AND p.END_TIME
+                        GROUP BY r.MODEL_NAME, r.GROUP_NAME
+                    ),
+                    REPAIR_RAW_SORTED AS (
+                        SELECT
+                            rep.MODEL_NAME,
+                            rep.TEST_GROUP,
+                            rep.SERIAL_NUMBER,
+                            ROW_NUMBER() OVER (
+                                PARTITION BY rep.SERIAL_NUMBER, rep.MODEL_NAME, rep.TEST_GROUP
+                                ORDER BY rep.TIME_REPAIR DESC
+                            ) AS RN
+                        FROM SFISM4.R109 rep, PARAMS p
+                        WHERE rep.REASON_CODE IS NOT NULL
+                          AND rep.TIME_REPAIR BETWEEN p.START_TIME AND p.END_TIME
+                    ),
+                    REPAIR_FINAL_DATA AS (
+                        SELECT
+                            MODEL_NAME,
+                            TEST_GROUP AS GROUP_NAME,
+                            COUNT(SERIAL_NUMBER) AS REPAIRED_QTY
+                        FROM REPAIR_RAW_SORTED
+                        WHERE RN = 1
+                        GROUP BY MODEL_NAME, TEST_GROUP
+                    )
+                    SELECT
+                        m.MODEL_NAME,
+                        m.GROUP_NAME,
+                        m.SUM_FIRST_PASS,
+                        m.SUM_SECOND_PASS,
+                        m.SUM_FAIL,
+                        NVL(r.REPAIRED_QTY, 0) AS REPAIRED_QTY,
+                        ROUND(m.SUM_FIRST_PASS / NULLIF(m.SUM_FIRST_PASS + m.SUM_FIRST_FAIL, 0) * 100, 2) AS FPY,
+                        ROUND((m.SUM_FIRST_PASS + m.SUM_SECOND_PASS) /
+                              NULLIF(m.SUM_FIRST_PASS + m.SUM_SECOND_PASS + m.SUM_FAIL, 0) * 100, 2) AS SPY,
+                        ROUND((m.SUM_FIRST_PASS + m.SUM_SECOND_PASS + LEAST(NVL(r.REPAIRED_QTY, 0), m.SUM_FAIL)) /
+                              NULLIF(m.SUM_FIRST_PASS + m.SUM_SECOND_PASS + m.SUM_FAIL, 0) * 100, 2) AS LPY
+                    FROM PROD_DATA m
+                    LEFT JOIN REPAIR_FINAL_DATA r
+                        ON m.MODEL_NAME = r.MODEL_NAME
+                       AND m.GROUP_NAME = r.GROUP_NAME
+                    ORDER BY m.MODEL_NAME, m.GROUP_NAME";
+
+                const string failDetailQuery = @"
+                    WITH PARAMS AS (
+                        SELECT
+                            TO_DATE(:startTime, 'YYYYMMDDHH24') AS START_TIME,
+                            TO_DATE(:endTime, 'YYYYMMDDHH24') AS END_TIME
+                        FROM DUAL
+                    ),
+                    TARGET_FAIL_MOS AS (
+                        SELECT DISTINCT
+                            r.MO_NUMBER,
+                            r.MODEL_NAME,
+                            r.GROUP_NAME
+                        FROM SFISM4.r_station_rec_t r, PARAMS p
+                        WHERE TO_DATE(r.WORK_DATE || LPAD(r.WORK_SECTION, 2, '0'), 'YYYYMMDDHH24')
+                              BETWEEN p.START_TIME AND p.END_TIME
+                          AND r.FAIL_QTY > 0
+                    ),
+                    SN_LATEST_STATUS AS (
+                        SELECT
+                            rep.SERIAL_NUMBER,
+                            rep.MO_NUMBER,
+                            rep.MODEL_NAME,
+                            rep.TEST_GROUP,
+                            rep.TEST_CODE,
+                            rep.DATA1,
+                            rep.REASON_CODE,
+                            rep.TEST_TIME,
+                            ROW_NUMBER() OVER (
+                                PARTITION BY rep.SERIAL_NUMBER
+                                ORDER BY rep.TEST_TIME DESC
+                            ) AS RN
+                        FROM SFISM4.R109 rep
+                        INNER JOIN TARGET_FAIL_MOS t
+                            ON rep.MO_NUMBER = t.MO_NUMBER
+                           AND rep.MODEL_NAME = t.MODEL_NAME
+                           AND rep.TEST_GROUP = t.GROUP_NAME
+                        WHERE rep.MO_NUMBER IS NOT NULL
+                    )
+                    SELECT
+                        SERIAL_NUMBER,
+                        MO_NUMBER,
+                        MODEL_NAME,
+                        TEST_GROUP AS FAIL_STATION,
+                        TEST_CODE,
+                        DATA1 AS ERROR_DESC,
+                        TEST_TIME AS FAIL_TIME
+                    FROM SN_LATEST_STATUS
+                    WHERE RN = 1
+                      AND REASON_CODE IS NULL
+                    ORDER BY MO_NUMBER, FAIL_TIME DESC";
+
+                var summary = new List<YieldRateSummaryItem>();
+                var failDetails = new List<YieldRateFailDetailItem>();
+
+                using (var connection = new OracleConnection(_connectionString))
+                {
+                    await connection.OpenAsync();
+
+                    using (var summaryCommand = new OracleCommand(summaryQuery, connection))
+                    {
+                        summaryCommand.Parameters.Add(new OracleParameter("startTime", OracleDbType.Varchar2) { Value = request.StartTime });
+                        summaryCommand.Parameters.Add(new OracleParameter("endTime", OracleDbType.Varchar2) { Value = request.EndTime });
+
+                        using (var reader = await summaryCommand.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                summary.Add(new YieldRateSummaryItem
+                                {
+                                    ModelName = reader["MODEL_NAME"]?.ToString() ?? string.Empty,
+                                    GroupName = reader["GROUP_NAME"]?.ToString() ?? string.Empty,
+                                    SumFirstPass = reader["SUM_FIRST_PASS"] == DBNull.Value ? 0 : Convert.ToDecimal(reader["SUM_FIRST_PASS"]),
+                                    SumSecondPass = reader["SUM_SECOND_PASS"] == DBNull.Value ? 0 : Convert.ToDecimal(reader["SUM_SECOND_PASS"]),
+                                    SumFail = reader["SUM_FAIL"] == DBNull.Value ? 0 : Convert.ToDecimal(reader["SUM_FAIL"]),
+                                    RepairedQty = reader["REPAIRED_QTY"] == DBNull.Value ? 0 : Convert.ToDecimal(reader["REPAIRED_QTY"]),
+                                    Fpy = reader["FPY"] == DBNull.Value ? (decimal?)null : Convert.ToDecimal(reader["FPY"]),
+                                    Spy = reader["SPY"] == DBNull.Value ? (decimal?)null : Convert.ToDecimal(reader["SPY"]),
+                                    Lpy = reader["LPY"] == DBNull.Value ? (decimal?)null : Convert.ToDecimal(reader["LPY"])
+                                });
+                            }
+                        }
+                    }
+
+                    using (var failDetailCommand = new OracleCommand(failDetailQuery, connection))
+                    {
+                        failDetailCommand.Parameters.Add(new OracleParameter("startTime", OracleDbType.Varchar2) { Value = request.StartTime });
+                        failDetailCommand.Parameters.Add(new OracleParameter("endTime", OracleDbType.Varchar2) { Value = request.EndTime });
+
+                        using (var reader = await failDetailCommand.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                failDetails.Add(new YieldRateFailDetailItem
+                                {
+                                    SerialNumber = reader["SERIAL_NUMBER"]?.ToString() ?? string.Empty,
+                                    MoNumber = reader["MO_NUMBER"]?.ToString() ?? string.Empty,
+                                    ModelName = reader["MODEL_NAME"]?.ToString() ?? string.Empty,
+                                    FailStation = reader["FAIL_STATION"]?.ToString() ?? string.Empty,
+                                    TestCode = reader["TEST_CODE"]?.ToString() ?? string.Empty,
+                                    ErrorDesc = reader["ERROR_DESC"]?.ToString() ?? string.Empty,
+                                    FailTime = reader["FAIL_TIME"] as DateTime?
+                                });
+                            }
+                        }
+                    }
+                }
+
+                return Ok(new YieldRateResponse
+                {
+                    StartTime = request.StartTime,
+                    EndTime = request.EndTime,
+                    Summary = summary,
+                    PendingFailDetails = failDetails
+                });
+            }
+            catch (OracleException ex)
+            {
+                return StatusCode(500, new { success = false, message = $"Lỗi Oracle: {ex.Message}" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = $"Lỗi hệ thống: {ex.Message}" });
+            }
+        }
+
         private string GetSqlQueryType1(string snPlaceholders)
         {
             return $@"
@@ -562,6 +762,44 @@ namespace API_WEB.Controllers.SFC
     public class SerialNumbersExportRequest
     {
         public List<string> SerialNumbers { get; set; }
+    }
+
+    public class YieldRateRequest
+    {
+        public string StartTime { get; set; }
+        public string EndTime { get; set; }
+    }
+
+    public class YieldRateSummaryItem
+    {
+        public string ModelName { get; set; }
+        public string GroupName { get; set; }
+        public decimal SumFirstPass { get; set; }
+        public decimal SumSecondPass { get; set; }
+        public decimal SumFail { get; set; }
+        public decimal RepairedQty { get; set; }
+        public decimal? Fpy { get; set; }
+        public decimal? Spy { get; set; }
+        public decimal? Lpy { get; set; }
+    }
+
+    public class YieldRateFailDetailItem
+    {
+        public string SerialNumber { get; set; }
+        public string MoNumber { get; set; }
+        public string ModelName { get; set; }
+        public string FailStation { get; set; }
+        public string TestCode { get; set; }
+        public string ErrorDesc { get; set; }
+        public DateTime? FailTime { get; set; }
+    }
+
+    public class YieldRateResponse
+    {
+        public string StartTime { get; set; }
+        public string EndTime { get; set; }
+        public List<YieldRateSummaryItem> Summary { get; set; }
+        public List<YieldRateFailDetailItem> PendingFailDetails { get; set; }
     }
 
     public class FtFailRecord
