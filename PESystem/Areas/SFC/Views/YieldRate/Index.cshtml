@@ -15,6 +15,7 @@
         </div>
         <div>
             <button id="searchBtn" class="btn btn-ne">Tìm kiếm</button>
+            <button id="exportExcelBtn" class="btn btn-success">Xuất Excel</button>
         </div>
     </div>
 </div>
@@ -64,6 +65,9 @@
 @section Scripts {
     <script>
         const API_URL = 'https://pe-vnmbd-nvidia-cns.myfiinet.com/api/SFC/yield-rate-by-time';
+
+        let currentSummaryData = [];
+        let currentPendingFailData = [];
 
         function formatInputToYmdh(datetimeValue) {
             if (!datetimeValue) return '';
@@ -139,6 +143,50 @@
             tbody.innerHTML = html;
         }
 
+
+        function exportToExcel() {
+            if ((!currentSummaryData || !currentSummaryData.length) && (!currentPendingFailData || !currentPendingFailData.length)) {
+                Swal.fire('Không có dữ liệu', 'Vui lòng tìm kiếm dữ liệu trước khi xuất Excel.', 'warning');
+                return;
+            }
+
+            const workbook = XLSX.utils.book_new();
+
+            const summaryRows = (currentSummaryData || []).map(item => ({
+                MODEL_NAME: item.modelName ?? '',
+                GROUP_NAME: item.groupName ?? '',
+                SUM_FIRST_PASS: item.sumFirstPass ?? 0,
+                SUM_SECOND_PASS: item.sumSecondPass ?? 0,
+                SUM_FAIL: item.sumFail ?? 0,
+                REPAIRED_QTY: item.repairedQty ?? 0,
+                FPY: formatPercent(item.fpy),
+                SPY: formatPercent(item.spy),
+                LPY: formatPercent(item.lpy)
+            }));
+
+            const pendingRows = (currentPendingFailData || []).map(item => ({
+                SERIAL_NUMBER: item.serialNumber ?? '',
+                MO_NUMBER: item.moNumber ?? '',
+                MODEL_NAME: item.modelName ?? '',
+                FAIL_STATION: item.failStation ?? '',
+                TEST_CODE: item.testCode ?? '',
+                ERROR_DESC: item.errorDesc ?? '',
+                FAIL_TIME: formatDateTime(item.failTime)
+            }));
+
+            const wsSummary = XLSX.utils.json_to_sheet(summaryRows.length ? summaryRows : [{ INFO: 'Không có dữ liệu' }]);
+            const wsPending = XLSX.utils.json_to_sheet(pendingRows.length ? pendingRows : [{ INFO: 'Không có dữ liệu' }]);
+
+            XLSX.utils.book_append_sheet(workbook, wsSummary, 'Yield_Summary');
+            XLSX.utils.book_append_sheet(workbook, wsPending, 'Pending_Fail_SN');
+
+            const startTime = formatInputToYmdh(document.getElementById('startDate').value) || 'NA';
+            const endTime = formatInputToYmdh(document.getElementById('endDate').value) || 'NA';
+            const fileName = `YieldRate_${startTime}_${endTime}.xlsx`;
+
+            XLSX.writeFile(workbook, fileName);
+        }
+
         async function searchYieldRate() {
             const startVal = document.getElementById('startDate').value;
             const endVal = document.getElementById('endDate').value;
@@ -187,9 +235,15 @@
                     throw new Error('API không trả về dữ liệu JSON hợp lệ.');
                 }
 
-                renderSummaryRows(data.summary || []);
-                renderPendingFailRows(data.pendingFailDetails || []);
+                currentSummaryData = data.summary || [];
+                currentPendingFailData = data.pendingFailDetails || [];
+
+                renderSummaryRows(currentSummaryData);
+                renderPendingFailRows(currentPendingFailData);
             } catch (error) {
+                currentSummaryData = [];
+                currentPendingFailData = [];
+
                 renderSummaryRows([]);
                 renderPendingFailRows([]);
                 Swal.fire('Lỗi', error.message || 'Có lỗi xảy ra.', 'error');
@@ -199,5 +253,6 @@
         }
 
         document.getElementById('searchBtn').addEventListener('click', searchYieldRate);
+        document.getElementById('exportExcelBtn').addEventListener('click', exportToExcel);
     </script>
 }

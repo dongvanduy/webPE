@@ -470,13 +470,13 @@ namespace API_WEB.Controllers.SFC
                             rep.SERIAL_NUMBER,
                             ROW_NUMBER() OVER (
                                 PARTITION BY rep.SERIAL_NUMBER, rep.MODEL_NAME, rep.TEST_GROUP
-                                ORDER BY rep.REPAIR_TIME DESC
+                                ORDER BY rep.TIME_REPAIR DESC
                             ) AS RN
                         FROM SFISM4.R109 rep
                         INNER JOIN TARGET_MODELS tm ON rep.MODEL_NAME = tm.MODEL_NAME
                         CROSS JOIN PARAMS p
                         WHERE rep.REASON_CODE IS NOT NULL
-                          AND rep.REPAIR_TIME BETWEEN p.START_TIME AND p.END_TIME
+                          AND rep.TIME_REPAIR BETWEEN p.START_TIME AND p.END_TIME
                     ),
                     REPAIR_FINAL_DATA AS (
                         SELECT
