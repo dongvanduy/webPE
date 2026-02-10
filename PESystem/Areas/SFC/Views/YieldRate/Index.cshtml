@@ -1,14 +1,203 @@
-﻿@{
+@{
     ViewData["Title"] = "Yield Rate";
     Layout = "~/Areas/SFC/Views/Shared/_Layout_SFC.cshtml";
 }
-<div class="date-time-range text-muted">
-    <label for="startDate">Bắt đầu:</label>
-    <input type="datetime-local" id="startDate" />
-    <label for="endDate">Kết thúc:</label>
-    <input type="datetime-local" id="endDate" />
-    <button id="searchBtn" class="btn btn-ne">Tìm kiếm</button>
+
+<div class="card p-3 mb-3">
+    <div class="d-flex flex-wrap gap-2 align-items-end">
+        <div>
+            <label for="startDate" class="form-label mb-1">Bắt đầu</label>
+            <input type="datetime-local" id="startDate" class="form-control" />
+        </div>
+        <div>
+            <label for="endDate" class="form-label mb-1">Kết thúc</label>
+            <input type="datetime-local" id="endDate" class="form-control" />
+        </div>
+        <div>
+            <button id="searchBtn" class="btn btn-ne">Tìm kiếm</button>
+        </div>
+    </div>
+</div>
+
+<div class="card p-3 mb-3">
+    <h5 class="mb-3">Yield Rate Summary</h5>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped" id="yieldSummaryTable">
+            <thead>
+                <tr>
+                    <th>MODEL_NAME</th>
+                    <th>GROUP_NAME</th>
+                    <th>SUM_FIRST_PASS</th>
+                    <th>SUM_SECOND_PASS</th>
+                    <th>SUM_FAIL</th>
+                    <th>REPAIRED_QTY</th>
+                    <th>FPY</th>
+                    <th>SPY</th>
+                    <th>LPY</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card p-3">
+    <h5 class="mb-3">Danh sách SN fail chưa sửa</h5>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped" id="pendingFailTable">
+            <thead>
+                <tr>
+                    <th>SERIAL_NUMBER</th>
+                    <th>MO_NUMBER</th>
+                    <th>MODEL_NAME</th>
+                    <th>FAIL_STATION</th>
+                    <th>TEST_CODE</th>
+                    <th>ERROR_DESC</th>
+                    <th>FAIL_TIME</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
 </div>
 
 @section Scripts {
+    <script>
+        const API_URL = 'https://pe-vnmbd-nvidia-cns.myfiinet.com/api/SFC/yield-rate-by-time';
+
+        function formatInputToYmdh(datetimeValue) {
+            if (!datetimeValue) return '';
+            const date = new Date(datetimeValue);
+            if (isNaN(date.getTime())) return '';
+
+            const yyyy = date.getFullYear().toString();
+            const MM = String(date.getMonth() + 1).padStart(2, '0');
+            const dd = String(date.getDate()).padStart(2, '0');
+            const HH = String(date.getHours()).padStart(2, '0');
+            return `${yyyy}${MM}${dd}${HH}`;
+        }
+
+        function formatPercent(value) {
+            if (value === null || value === undefined || value === '') return '-';
+            return `${Number(value).toFixed(2)}%`;
+        }
+
+        function formatDateTime(value) {
+            if (!value) return '';
+            const date = new Date(value);
+            if (isNaN(date.getTime())) return value;
+            return date.toLocaleString('vi-VN');
+        }
+
+        function renderSummaryRows(items) {
+            const tbody = document.querySelector('#yieldSummaryTable tbody');
+            tbody.innerHTML = '';
+
+            if (!items || !items.length) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">Không có dữ liệu</td></tr>';
+                return;
+            }
+
+            const html = items.map(item => `
+                <tr>
+                    <td>${item.modelName ?? ''}</td>
+                    <td>${item.groupName ?? ''}</td>
+                    <td>${item.sumFirstPass ?? 0}</td>
+                    <td>${item.sumSecondPass ?? 0}</td>
+                    <td>${item.sumFail ?? 0}</td>
+                    <td>${item.repairedQty ?? 0}</td>
+                    <td>${formatPercent(item.fpy)}</td>
+                    <td>${formatPercent(item.spy)}</td>
+                    <td>${formatPercent(item.lpy)}</td>
+                </tr>
+            `).join('');
+
+            tbody.innerHTML = html;
+        }
+
+        function renderPendingFailRows(items) {
+            const tbody = document.querySelector('#pendingFailTable tbody');
+            tbody.innerHTML = '';
+
+            if (!items || !items.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Không có dữ liệu</td></tr>';
+                return;
+            }
+
+            const html = items.map(item => `
+                <tr>
+                    <td>${item.serialNumber ?? ''}</td>
+                    <td>${item.moNumber ?? ''}</td>
+                    <td>${item.modelName ?? ''}</td>
+                    <td>${item.failStation ?? ''}</td>
+                    <td>${item.testCode ?? ''}</td>
+                    <td>${item.errorDesc ?? ''}</td>
+                    <td>${formatDateTime(item.failTime)}</td>
+                </tr>
+            `).join('');
+
+            tbody.innerHTML = html;
+        }
+
+        async function searchYieldRate() {
+            const startVal = document.getElementById('startDate').value;
+            const endVal = document.getElementById('endDate').value;
+
+            const startTime = formatInputToYmdh(startVal);
+            const endTime = formatInputToYmdh(endVal);
+
+            if (!startTime || !endTime) {
+                Swal.fire('Thiếu dữ liệu', 'Vui lòng chọn đầy đủ thời gian bắt đầu và kết thúc.', 'warning');
+                return;
+            }
+
+            if (startTime > endTime) {
+                Swal.fire('Sai dữ liệu', 'Thời gian bắt đầu phải nhỏ hơn hoặc bằng thời gian kết thúc.', 'warning');
+                return;
+            }
+
+            try {
+                showSpinner();
+
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ startTime, endTime })
+                });
+
+                const rawText = await response.text();
+                let data = null;
+
+                if (rawText) {
+                    try {
+                        data = JSON.parse(rawText);
+                    } catch {
+                        data = null;
+                    }
+                }
+
+                if (!response.ok) {
+                    const serverMessage = data?.message || data?.title || rawText || 'Không thể lấy dữ liệu yield rate.';
+                    throw new Error(serverMessage);
+                }
+
+                if (!data) {
+                    throw new Error('API không trả về dữ liệu JSON hợp lệ.');
+                }
+
+                renderSummaryRows(data.summary || []);
+                renderPendingFailRows(data.pendingFailDetails || []);
+            } catch (error) {
+                renderSummaryRows([]);
+                renderPendingFailRows([]);
+                Swal.fire('Lỗi', error.message || 'Có lỗi xảy ra.', 'error');
+            } finally {
+                hideSpinner();
+            }
+        }
+
+        document.getElementById('searchBtn').addEventListener('click', searchYieldRate);
+    </script>
 }
