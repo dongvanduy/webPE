@@ -219,10 +219,10 @@ namespace API_WEB.Controllers.Scrap
                     return BadRequest(new { message = "SN list cannot be empty!" });
                 }
 
-                if (request.SnList.Count >= 230)
-                {
-                    return BadRequest(new { message = "Each delete request must contain fewer than 230 SNs." });
-                }
+                //if (request.SnList.Count >= 230)
+                //{
+                //    return BadRequest(new { message = "Each delete request must contain fewer than 230 SNs." });
+                //}
 
                 // Lấy danh sách bản ghi thỏa mãn điều kiện ApplyTaskStatus = 2 và ModelType SWITCH
                 var recordsToRemove = await _sqlContext.ScrapLists
